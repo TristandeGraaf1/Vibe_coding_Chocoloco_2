@@ -418,7 +418,38 @@ html[data-theme="dark"] .warning-days {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 1.5rem;
-    margin-bottom: 2rem;
+    margin: 2rem 0;
+}
+
+.quick-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0 3rem 0;
+    max-width: 600px;
+}
+
+.quick-stat {
+    background: linear-gradient(135deg, var(--accent-color) 0%, rgba(212, 165, 116, 0.2) 100%);
+    border-left: 5px solid var(--primary-color);
+    border-radius: 0.6rem;
+    padding: 1.2rem;
+    text-align: center;
+}
+
+.stat-number {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 0.3rem;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 600;
 }
 
 .nav-card {

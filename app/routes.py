@@ -132,3 +132,8 @@ def settings():
 @login_required
 def customer_service():
     return render_template('customer_service.html')
+
+@main_bp.route('/faq')
+@login_required
+def faq():
+    return render_template('faq.html')

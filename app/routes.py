@@ -127,3 +127,8 @@ def set_theme(theme):
 @login_required
 def settings():
     return render_template('settings.html')
+
+@main_bp.route('/customer-service')
+@login_required
+def customer_service():
+    return render_template('customer_service.html')

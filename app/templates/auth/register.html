@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Registreren - Chocoloco{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h1>Registreren</h1>
+
+        <form method="POST" class="form">
+            {{ form.hidden_tag() }}
+
+            <div class="form-group">
+                {{ form.username.label }}
+                {% if form.username.errors %}
+                    {{ form.username(class="form-input error") }}
+                    <ul class="errors">
+                    {% for error in form.username.errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                {% else %}
+                    {{ form.username(class="form-input", placeholder="Gebruikersnaam") }}
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                {{ form.email.label }}
+                {% if form.email.errors %}
+                    {{ form.email(class="form-input error") }}
+                    <ul class="errors">
+                    {% for error in form.email.errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                {% else %}
+                    {{ form.email(class="form-input", placeholder="je@email.com") }}
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                {{ form.password.label }}
+                {% if form.password.errors %}
+                    {{ form.password(class="form-input error") }}
+                    <ul class="errors">
+                    {% for error in form.password.errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                {% else %}
+                    {{ form.password(class="form-input", placeholder="Wachtwoord") }}
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                {{ form.confirm_password.label }}
+                {% if form.confirm_password.errors %}
+                    {{ form.confirm_password(class="form-input error") }}
+                    <ul class="errors">
+                    {% for error in form.confirm_password.errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                {% else %}
+                    {{ form.confirm_password(class="form-input", placeholder="Bevestig wachtwoord") }}
+                {% endif %}
+            </div>
+
+            {{ form.submit(class="btn btn-primary btn-block") }}
+        </form>
+
+        <p class="auth-link">Al een account? <a href="{{ url_for('auth.login') }}">Inloggen</a></p>
+    </div>
+</div>
+{% endblock %}

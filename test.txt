@@ -1,0 +1,99 @@
+Hoi,
+
+Ik wil een applicatie in python flask voor mijn chocoladebedrijf. 
+
+Dit zijn de user stories:
+1.	Product registreren
+Als klant wil ik een chocoladeproduct kunnen scannen met een QR-code, zodat ik productinformatie kan bekijken.
+Acceptatiecriteria:
+-	QR-code kan gescand worden via camera
+-	Product word dan toegevoegd in het dashboard
+-	Product info word gegeven.
+Inschatting: M
+
+
+2.	Dashboard bekijken
+Als klant wil ik een overzicht zien van mijn geregistreerde producten zodat ik inzicht heb in mijn aankopen.
+Acceptatiecriteria:
+-	Producten worden weergegeven
+-	Product details aanklikbaar
+Inschatting: M
+
+3.	AI-Chatbot
+Als klant wil ik de AI chatbot gebruiken om vragen te stellen, zodat mijn vragen snel  beantwoord kunnen worden
+Acceptatiecriteria:
+-	Doorverwijzing naar medewerker mogelijk
+-	Snelle reactie vereist
+-	Geen nutteloze antwoorden
+Inschatting: L
+
+
+
+
+
+4.	Klachten
+Als klant wil een klacht kunnen indienen, zodat mijn probleem wordt opgelost
+Acceptatie criteria:
+-	Klantformulier beschikbaar
+-	Foto upload mogelijk
+-	Status van de klacht is zichtbaar
+
+5.	Product bestellen
+Als klant wil ik chocoladeproducten kunnen bestellen via de app, zodat ik eenvoudig nieuwe producten kan kopen.
+Acceptatiecriteria:
+•	Producten zijn zichtbaar 
+•	Bestelknop werkt 
+Inschatting: L
+
+6.	Aanbevelingen
+Als klant wil ik gepersonaliseerde aanbevelingen ontvangen zodat ik producten ontdek die bij mij passen.
+Acceptatiecriteria:
+•	Aanbevelingen gebaseerd op eerdere aankopen 
+•	Relevante producten worden getoond 
+•	Updates bij nieuwe producten 
+Inschatting: L
+
+7.	Product notificaties
+Als klant wil ik notificaties ontvangen wanneer een product bijna over datum is, zodat ik producten op tijd kan gebruiken.
+Acceptatiecriteria
+•	De app stuurt automatisch een melding 
+•	De melding toont productnaam en datum 
+•	Gebruiker kan meldingen aan/uit zetten 
+Inschatting: M
+8.	Favoriete smaken.
+Als klant wil ik favoriete smaken kunnen opslaan, zodat ik sneller producten terug kan vinden.
+Acceptatiecriteria
+•	Gebruiker kan producten als favoriet markeren 
+•	Favorieten zijn zichtbaar in profiel 
+•	Favorieten blijven opgeslagen na uitloggen 
+Inschatting: S
+9.	Herinneringen
+Als gebruiker wil ik herinneringen ontvangen voor workshops en events, zodat ik deze niet vergeet.
+Acceptatiecriteria
+•	Gebruiker ontvangt een pushnotificatie 
+•	Tijd en locatie worden weergegeven 
+•	Herinneringen kunnen uitgezet worden 
+Inschatting: M
+10.	Volgen van klachten
+Als klant wil ik de status van mijn klacht kunnen volgen, zodat ik weet wanneer deze wordt opgelost.
+Acceptatiecriteria
+•	Gebruiker ziet huidige status 
+•	Updates worden automatisch weergegeven 
+•	Gebruiker ontvangt notificaties bij wijzigingen 
+Inschatting: L
+11.	Donker en lichte modus.
+Als gebruiker wil ik kunnen kiezen tussen lichte en donkere modus, zodat de app prettig te gebruiken is.
+Acceptatiecriteria
+•	Gebruiker kan thema aanpassen 
+•	Instelling wordt opgeslagen 
+•	Interface verandert direct 
+Inschatting: S
+12.	Recepten zoeken
+Als gebruiker wil ik recepten kunnen zoeken op smaak of ingrediënt, zodat ik sneller passende recepten kan vinden.
+Acceptatiecriteria
+•	Zoekfunctie werkt op naam en ingrediënt 
+•	Resultaten worden direct weergegeven 
+•	Gebruiker kan recepten openen 
+Inschatting: M
+
+

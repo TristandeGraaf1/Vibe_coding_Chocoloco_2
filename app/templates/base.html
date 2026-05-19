@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="nl" data-theme="{{ current_user.theme if current_user.is_authenticated else 'light' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Chocoloco{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    {% if current_user.is_authenticated %}
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="{{ url_for('main.dashboard') }}" class="nav-brand">🍫 Chocoloco</a>
+            <div class="nav-menu">
+                <a href="{{ url_for('main.dashboard') }}" class="nav-link">Dashboard</a>
+                <a href="{{ url_for('main.add_product') }}" class="nav-link">+ Product</a>
+                <button class="theme-toggle" onclick="toggleTheme()">
+                    <span id="theme-icon">🌙</span>
+                </button>
+                <a href="{{ url_for('auth.logout') }}" class="nav-link">Uitloggen</a>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+
+            html.setAttribute('data-theme', newTheme);
+            document.getElementById('theme-icon').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+
+            fetch('{{ url_for("main.set_theme", theme="") }}' + newTheme, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'}
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const theme = document.documentElement.getAttribute('data-theme');
+            document.getElementById('theme-icon').textContent = theme === 'dark' ? '☀️' : '🌙';
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - Chocoloco{% endblock %}
+
+{% block content %}
+<div class="product-detail">
+    <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary mb-20">← Terug</a>
+
+    <div class="detail-card">
+        <div class="detail-header">
+            <h1>{{ product.name }}</h1>
+            {% if product in current_user.favorites %}
+                <button class="favorite-btn active" onclick="toggleFavorite({{ product.id }})">⭐ Favoriet</button>
+            {% else %}
+                <button class="favorite-btn" onclick="toggleFavorite({{ product.id }})">☆ Toevoegen aan favorieten</button>
+            {% endif %}
+        </div>
+
+        {% if product.flavor %}
+        <div class="detail-row">
+            <label>Smaak:</label>
+            <p>{{ product.flavor }}</p>
+        </div>
+        {% endif %}
+
+        {% if product.description %}
+        <div class="detail-row">
+            <label>Beschrijving:</label>
+            <p>{{ product.description }}</p>
+        </div>
+        {% endif %}
+
+        {% if product.expiry_date %}
+        <div class="detail-row">
+            <label>Vervaldatum:</label>
+            <p>{{ product.expiry_date.strftime('%d-%m-%Y') }}</p>
+        </div>
+        {% endif %}
+
+        <div class="detail-row">
+            <label>Toegevoegd op:</label>
+            <p>{{ product.added_at.strftime('%d-%m-%Y %H:%M') }}</p>
+        </div>
+
+        <div class="detail-actions mt-20">
+            <form method="POST" action="{{ url_for('main.delete_product', product_id=product.id) }}" style="display:inline;">
+                <button type="submit" class="btn btn-danger" onclick="return confirm('Dit product verwijderen?')">Verwijderen</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleFavorite(productId) {
+        fetch(`/product/${productId}/favorite`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        }).then(r => r.json()).then(data => {
+            const btn = event.target;
+            btn.textContent = data.is_favorite ? '⭐ Favoriet' : '☆ Toevoegen aan favorieten';
+            btn.classList.toggle('active');
+        });
+    }
+</script>
+{% endblock %}

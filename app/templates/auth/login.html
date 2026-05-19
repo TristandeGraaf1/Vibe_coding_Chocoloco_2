@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Inloggen - Chocoloco{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h1>Inloggen</h1>
+
+        <form method="POST" class="form">
+            {{ form.hidden_tag() }}
+
+            <div class="form-group">
+                {{ form.email.label }}
+                {% if form.email.errors %}
+                    {{ form.email(class="form-input error") }}
+                    <ul class="errors">
+                    {% for error in form.email.errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                {% else %}
+                    {{ form.email(class="form-input", placeholder="je@email.com") }}
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                {{ form.password.label }}
+                {% if form.password.errors %}
+                    {{ form.password(class="form-input error") }}
+                    <ul class="errors">
+                    {% for error in form.password.errors %}<li>{{ error }}</li>{% endfor %}
+                    </ul>
+                {% else %}
+                    {{ form.password(class="form-input", placeholder="Wachtwoord") }}
+                {% endif %}
+            </div>
+
+            {{ form.submit(class="btn btn-primary btn-block") }}
+        </form>
+
+        <p class="auth-link">Nog geen account? <a href="{{ url_for('auth.register') }}">Registreren</a></p>
+    </div>
+</div>
+{% endblock %}

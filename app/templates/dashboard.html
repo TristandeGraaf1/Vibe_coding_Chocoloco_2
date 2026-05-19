@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Chocoloco{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <!-- Hero Section -->
+    <div class="dashboard-hero">
+        <h1>🍫 Welkom, {{ current_user.username }}!</h1>
+        <p>Beheer en ontdek je favoriete chocoladeproducten</p>
+    </div>
+
+    <!-- Navigation Cards Section -->
+    <div class="section-container">
+        <h2 class="section-title">Verkennen</h2>
+        <div class="nav-cards-grid">
+            <a href="{{ url_for('main.dashboard') }}" class="nav-card">
+                <div class="nav-card-icon">📦</div>
+                <h3>Mijn Producten</h3>
+                <p>Beheer al je chocoladeproducten</p>
+            </a>
+            <a href="#" class="nav-card">
+                <div class="nav-card-icon">🛒</div>
+                <h3>Shop</h3>
+                <p>Bestel nieuwe chocoladeproducten</p>
+            </a>
+            <a href="#" class="nav-card">
+                <div class="nav-card-icon">⭐</div>
+                <h3>Favorieten</h3>
+                <p>Je favoriete smaken</p>
+            </a>
+            <a href="#" class="nav-card">
+                <div class="nav-card-icon">🍳</div>
+                <h3>Recepten</h3>
+                <p>Recepten zoeken op smaak</p>
+            </a>
+            <a href="#" class="nav-card">
+                <div class="nav-card-icon">📝</div>
+                <h3>Klachten</h3>
+                <p>Dien een klacht in</p>
+            </a>
+            <a href="#" class="nav-card">
+                <div class="nav-card-icon">📅</div>
+                <h3>Events</h3>
+                <p>Workshops & evenementen</p>
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Section -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">📦</div>
+            <div class="stat-content">
+                <p class="stat-label">Totaal Producten</p>
+                <p class="stat-value">{{ products|length }}</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">⭐</div>
+            <div class="stat-content">
+                <p class="stat-label">Favorieten</p>
+                <p class="stat-value">{{ current_user.favorites|length }}</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">⚠️</div>
+            <div class="stat-content">
+                <p class="stat-label">Waarschuwingen</p>
+                <p class="stat-value">{{ warnings|length }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Warnings Section -->
+    {% if warnings %}
+    <div class="section-container">
+        <h2 class="section-title">⚠️ Vervaldatum Waarschuwingen</h2>
+        <div class="warnings-grid">
+        {% for warning in warnings %}
+            <div class="warning-card">
+                <div class="warning-icon">🔔</div>
+                <div class="warning-content">
+                    <p class="warning-product">{{ warning.product }}</p>
+                    <p class="warning-days">Vervalt over {{ warning.days }} dag{{ "en" if warning.days != 1 else "" }}</p>
+                </div>
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Action -->
+    {% if not products %}
+    <div class="empty-state">
+        <div class="empty-icon">📦</div>
+        <h2>Geen producten nog</h2>
+        <p>Je hebt nog geen chocoladeproducten toegevoegd. Begin nu!</p>
+        <a href="{{ url_for('main.add_product') }}" class="btn btn-primary btn-large">+ Voeg je eerste product toe</a>
+    </div>
+    {% else %}
+
+    <!-- Favorites Section -->
+    {% if current_user.favorites %}
+    <div class="section-container">
+        <h2 class="section-title">⭐ Mijn Favorieten</h2>
+        <div class="favorites-scroll">
+        {% for product in current_user.favorites[:6] %}
+            <div class="favorite-card">
+                <div class="favorite-star">⭐</div>
+                <h4>{{ product.name }}</h4>
+                {% if product.flavor %}<p class="favorite-flavor">{{ product.flavor }}</p>{% endif %}
+                <a href="{{ url_for('main.product_detail', product_id=product.id) }}" class="favorite-link">→</a>
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- All Products Section -->
+    <div class="section-container">
+        <div class="section-header">
+            <h2 class="section-title">📚 Mijn Producten</h2>
+            <a href="{{ url_for('main.add_product') }}" class="btn btn-secondary btn-small">+ Toevoegen</a>
+        </div>
+        <div class="products-grid">
+        {% for product in products %}
+            <div class="product-card">
+                <div class="product-card-header">
+                    <h3>{{ product.name }}</h3>
+                    <button class="favorite-btn {% if product in current_user.favorites %}active{% endif %}"
+                            onclick="toggleFavorite({{ product.id }})"
+                            title="{% if product in current_user.favorites %}Verwijderen uit favorieten{% else %}Toevoegen aan favorieten{% endif %}">
+                        {% if product in current_user.favorites %}⭐{% else %}☆{% endif %}
+                    </button>
+                </div>
+
+                <div class="product-card-body">
+                    {% if product.flavor %}
+                    <div class="product-info">
+                        <span class="info-label">Smaak:</span>
+                        <span class="info-value">{{ product.flavor }}</span>
+                    </div>
+                    {% endif %}
+
+                    {% if product.expiry_date %}
+                    <div class="product-info">
+                        <span class="info-label">Vervaldatum:</span>
+                        <span class="info-value expiry-date">{{ product.expiry_date.strftime('%d-%m-%Y') }}</span>
+                    </div>
+                    {% endif %}
+
+                    {% if product.description %}
+                    <div class="product-description">
+                        {{ product.description[:80] }}{% if product.description|length > 80 %}...{% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="product-card-footer">
+                    <a href="{{ url_for('main.product_detail', product_id=product.id) }}" class="btn btn-primary btn-small">Bekijken</a>
+                    <button class="btn btn-danger btn-small" onclick="deleteProduct({{ product.id }})" title="Verwijderen">🗑️</button>
+                </div>
+            </div>
+        {% endfor %}
+        </div>
+    </div>
+
+    {% endif %}
+</div>
+
+<script>
+    function toggleFavorite(productId) {
+        fetch(`/product/${productId}/favorite`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        }).then(r => r.json()).then(data => {
+            location.reload();
+        });
+    }
+
+    function deleteProduct(productId) {
+        if (confirm('Dit product verwijderen?')) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/product/${productId}/delete`;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+</script>
+{% endblock %}

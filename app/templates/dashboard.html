@@ -10,54 +10,54 @@
         <p>Beheer en ontdek je favoriete chocoladeproducten</p>
     </div>
 
+    <!-- Quick Stats -->
+    <div class="quick-stats">
+        <div class="quick-stat" style="animation-delay: 0s;">
+            <span class="stat-number">{{ products|length }}</span>
+            <span class="stat-label">Producten</span>
+        </div>
+        <div class="quick-stat" style="animation-delay: 0.1s;">
+            <span class="stat-number">{{ current_user.favorites|length }}</span>
+            <span class="stat-label">Favorieten</span>
+        </div>
+        <div class="quick-stat" style="animation-delay: 0.2s;">
+            <span class="stat-number">{{ warnings|length }}</span>
+            <span class="stat-label">Waarschuwingen</span>
+        </div>
+    </div>
+
     <!-- Navigation Cards Section -->
     <div class="nav-cards-grid">
-        <a href="{{ url_for('main.add_product') }}" class="nav-card">
+        <a href="{{ url_for('main.add_product') }}" class="nav-card" style="animation-delay: 0s;">
             <div class="nav-card-icon">📦</div>
             <h3>Producten</h3>
             <p>Registreer en bekijk je producten</p>
         </a>
-        <a href="#" class="nav-card">
+        <a href="#" class="nav-card" style="animation-delay: 0.1s;">
             <div class="nav-card-icon">🔍</div>
             <h3>Ontdekken</h3>
             <p>Verken nieuwe chocolades</p>
         </a>
-        <a href="{{ url_for('main.customer_service') }}" class="nav-card">
+        <a href="{{ url_for('main.customer_service') }}" class="nav-card" style="animation-delay: 0.2s;">
             <div class="nav-card-icon">💬</div>
             <h3>Klantenservice</h3>
             <p>Hulp en ondersteuning</p>
         </a>
-        <a href="#" class="nav-card">
+        <a href="#" class="nav-card" style="animation-delay: 0.3s;">
             <div class="nav-card-icon">🛒</div>
             <h3>Shop</h3>
             <p>Bestel nieuwe producten</p>
         </a>
-        <a href="#" class="nav-card">
+        <a href="#" class="nav-card" style="animation-delay: 0.4s;">
             <div class="nav-card-icon">👥</div>
             <h3>Community</h3>
             <p>Verbind met andere fans</p>
         </a>
-        <a href="#" class="nav-card">
+        <a href="#" class="nav-card" style="animation-delay: 0.5s;">
             <div class="nav-card-icon">⭐</div>
             <h3>Chocorewards</h3>
             <p>Verzamel punten en beloningen</p>
         </a>
-    </div>
-
-    <!-- Quick Stats -->
-    <div class="quick-stats">
-        <div class="quick-stat">
-            <span class="stat-number">{{ products|length }}</span>
-            <span class="stat-label">Producten</span>
-        </div>
-        <div class="quick-stat">
-            <span class="stat-number">{{ current_user.favorites|length }}</span>
-            <span class="stat-label">Favorieten</span>
-        </div>
-        <div class="quick-stat">
-            <span class="stat-number">{{ warnings|length }}</span>
-            <span class="stat-label">Waarschuwingen</span>
-        </div>
     </div>
 
     <!-- Warnings Section -->

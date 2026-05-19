@@ -16,33 +16,28 @@
         <div class="nav-cards-grid">
             <a href="{{ url_for('main.dashboard') }}" class="nav-card">
                 <div class="nav-card-icon">📦</div>
-                <h3>Mijn Producten</h3>
-                <p>Beheer al je chocoladeproducten</p>
+                <h3>Producten</h3>
+                <p>Registreer en bekijk je producten</p>
+            </a>
+            <a href="#" class="nav-card">
+                <div class="nav-card-icon">💬</div>
+                <h3>Klantenservice</h3>
+                <p>Hulp en ondersteuning</p>
             </a>
             <a href="#" class="nav-card">
                 <div class="nav-card-icon">🛒</div>
                 <h3>Shop</h3>
-                <p>Bestel nieuwe chocoladeproducten</p>
+                <p>Bestel nieuwe producten</p>
+            </a>
+            <a href="#" class="nav-card">
+                <div class="nav-card-icon">👥</div>
+                <h3>Community</h3>
+                <p>Verbind met andere fans</p>
             </a>
             <a href="#" class="nav-card">
                 <div class="nav-card-icon">⭐</div>
-                <h3>Favorieten</h3>
-                <p>Je favoriete smaken</p>
-            </a>
-            <a href="#" class="nav-card">
-                <div class="nav-card-icon">🍳</div>
-                <h3>Recepten</h3>
-                <p>Recepten zoeken op smaak</p>
-            </a>
-            <a href="#" class="nav-card">
-                <div class="nav-card-icon">📝</div>
-                <h3>Klachten</h3>
-                <p>Dien een klacht in</p>
-            </a>
-            <a href="#" class="nav-card">
-                <div class="nav-card-icon">📅</div>
-                <h3>Events</h3>
-                <p>Workshops & evenementen</p>
+                <h3>Chocorewards</h3>
+                <p>Verzamel punten en beloningen</p>
             </a>
         </div>
     </div>
@@ -89,6 +84,44 @@
         </div>
     </div>
     {% endif %}
+
+    <!-- Video & News Widgets -->
+    <div class="widgets-section">
+        <div class="video-widget">
+            <h3>🎥 Ontdek Chocoloco</h3>
+            <div class="video-container">
+                <iframe width="100%" height="300" src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="Chocoloco Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+            <p class="widget-caption">Kijk hoe je onze chocoladeproducten het beste kunt gebruiken</p>
+        </div>
+
+        <div class="news-widget">
+            <h3>📰 Laatste Nieuws</h3>
+            <div class="news-list">
+                <div class="news-item">
+                    <div class="news-date">Vandaag</div>
+                    <div class="news-content">
+                        <h4>Nieuwe Smaak: Caramel Delight</h4>
+                        <p>Ontdek onze nieuwste toevoeging aan het assortiment!</p>
+                    </div>
+                </div>
+                <div class="news-item">
+                    <div class="news-date">Gisteren</div>
+                    <div class="news-content">
+                        <h4>Zomer Event Aankondiging</h4>
+                        <p>Sluit je aan bij onze exclusieve zomer workshop</p>
+                    </div>
+                </div>
+                <div class="news-item">
+                    <div class="news-date">3 dagen geleden</div>
+                    <div class="news-content">
+                        <h4>Chocorewards Upgrade</h4>
+                        <p>Nog meer beloningen voor je loyaliteit!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Quick Action -->
     {% if not products %}

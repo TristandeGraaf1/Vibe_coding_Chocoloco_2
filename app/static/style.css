@@ -462,6 +462,98 @@ html[data-theme="dark"] .warning-days {
     line-height: 1.4;
 }
 
+.widgets-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    margin: 3rem 0;
+}
+
+.video-widget, .news-widget {
+    background-color: var(--card-bg);
+    border: 2px solid var(--accent-color);
+    border-radius: 0.8rem;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-light);
+}
+
+.video-widget h3, .news-widget h3 {
+    margin: 0 0 1.2rem 0;
+    color: var(--primary-color);
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.video-container {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%;
+    height: 0;
+    overflow: hidden;
+    border-radius: 0.6rem;
+    margin-bottom: 1rem;
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.video-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 0.6rem;
+}
+
+.widget-caption {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-style: italic;
+    line-height: 1.5;
+}
+
+.news-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.news-item {
+    padding: 1rem;
+    background-color: rgba(212, 165, 116, 0.08);
+    border-left: 4px solid var(--accent-color);
+    border-radius: 0.4rem;
+    transition: all 0.3s;
+}
+
+.news-item:hover {
+    background-color: rgba(212, 165, 116, 0.15);
+    border-left-color: var(--primary-color);
+}
+
+.news-date {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.news-content h4 {
+    margin: 0 0 0.4rem 0;
+    color: var(--primary-color);
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.news-content p {
+    margin: 0;
+    color: var(--text-color);
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
 .favorites-scroll {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));

@@ -107,6 +107,11 @@ body {
     transform: scale(1.2);
 }
 
+.settings-btn {
+    font-size: 1.3rem;
+    padding: 0.5rem !important;
+}
+
 .container {
     max-width: 1400px;
     margin: 0 auto;

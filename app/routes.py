@@ -122,3 +122,8 @@ def set_theme(theme):
         db.session.commit()
         return jsonify({'status': 'success'})
     return jsonify({'error': 'Invalid theme'}), 400
+
+@main_bp.route('/settings')
+@login_required
+def settings():
+    return render_template('settings.html')

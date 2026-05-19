@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Instellingen - Chocoloco{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <h1>⚙️ Instellingen</h1>
+
+    <div class="settings-grid">
+        <!-- Account Section -->
+        <div class="settings-section">
+            <h2>Accountgegevens</h2>
+            <div class="setting-item">
+                <label>Gebruikersnaam</label>
+                <p class="setting-value">{{ current_user.username }}</p>
+            </div>
+            <div class="setting-item">
+                <label>E-mailadres</label>
+                <p class="setting-value">{{ current_user.email }}</p>
+            </div>
+            <div class="setting-item">
+                <label>Lid sinds</label>
+                <p class="setting-value">{{ current_user.created_at.strftime('%d-%m-%Y') }}</p>
+            </div>
+        </div>
+
+        <!-- Preferences Section -->
+        <div class="settings-section">
+            <h2>Voorkeuren</h2>
+            <div class="setting-item">
+                <label for="theme-select">Thema</label>
+                <select id="theme-select" onchange="changeTheme(this.value)">
+                    <option value="light" {% if current_user.theme == 'light' %}selected{% endif %}>Licht</option>
+                    <option value="dark" {% if current_user.theme == 'dark' %}selected{% endif %}>Donker</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Security Section -->
+        <div class="settings-section">
+            <h2>Beveiliging</h2>
+            <div class="setting-item">
+                <a href="#" class="btn btn-secondary">Wachtwoord wijzigen</a>
+            </div>
+            <div class="setting-item">
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-danger">Uitloggen</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="back-container">
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">← Terug naar dashboard</a>
+    </div>
+</div>
+
+<style>
+    .settings-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+
+    .settings-container h1 {
+        font-size: 2rem;
+        color: var(--primary-color);
+        margin-bottom: 2rem;
+    }
+
+    .settings-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .settings-section {
+        background: var(--bg-secondary);
+        border-radius: 0.8rem;
+        padding: 1.5rem;
+        border: 1px solid var(--border-color);
+    }
+
+    .settings-section h2 {
+        font-size: 1.2rem;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--accent-color);
+    }
+
+    .setting-item {
+        margin-bottom: 1.5rem;
+    }
+
+    .setting-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .setting-item label {
+        display: block;
+        font-weight: 600;
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .setting-value {
+        color: var(--text-primary);
+        font-size: 1rem;
+        margin: 0;
+    }
+
+    .setting-item select {
+        width: 100%;
+        padding: 0.7rem;
+        border: 1px solid var(--border-color);
+        border-radius: 0.4rem;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        font-size: 1rem;
+    }
+
+    .back-container {
+        display: flex;
+        justify-content: center;
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 0.7rem 1.5rem;
+        border-radius: 0.4rem;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        text-align: center;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+
+    .btn-secondary {
+        background: var(--bg-secondary);
+        color: var(--primary-color);
+        border: 2px solid var(--primary-color);
+    }
+
+    .btn-secondary:hover {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .btn-danger {
+        background: #d32f2f;
+        color: white;
+    }
+
+    .btn-danger:hover {
+        background: #b71c1c;
+    }
+
+    @media (max-width: 768px) {
+        .settings-container {
+            padding: 1rem;
+        }
+
+        .settings-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<script>
+    function changeTheme(theme) {
+        fetch('{{ url_for("main.set_theme", theme="") }}' + theme, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        }).then(() => {
+            location.reload();
+        });
+    }
+</script>
+{% endblock %}

@@ -42,7 +42,7 @@ class ProductRegisterForm(FlaskForm):
 
 class TopicForm(FlaskForm):
     title = StringField('Titel', validators=[DataRequired(), Length(min=3, max=200)])
-    body = TextAreaField('Bericht', validators=[DataRequired(), Length(min=5)])
+    body = TextAreaField('Bericht', validators=[Length(min=5)])
     submit = SubmitField('Plaats onderwerp')
 
 

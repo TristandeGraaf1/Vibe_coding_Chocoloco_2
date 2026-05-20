@@ -31,7 +31,8 @@
                             <span class="toolbar-spacer"></span>
                             <span class="char-count muted" id="charCount">0 tekens</span>
                         </div>
-                        {{ form.body(class="form-textarea", id='bodyInput', placeholder='Schrijf hier je bericht (ondersteunt **bold** en *italic*)') }}
+                        {{ form.body(class="form-textarea rich-text-input", id='bodyInput', style='display:none') }}
+                        <div id="bodyEditor" class="rich-editor" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Schrijf hier je bericht. Vet, cursief en links worden direct opgemaakt."></div>
                     </div>
 
                     <div style="display:flex; gap:0.75rem; margin-top:0.5rem; align-items:center;">
@@ -58,52 +59,69 @@
     <script>
     (function(){
         const body = document.getElementById('bodyInput');
+        const editor = document.getElementById('bodyEditor');
         const preview = document.getElementById('preview');
         const charCount = document.getElementById('charCount');
         const submitBtn = document.getElementById('submitBtn');
 
-        function escapeHtml(s){
-            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        }
-
-        function renderMarkdown(md){
-            let out = escapeHtml(md);
-            out = out.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-            out = out.replace(/^## (.*$)/gim, '<h2>$1</h2>');
-            out = out.replace(/^# (.*$)/gim, '<h1>$1</h1>');
-            out = out.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
-            out = out.replace(/\*(.*?)\*/gim, '<em>$1</em>');
-            // convert markdown links [text](https://...)
-            out = out.replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/gim, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-            out = out.replace(/\n/g, '<br>');
-            return out;
+        function syncBody(){
+            body.value = editor.innerHTML.trim();
         }
 
         function updatePreview(){
-            const val = body.value || '';
-            preview.innerHTML = renderMarkdown(val) || '<span class="muted">(Leeg)</span>';
-            charCount.textContent = val.length + ' tekens';
-            // Keep submit handling to server-side validation; do not force-disable the button here.
+            syncBody();
+            const textLength = (editor.innerText || '').trim().length;
+            preview.innerHTML = editor.innerHTML.trim() || '<span class="muted">(Leeg)</span>';
+            charCount.textContent = textLength + ' tekens';
+            if(!editor.innerHTML.trim()) {
+                preview.innerHTML = '<span class="muted">(Leeg)</span>';
+            }
         }
 
         document.addEventListener('input', function(e){
-            if(e.target === body || e.target.id === 'title') updatePreview();
+            if(e.target === editor || e.target.id === 'title') updatePreview();
         });
+
+        editor.addEventListener('focus', () => editor.classList.add('is-focused'));
+        editor.addEventListener('blur', () => editor.classList.remove('is-focused'));
+
+        const initialValue = body.value || '';
+        editor.innerHTML = initialValue;
+        syncBody();
 
         // toolbar actions
         document.querySelectorAll('.toolbar-btn').forEach(btn=>{
             btn.addEventListener('click', ()=>{
                 const action = btn.dataset.action;
-                const start = body.selectionStart; const end = body.selectionEnd; const selected = body.value.substring(start,end);
-                let insert = '';
-                if(action==='bold') insert = '**' + (selected || 'vet') + '**';
-                if(action==='italic') insert = '*' + (selected || 'cursief') + '*';
-                if(action==='h1') insert = '# ' + (selected || 'Koptekst');
-                if(action==='link') insert = '[' + (selected || 'linktekst') + '](https://)';
-                body.setRangeText(insert, start, end, 'end');
-                body.focus();
+                editor.focus();
+                if(action === 'bold') document.execCommand('bold');
+                if(action === 'italic') document.execCommand('italic');
+                if(action === 'h1') document.execCommand('formatBlock', false, 'h1');
+                if(action === 'link') {
+                    const currentSelection = window.getSelection();
+                    const selectedText = currentSelection && currentSelection.toString().trim();
+                    const url = prompt('Plak een link', 'https://voorbeeld.nl');
+                    if(url) {
+                        if(selectedText) {
+                            document.execCommand('createLink', false, url);
+                        } else {
+                            document.execCommand('insertHTML', false, `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
+                        }
+                    }
+                }
                 updatePreview();
             });
+        });
+
+        editor.addEventListener('paste', function(e){
+            e.preventDefault();
+            const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+            document.execCommand('insertText', false, text);
+            updatePreview();
+        });
+
+        document.getElementById('topicForm').addEventListener('submit', function(){
+            syncBody();
         });
 
         // initial

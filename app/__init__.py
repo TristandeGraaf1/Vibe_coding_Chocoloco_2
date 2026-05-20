@@ -93,6 +93,8 @@ def create_app():
     def inject_community_helpers():
         from app.models import ForumTopic, ForumReply
         import re
+        from html import escape as html_escape
+        from html.parser import HTMLParser
         from markupsafe import Markup, escape
 
         def contribution_count(user_id):
@@ -110,9 +112,47 @@ def create_app():
                 return {'label': 'Cacao Beginner', 'class': 'badge-beginner', 'score': score}
             return {'label': 'Cacao Newbie', 'class': 'badge-newbie', 'score': score}
 
+        class RichTextSanitizer(HTMLParser):
+            allowed_tags = {'strong', 'em', 'b', 'i', 'u', 'br', 'p', 'div', 'span', 'h1', 'h2', 'h3', 'a'}
+            allowed_attrs = {'a': {'href', 'target', 'rel'}}
+
+            def __init__(self):
+                super().__init__()
+                self.parts = []
+
+            def handle_starttag(self, tag, attrs):
+                if tag not in self.allowed_tags:
+                    return
+                clean_attrs = []
+                allowed = self.allowed_attrs.get(tag, set())
+                for key, value in attrs:
+                    if key in allowed:
+                        if key == 'href' and value and not value.startswith(('http://', 'https://', '/')):
+                            continue
+                        clean_attrs.append(f'{key}="{html_escape(value, quote=True)}"')
+                suffix = f' {" ".join(clean_attrs)}' if clean_attrs else ''
+                self.parts.append(f'<{tag}{suffix}>')
+
+            def handle_endtag(self, tag):
+                if tag in self.allowed_tags and tag != 'br':
+                    self.parts.append(f'</{tag}>')
+
+            def handle_data(self, data):
+                self.parts.append(html_escape(data))
+
+            def get_html(self):
+                return ''.join(self.parts)
+
         def render_markdown(md):
             if not md:
                 return ''
+
+            raw = md.strip()
+            if raw.startswith('<') and raw.endswith('>'):
+                sanitizer = RichTextSanitizer()
+                sanitizer.feed(raw)
+                return Markup(sanitizer.get_html().replace('\n', '<br>'))
+
             out = escape(md)
             out = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', out, flags=re.S)
             out = re.sub(r'\*(.*?)\*', r'<em>\1</em>', out, flags=re.S)

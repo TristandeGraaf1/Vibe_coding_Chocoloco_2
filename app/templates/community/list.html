@@ -4,16 +4,23 @@
 
 {% block content %}
 <div class="section-container community-wrap">
-    <div class="community-banner">
-        <div class="banner-inner">
-            <div>
-                <h1 class="banner-title">Community - Vind en deel kennis</h1>
-                <p class="banner-sub">Zoek snel naar bestaande topics of start een nieuw onderwerp.</p>
+    <div class="community-hero">
+        <div class="community-hero-content">
+            <div class="community-hero-copy">
+                <span class="community-hero-eyebrow">Chocoloco Community</span>
+                <h1 class="community-hero-title">Warm, behulpzaam en helemaal van Chocoloco.</h1>
+                <p class="community-hero-sub">Zoek bestaande topics, stel je vraag of deel je eigen ervaring in een community die past bij de Chocoloco-sfeer.</p>
             </div>
-            <form method="get" action="{{ url_for('main.community') }}" class="banner-search">
-                <input type="search" name="q" placeholder="Zoek topics of vragen..." value="{{ q if q is defined else '' }}" class="search-input">
-                <button class="btn btn-primary">Zoek</button>
-            </form>
+            <div class="community-hero-panel">
+                <form method="get" action="{{ url_for('main.community') }}" class="banner-search hero-search">
+                    <label class="hero-search-label" for="communitySearch">Zoek in de Chocoloco community</label>
+                    <div class="hero-search-row">
+                        <input id="communitySearch" type="search" name="q" placeholder="Zoek topics, tips of vragen..." value="{{ q if q is defined else '' }}" class="search-input hero-search-input">
+                        <button class="btn btn-primary hero-search-btn">Zoek</button>
+                    </div>
+                </form>
+                <a href="{{ url_for('main.community_new') }}" class="btn btn-secondary hero-cta">Nieuw onderwerp</a>
+            </div>
         </div>
     </div>
     <div class="section-header">

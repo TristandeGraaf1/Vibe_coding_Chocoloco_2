@@ -23,6 +23,7 @@
                     </button>
                     <div class="nav-notification-panel" id="nav-notification-panel" hidden>
                         <p class="nav-notification-title">Meldingen</p>
+                        <div class="nav-notification-content" id="nav-notification-content">
                         {% if nav_notifications %}
                         <div class="nav-notification-list" id="nav-notification-list">
                             {% for notification in nav_notifications %}
@@ -64,11 +65,17 @@
                         </div>
                         <a href="{{ url_for('main.community') }}" class="nav-notification-link">Bekijk community</a>
                         {% else %}
-                        <p class="nav-notification-message">Geen actieve meldingen.</p>
-                        <div class="nav-notification-actions">
-                            <a href="{{ url_for('main.all_products') }}" class="nav-notification-link">Bekijk producten</a>
+                        <div class="nav-notification-empty" id="nav-notification-empty">
+                            <div class="nav-notification-empty-icon">🔔</div>
+                            <p class="nav-notification-message">Je hebt nu geen meldingen.</p>
+                            <p class="nav-notification-item-meta">Als iemand reageert op een geabonneerd topic of een product bijna verloopt, verschijnt het hier.</p>
+                            <div class="nav-notification-actions">
+                                <a href="{{ url_for('main.community') }}" class="nav-notification-link">Bekijk community</a>
+                                <a href="{{ url_for('main.all_products') }}" class="nav-notification-link">Bekijk producten</a>
+                            </div>
                         </div>
                         {% endif %}
+                        </div>
                     </div>
                 </div>
                 <a href="{{ url_for('main.settings') }}" class="nav-link settings-btn" title="Instellingen">⚙️</a>
@@ -160,6 +167,7 @@
 
                     fetch(actionUrl, {
                         method: 'POST',
+                        credentials: 'same-origin',
                         headers: {'Content-Type': 'application/json'}
                     }).then(function(response) {
                         if (!response.ok) {
@@ -204,6 +212,50 @@
                         closeNotificationPanel();
                     }
                 });
+
+                // Poll server for new notifications periodically
+                const pollNotifications = function() {
+                    fetch('{{ url_for("main.notifications_poll") }}', { credentials: 'same-origin' })
+                        .then(function(res){ if(!res.ok) throw new Error('Network'); return res.json(); })
+                        .then(function(data){
+                            updateBadge(data.unread_count || 0);
+
+                            const content = notificationPanel.querySelector('#nav-notification-content');
+                            let list = notificationPanel.querySelector('#nav-notification-list');
+                            if(!content) return;
+
+                            if(!data.notifications || !data.notifications.length) {
+                                content.innerHTML = '<div class="nav-notification-empty" id="nav-notification-empty"><div class="nav-notification-empty-icon">🔔</div><p class="nav-notification-message">Je hebt nu geen meldingen.</p><p class="nav-notification-item-meta">Als iemand reageert op een geabonneerd topic of een product bijna verloopt, verschijnt het hier.</p><div class="nav-notification-actions"><a href="{{ url_for('main.community') }}" class="nav-notification-link">Bekijk community</a><a href="{{ url_for('main.all_products') }}" class="nav-notification-link">Bekijk producten</a></div></div>';
+                                return;
+                            }
+
+                            if (!list) {
+                                content.innerHTML = '<div class="nav-notification-list" id="nav-notification-list"></div><a href="{{ url_for('main.community') }}" class="nav-notification-link">Bekijk community</a>';
+                                list = notificationPanel.querySelector('#nav-notification-list');
+                            }
+
+                            list.innerHTML = '';
+                            data.notifications.forEach(function(n){
+                                let item = document.createElement('div');
+                                item.className = 'nav-notification-item ' + (n.is_read ? 'is-read' : 'is-unread');
+
+                                if(n.kind === 'expiry'){
+                                    item.dataset.productId = n.product_id;
+                                    item.innerHTML = `<div class="nav-notification-item-header"><p class="nav-notification-message">${n.name}</p><span class="nav-notification-item-state ${n.is_read? 'is-read':'is-unread'}">${n.is_read? 'Gelezen':'Nieuw'}</span></div><p class="nav-notification-item-meta">Vervalt over ${n.days} dag${n.days != 1 ? 'en' : ''}</p><div class="nav-notification-actions">${n.is_read? '': '<button type="button" class="nav-notification-mark-read" data-read-url="'+ ('{{ url_for("main.mark_expiry_warning_read", product_id=0) }}').replace('/0','/'+n.product_id)+'">Markeer als gelezen</button>'}<button type="button" class="nav-notification-dismiss" data-dismiss-url="${ ('{{ url_for("main.dismiss_expiry_warning", product_id=0) }}').replace('/0','/'+n.product_id) }">Verwijder melding</button></div>`;
+                                } else if(n.kind === 'forum'){
+                                    item.dataset.notificationId = n.notification_id;
+                                    item.innerHTML = `<div class="nav-notification-item-header"><p class="nav-notification-message">Nieuw antwoord in: ${n.topic_title}</p><span class="nav-notification-item-state ${n.is_read? 'is-read':'is-unread'}">${n.is_read? 'Gelezen':'Nieuw'}</span></div><p class="nav-notification-item-meta">${n.text}</p><div class="nav-notification-actions">${n.is_read? '': '<button type="button" class="nav-notification-mark-read" data-read-url="'+ ('{{ url_for("main.mark_forum_notification_read", notification_id=0) }}').replace('/0','/'+n.notification_id)+'">Markeer als gelezen</button>'}<button type="button" class="nav-notification-dismiss" data-dismiss-url="${ ('{{ url_for("main.dismiss_forum_notification", notification_id=0) }}').replace('/0','/'+n.notification_id) }">Verwijder melding</button><a href="${ ('{{ url_for("main.community_topic", topic_id=0) }}').replace('/0','/'+n.topic_id) }" class="nav-notification-link">Bekijk onderwerp</a></div>`;
+                                }
+
+                                list.appendChild(item);
+                            });
+                        }).catch(function(err){
+                            console.error('poll error', err);
+                        });
+                };
+
+                pollNotifications();
+                setInterval(pollNotifications, 15000);
             }
         });
     </script>

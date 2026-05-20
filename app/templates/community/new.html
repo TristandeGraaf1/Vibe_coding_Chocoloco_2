@@ -5,11 +5,15 @@
 {% block content %}
 <div class="section-container">
     <div class="section-header">
-        <h2 class="section-title">Nieuw onderwerp</h2>
+        <h2 class="section-title">{% if editing %}Onderwerp bewerken{% else %}Nieuw onderwerp{% endif %}</h2>
     </div>
     <div class="grid-2">
         <div>
-            <div class="card">
+            <div class="editor-card card">
+                <div class="editor-header">
+                    <h3 class="section-title">{% if editing %}Onderwerp bewerken{% else %}Nieuw onderwerp{% endif %}</h3>
+                    <p class="muted">Deel je vraag of ervaring. Gebruik **bold**, *italic* en links.</p>
+                </div>
                 <form method="post" class="form" id="topicForm">
                     {{ form.hidden_tag() }}
                     <div class="form-group">
@@ -31,7 +35,11 @@
                     </div>
 
                     <div style="display:flex; gap:0.75rem; margin-top:0.5rem; align-items:center;">
-                        {{ form.submit(class="btn btn-primary", id='submitBtn') }}
+                        {% if editing %}
+                            {{ form.submit(class="btn btn-primary", id='submitBtn', value='Opslaan') }}
+                        {% else %}
+                            {{ form.submit(class="btn btn-primary", id='submitBtn') }}
+                        {% endif %}
                         <a href="{{ url_for('main.community') }}" class="btn btn-secondary">Annuleer</a>
                         <a href="#preview" class="btn btn-small btn-secondary" id="togglePreview">Toon preview</a>
                     </div>
@@ -65,6 +73,8 @@
             out = out.replace(/^# (.*$)/gim, '<h1>$1</h1>');
             out = out.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
             out = out.replace(/\*(.*?)\*/gim, '<em>$1</em>');
+            // convert markdown links [text](https://...)
+            out = out.replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/gim, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
             out = out.replace(/\n/g, '<br>');
             return out;
         }
@@ -73,7 +83,7 @@
             const val = body.value || '';
             preview.innerHTML = renderMarkdown(val) || '<span class="muted">(Leeg)</span>';
             charCount.textContent = val.length + ' tekens';
-            submitBtn.disabled = ( (document.getElementById('title') && document.getElementById('title').value.trim().length===0) || val.trim().length < 5 );
+            // Keep submit handling to server-side validation; do not force-disable the button here.
         }
 
         document.addEventListener('input', function(e){

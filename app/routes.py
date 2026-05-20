@@ -4,6 +4,7 @@ from app import db
 from app.models import User, Product, ExpiryWarningRead, ExpiryWarningDismissed, ForumTopic, ForumReply, TopicSubscription, ForumNotification, ReplyLike
 from app.forms import LoginForm, RegisterForm, ProductForm, ProductRegisterForm, TopicForm, ReplyForm
 from datetime import datetime, timedelta
+from flask import current_app
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 main_bp = Blueprint('main', __name__)
@@ -290,6 +291,43 @@ def community_new():
     return render_template('community/new.html', form=form)
 
 
+@main_bp.route('/community/topic/<int:topic_id>/edit', methods=['GET', 'POST'])
+@login_required
+def community_edit(topic_id):
+    topic = ForumTopic.query.get_or_404(topic_id)
+    if topic.user_id != current_user.id:
+        return redirect(url_for('main.community_topic', topic_id=topic.id))
+    form = TopicForm()
+    if form.validate_on_submit():
+        topic.title = form.title.data
+        topic.body = form.body.data
+        topic.updated_at = datetime.utcnow()
+        db.session.commit()
+        return redirect(url_for('main.community_topic', topic_id=topic.id))
+
+    # prefill
+    if request.method == 'GET':
+        form.title.data = topic.title
+        form.body.data = topic.body
+
+    return render_template('community/new.html', form=form, editing=True, topic=topic)
+
+
+@main_bp.route('/community/topic/<int:topic_id>/delete', methods=['POST'])
+@login_required
+def community_delete(topic_id):
+    topic = ForumTopic.query.get_or_404(topic_id)
+    if topic.user_id != current_user.id:
+        return jsonify({'error': 'Unauthorized'}), 403
+    # delete associated replies and subscriptions and notifications
+    ForumReply.query.filter_by(topic_id=topic.id).delete()
+    TopicSubscription.query.filter_by(topic_id=topic.id).delete()
+    ForumNotification.query.filter_by(topic_id=topic.id).delete()
+    db.session.delete(topic)
+    db.session.commit()
+    return redirect(url_for('main.community'))
+
+
 @main_bp.route('/community/topic/<int:topic_id>', methods=['GET', 'POST'])
 @login_required
 def community_topic(topic_id):
@@ -381,3 +419,67 @@ def dismiss_forum_notification(notification_id):
     from app.models import ForumNotification as FN
     unread = FN.query.filter_by(user_id=current_user.id, is_read=False).count()
     return jsonify({'status': 'success', 'unread_count': unread})
+
+
+@main_bp.route('/notifications/poll')
+@login_required
+def notifications_poll():
+    from app.models import Product, ExpiryWarningRead, ExpiryWarningDismissed, ForumNotification, ForumTopic, ForumReply
+
+    products = Product.query.filter_by(user_id=current_user.id).all()
+    notifications = []
+    unread_count = 0
+
+    for product in products:
+        if product.expiry_date:
+            days_until_expiry = (product.expiry_date - datetime.now().date()).days
+            if 0 <= days_until_expiry <= 7:
+                dismissed_entry = ExpiryWarningDismissed.query.filter_by(
+                    user_id=current_user.id,
+                    product_id=product.id
+                ).first()
+
+                if dismissed_entry:
+                    continue
+
+                is_read = ExpiryWarningRead.query.filter_by(
+                    user_id=current_user.id,
+                    product_id=product.id
+                ).first() is not None
+
+                notifications.append({
+                    'kind': 'expiry',
+                    'product_id': product.id,
+                    'name': product.name,
+                    'days': days_until_expiry,
+                    'is_read': is_read,
+                })
+
+                if not is_read:
+                    unread_count += 1
+
+    forum_notifs = ForumNotification.query.filter_by(user_id=current_user.id).order_by(ForumNotification.created_at.desc()).all()
+    for fn in forum_notifs:
+        topic = ForumTopic.query.get(fn.topic_id)
+        reply = ForumReply.query.get(fn.reply_id) if fn.reply_id else None
+        text = ''
+        if reply:
+            text = (reply.body[:160] + ('...' if len(reply.body) > 160 else ''))
+        else:
+            text = topic.title if topic else 'Nieuw forumbericht'
+
+        notifications.append({
+            'kind': 'forum',
+            'notification_id': fn.id,
+            'topic_id': fn.topic_id,
+            'topic_title': topic.title if topic else 'Onderwerp',
+            'text': text,
+            'is_read': fn.is_read,
+        })
+        if not fn.is_read:
+            unread_count += 1
+
+    # simple sort: unread first
+    notifications.sort(key=lambda item: (item.get('is_read', True),))
+
+    return jsonify({'notifications': notifications, 'unread_count': unread_count})

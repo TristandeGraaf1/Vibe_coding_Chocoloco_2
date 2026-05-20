@@ -3,6 +3,7 @@
 {% block title %}{{ topic.title }} - Community{% endblock %}
 
 {% block content %}
+<div class="community-wrap">
 <div class="section-container">
     <div class="section-header">
         <h2 class="section-title">{{ topic.title }}</h2>
@@ -13,16 +14,26 @@
 <div class="section-container">
     <div class="post-card">
         <div class="post-author">
-            <div class="avatar large">{{ topic.user.username[0]|upper if topic.user else 'G' }}</div>
+            {% set author_badge = contribution_badge(topic.user.id) if topic.user else {'label':'Newbie','class':'badge-newbie'} %}
+            <div class="avatar-shell large {{ author_badge.class }}">
+                <div class="avatar large">{{ topic.user.username[0]|upper if topic.user else 'G' }}</div>
+                <span class="avatar-badge">{{ author_badge.label }}</span>
+            </div>
         </div>
         <div class="post-main">
             <h3 class="post-title">{{ topic.title }}</h3>
-            <p class="post-body">{{ topic.body }}</p>
+            <div class="post-body">{{ render_markdown(topic.body) }}</div>
             <p class="post-meta">Geplaatst door <strong>{{ topic.user.username if topic.user else 'Gebruiker' }}</strong> op {{ topic.created_at.strftime('%d-%m-%Y %H:%M') }}</p>
-                <div style="margin-top:0.6rem; display:flex; gap:0.6rem; align-items:center">
-                    <button class="btn btn-small" id="subscribeBtn" data-topic-id="{{ topic.id }}">{% if subscribed %}Geabonneerd{% else %}Abonneer{% endif %}</button>
-                    <a href="{{ url_for('main.community') }}" class="btn btn-secondary btn-small">Terug</a>
-                </div>
+                    <div style="margin-top:0.6rem; display:flex; gap:0.6rem; align-items:center">
+                        <button class="btn btn-small" id="subscribeBtn" data-topic-id="{{ topic.id }}">{% if subscribed %}Geabonneerd{% else %}Abonneer{% endif %}</button>
+                        <a href="{{ url_for('main.community') }}" class="btn btn-secondary btn-small">Terug</a>
+                        {% if current_user.is_authenticated and topic.user and current_user.id == topic.user.id %}
+                            <a href="{{ url_for('main.community_edit', topic_id=topic.id) }}" class="btn btn-primary btn-small">Bewerk</a>
+                            <form method="post" action="{{ url_for('main.community_delete', topic_id=topic.id) }}" style="display:inline-block; margin:0;">
+                                <button type="submit" class="btn btn-small btn-secondary" onclick="return confirm('Weet je zeker dat je dit onderwerp wilt verwijderen?');">Verwijder</button>
+                            </form>
+                        {% endif %}
+                    </div>
         </div>
     </div>
 
@@ -33,10 +44,14 @@
             {% for r in replies %}
             <div class="reply-card">
                 <div class="reply-left">
-                    <div class="avatar">{{ r.user.username[0]|upper if r.user else 'G' }}</div>
+                    {% set reply_badge = contribution_badge(r.user.id) if r.user else {'label':'Newbie','class':'badge-newbie'} %}
+                    <div class="avatar-shell {{ reply_badge.class }}">
+                        <div class="avatar">{{ r.user.username[0]|upper if r.user else 'G' }}</div>
+                        <span class="avatar-badge">{{ reply_badge.label }}</span>
+                    </div>
                 </div>
                 <div class="reply-main">
-                    <p class="reply-body">{{ r.body }}</p>
+                    <div class="reply-body">{{ render_markdown(r.body) }}</div>
                     <p class="reply-meta">Door <strong>{{ r.user.username if r.user else 'Gebruiker' }}</strong> op {{ r.created_at.strftime('%d-%m-%Y %H:%M') }}</p>
                 </div>
                 <div style="display:flex; align-items:center; gap:0.6rem;">
@@ -64,6 +79,7 @@
             </form>
         </div>
     </div>
+</div>
 </div>
 {% endblock %}
 

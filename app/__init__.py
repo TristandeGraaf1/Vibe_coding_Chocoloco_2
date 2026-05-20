@@ -89,6 +89,46 @@ def create_app():
             'nav_unread_count': unread_count,
         }
 
+    @app.context_processor
+    def inject_community_helpers():
+        from app.models import ForumTopic, ForumReply
+        import re
+        from markupsafe import Markup, escape
+
+        def contribution_count(user_id):
+            topic_count = ForumTopic.query.filter_by(user_id=user_id).count()
+            reply_count = ForumReply.query.filter_by(user_id=user_id).count()
+            return topic_count + reply_count
+
+        def contribution_badge(user_id):
+            score = contribution_count(user_id)
+            if score >= 30:
+                return {'label': 'Cacao Master', 'class': 'badge-master', 'score': score}
+            if score >= 15:
+                return {'label': 'Cacao Expert', 'class': 'badge-expert', 'score': score}
+            if score >= 5:
+                return {'label': 'Cacao Beginner', 'class': 'badge-beginner', 'score': score}
+            return {'label': 'Cacao Newbie', 'class': 'badge-newbie', 'score': score}
+
+        def render_markdown(md):
+            if not md:
+                return ''
+            out = escape(md)
+            out = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', out, flags=re.S)
+            out = re.sub(r'\*(.*?)\*', r'<em>\1</em>', out, flags=re.S)
+            out = re.sub(r'^### (.*)$', r'<h3>\1</h3>', out, flags=re.M)
+            out = re.sub(r'^## (.*)$', r'<h2>\1</h2>', out, flags=re.M)
+            out = re.sub(r'^# (.*)$', r'<h1>\1</h1>', out, flags=re.M)
+            out = re.sub(r'\[([^\]]+)\]\((https?://[^)]+)\)', r'<a href="\2" target="_blank" rel="noopener noreferrer">\1</a>', out)
+            out = out.replace('\n', '<br>')
+            return Markup(out)
+
+        return {
+            'contribution_count': contribution_count,
+            'contribution_badge': contribution_badge,
+            'render_markdown': render_markdown,
+        }
+
     with app.app_context():
         db.create_all()
 

@@ -32,3 +32,9 @@ class ProductForm(FlaskForm):
     description = TextAreaField('Beschrijving')
     expiry_date = DateField('Vervaldatum')
     submit = SubmitField('Product toevoegen')
+
+class ProductRegisterForm(FlaskForm):
+    product_code = StringField('Productcode', validators=[DataRequired(), Length(min=2, max=120)])
+    name = StringField('Productnaam', validators=[DataRequired(), Length(min=2, max=120)])
+    expiry_date = DateField('Houdbaarheid / vervaldatum', validators=[DataRequired()])
+    submit = SubmitField('Product registreren')

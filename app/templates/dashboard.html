@@ -59,7 +59,7 @@
 
     <!-- Navigation Cards Section -->
     <div class="nav-cards-grid">
-        <a href="{{ url_for('main.add_product') }}" class="nav-card" style="animation-delay: 0s;">
+        <a href="{{ url_for('main.product_hub') }}" class="nav-card" style="animation-delay: 0s;">
             <div class="nav-card-icon">📦</div>
             <h3>Producten</h3>
             <p>Registreer en bekijk je producten</p>
@@ -90,24 +90,6 @@
             <p>Verzamel punten en beloningen</p>
         </a>
     </div>
-
-    <!-- Warnings Section -->
-    {% if warnings %}
-    <div class="section-container">
-        <h2 class="section-title">⚠️ Vervaldatum Waarschuwingen</h2>
-        <div class="warnings-grid">
-        {% for warning in warnings %}
-            <div class="warning-card">
-                <div class="warning-icon">🔔</div>
-                <div class="warning-content">
-                    <p class="warning-product">{{ warning.product }}</p>
-                    <p class="warning-days">Vervalt over {{ warning.days }} dag{{ "en" if warning.days != 1 else "" }}</p>
-                </div>
-            </div>
-        {% endfor %}
-        </div>
-    </div>
-    {% endif %}
 
     <!-- Video & News Widgets -->
     <div class="widgets-section">

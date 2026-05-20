@@ -80,6 +80,200 @@ body {
     align-items: center;
 }
 
+.nav-notification-wrapper {
+    position: relative;
+}
+
+.nav-notification-toggle {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.8rem;
+    height: 2.8rem;
+    border: 2px solid var(--accent-color);
+    border-radius: 999px;
+    background: var(--card-bg);
+    color: var(--primary-color);
+    cursor: pointer;
+    box-shadow: var(--shadow-light);
+    transition: transform 0.25s ease, border-color 0.25s ease, background-color 0.25s ease;
+}
+
+.nav-notification-toggle:hover {
+    transform: translateY(-1px);
+    border-color: var(--primary-color);
+    background: rgba(212, 165, 116, 0.18);
+}
+
+.nav-notification-icon {
+    font-size: 1.15rem;
+    line-height: 1;
+}
+
+.nav-notification-badge {
+    position: absolute;
+    top: -0.3rem;
+    right: -0.3rem;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 0.3rem;
+    border-radius: 999px;
+    background: var(--danger-color);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--nav-bg);
+}
+
+.nav-notification-panel {
+    position: absolute;
+    top: calc(100% + 0.75rem);
+    right: 0;
+    width: min(320px, calc(100vw - 2rem));
+    background: var(--card-bg);
+    border: 2px solid var(--accent-color);
+    border-radius: 1rem;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.2);
+    padding: 1rem;
+    z-index: 120;
+}
+
+.nav-notification-panel::before {
+    content: '';
+    position: absolute;
+    top: -0.4rem;
+    right: 1rem;
+    width: 0.8rem;
+    height: 0.8rem;
+    background: var(--card-bg);
+    border-left: 2px solid var(--accent-color);
+    border-top: 2px solid var(--accent-color);
+    transform: rotate(45deg);
+}
+
+.nav-notification-title {
+    margin: 0 0 0.35rem 0;
+    color: var(--primary-color);
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.nav-notification-message {
+    margin: 0;
+    color: var(--text-color);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.nav-notification-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    max-height: 320px;
+    overflow-y: auto;
+    padding-right: 0.2rem;
+}
+
+.nav-notification-item {
+    padding: 0.85rem;
+    border: 1px solid rgba(212, 165, 116, 0.22);
+    border-radius: 0.85rem;
+    background: rgba(212, 165, 116, 0.08);
+}
+
+.nav-notification-item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.nav-notification-item-state {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.nav-notification-item-state.is-read {
+    background: rgba(40, 167, 69, 0.12);
+    color: var(--success-color);
+}
+
+.nav-notification-item-state.is-unread {
+    background: rgba(255, 193, 7, 0.16);
+    color: #946200;
+}
+
+.nav-notification-item-meta {
+    margin: 0.35rem 0 0;
+    color: var(--text-color);
+    font-size: 0.9rem;
+}
+
+.nav-notification-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 0.9rem;
+}
+
+.nav-notification-read-state {
+    margin: 0;
+    color: var(--success-color);
+    font-weight: 700;
+}
+
+.nav-notification-mark-read {
+    border: none;
+    border-radius: 0.6rem;
+    padding: 0.65rem 0.9rem;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.nav-notification-mark-read:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px rgba(107, 68, 35, 0.2);
+}
+
+.nav-notification-dismiss {
+    border: 1px solid rgba(220, 53, 69, 0.35);
+    border-radius: 0.6rem;
+    padding: 0.65rem 0.9rem;
+    background: rgba(220, 53, 69, 0.08);
+    color: var(--danger-color);
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.nav-notification-dismiss:hover {
+    transform: translateY(-1px);
+    background: rgba(220, 53, 69, 0.14);
+    box-shadow: 0 10px 20px rgba(220, 53, 69, 0.12);
+}
+
+.nav-notification-link {
+    display: inline-block;
+    margin-top: 0.75rem;
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.nav-notification-link:hover {
+    text-decoration: underline;
+}
+
 .nav-link {
     color: var(--text-color);
     text-decoration: none;
@@ -646,6 +840,123 @@ html[data-theme="dark"] .warning-days {
     color: var(--text-secondary);
     font-size: 0.85rem;
     line-height: 1.4;
+}
+
+.product-hub {
+    width: 100%;
+}
+
+.product-hub-hero {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 55%, var(--accent-color) 100%);
+    color: white;
+    border-radius: 1.2rem;
+    padding: 3rem 2rem;
+    box-shadow: 0 12px 30px rgba(107, 68, 35, 0.25);
+    margin-bottom: 2rem;
+    animation: slideInDown 0.6s ease-out;
+}
+
+.hub-kicker {
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 0.8rem;
+    font-weight: 700;
+    opacity: 0.9;
+    margin-bottom: 0.75rem;
+}
+
+.product-hub-hero h1 {
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    margin-bottom: 0.75rem;
+}
+
+.product-hub-hero p {
+    max-width: 760px;
+    font-size: 1.05rem;
+    line-height: 1.7;
+    opacity: 0.96;
+}
+
+.product-hub-actions .hub-card {
+    min-height: 220px;
+    justify-content: center;
+}
+
+.product-register-page {
+    width: 100%;
+}
+
+.register-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+    gap: 1.5rem;
+    align-items: stretch;
+}
+
+.register-card,
+.qr-card {
+    background-color: var(--card-bg);
+    border: 2px solid var(--accent-color);
+    border-radius: 1rem;
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+}
+
+.product-register-form {
+    max-width: 100%;
+}
+
+.qr-card {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.qr-preview {
+    width: 100%;
+    min-height: 180px;
+    border-radius: 1rem;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(107, 68, 35, 0.08), rgba(212, 165, 116, 0.28));
+    border: 1px dashed var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.qr-grid {
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(rgba(107, 68, 35, 0.14) 1px, transparent 1px), linear-gradient(90deg, rgba(107, 68, 35, 0.14) 1px, transparent 1px);
+    background-size: 18px 18px;
+    opacity: 0.35;
+}
+
+.qr-icon {
+    position: relative;
+    z-index: 1;
+    font-size: 4rem;
+    color: var(--primary-color);
+}
+
+.qr-card h2 {
+    color: var(--primary-color);
+    margin-top: 0.25rem;
+}
+
+.qr-card p {
+    color: var(--text-secondary);
+}
+
+.qr-hint {
+    font-size: 0.9rem;
+}
+
+.product-register-page .form-actions {
+    margin-top: 0.5rem;
 }
 
 .widgets-section {
@@ -1220,6 +1531,14 @@ html[data-theme="dark"] .warning-days {
     .nav-cards-grid {
         grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
         gap: 1rem;
+    }
+
+    .register-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .product-hub-hero {
+        padding: 2rem 1.25rem;
     }
 
     .products-grid {

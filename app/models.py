@@ -30,6 +30,22 @@ class Product(db.Model):
     image_url = db.Column(db.String(255))
     added_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+class ExpiryWarningRead(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    read_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (db.UniqueConstraint('user_id', 'product_id', name='uq_expiry_warning_read_user_product'),)
+
+class ExpiryWarningDismissed(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    dismissed_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (db.UniqueConstraint('user_id', 'product_id', name='uq_expiry_warning_dismissed_user_product'),)
+
 favorites = db.Table('favorites',
     db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
     db.Column('product_id', db.Integer, db.ForeignKey('product.id'))

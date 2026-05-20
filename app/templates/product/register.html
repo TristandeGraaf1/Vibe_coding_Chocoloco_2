@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Product registreren - Chocoloco{% endblock %}
+
+{% block content %}
+<div class="product-register-page">
+    <div class="page-header">
+        <a href="{{ url_for('main.product_hub') }}" class="back-link">← Terug naar producten</a>
+        <h1>Product registreren</h1>
+        <p>Vul een productcode in of gebruik de dummy QR-scan om een code in te vullen.</p>
+    </div>
+
+    <div class="register-layout">
+        <div class="register-card">
+            <form method="POST" class="form product-register-form" id="product-register-form">
+                {{ form.hidden_tag() }}
+
+                <div class="form-group">
+                    {{ form.product_code.label }}
+                    {% if form.product_code.errors %}
+                        {{ form.product_code(class="form-input error", placeholder="b.v. CHOCO-2026-001") }}
+                        <ul class="errors">
+                        {% for error in form.product_code.errors %}<li>{{ error }}</li>{% endfor %}
+                        </ul>
+                    {% else %}
+                        {{ form.product_code(class="form-input", placeholder="b.v. CHOCO-2026-001") }}
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    {{ form.name.label }}
+                    {% if form.name.errors %}
+                        {{ form.name(class="form-input error", placeholder="b.v. Hazelnootreep") }}
+                        <ul class="errors">
+                        {% for error in form.name.errors %}<li>{{ error }}</li>{% endfor %}
+                        </ul>
+                    {% else %}
+                        {{ form.name(class="form-input", placeholder="b.v. Hazelnootreep") }}
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    {{ form.expiry_date.label }}
+                    {% if form.expiry_date.errors %}
+                        {{ form.expiry_date(class="form-input error") }}
+                        <ul class="errors">
+                        {% for error in form.expiry_date.errors %}<li>{{ error }}</li>{% endfor %}
+                        </ul>
+                    {% else %}
+                        {{ form.expiry_date(class="form-input") }}
+                    {% endif %}
+                </div>
+
+                <div class="form-actions">
+                    {{ form.submit(class="btn btn-primary btn-block") }}
+                </div>
+            </form>
+        </div>
+
+        <div class="qr-card">
+            <div class="qr-preview">
+                <div class="qr-grid"></div>
+                <span class="qr-icon">◻︎</span>
+            </div>
+            <h2>Dummy QR-scan</h2>
+            <p>Deze knop simuleert een scan en vult een voorbeeldcode in.</p>
+            <button type="button" class="btn btn-secondary btn-block" id="scan-qr-button">QR-code scannen</button>
+            <p class="qr-hint">Na de scan kun je het product direct registreren.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('scan-qr-button').addEventListener('click', function() {
+        const productCodeField = document.getElementById('product_code');
+        const dummyCode = 'QR-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random() * 9000) + 1000);
+        productCodeField.value = dummyCode;
+        productCodeField.focus();
+    });
+</script>
+{% endblock %}

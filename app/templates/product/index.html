@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Producten - Chocoloco{% endblock %}
+
+{% block content %}
+<div class="product-hub">
+    <div class="product-hub-hero">
+        <p class="hub-kicker">Productbeheer</p>
+        <h1>Wat wil je doen met je producten?</h1>
+        <p>Kies tussen het overzicht van alle geregistreerde producten of het registreren van een nieuw product met code en dummy QR-scan.</p>
+    </div>
+
+    <div class="nav-cards-grid product-hub-actions">
+        <a href="{{ url_for('main.all_products') }}" class="nav-card hub-card" style="animation-delay: 0s;">
+            <div class="nav-card-icon">📋</div>
+            <h3>Alle producten</h3>
+            <p>Bekijk alle geregistreerde producten op één plek.</p>
+        </a>
+        <a href="{{ url_for('main.add_product') }}" class="nav-card hub-card" style="animation-delay: 0.1s;">
+            <div class="nav-card-icon">📷</div>
+            <h3>Product registreren</h3>
+            <p>Voer een productcode in of gebruik de dummy QR-scan.</p>
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}{{ topic.title }} - Community{% endblock %}
+
+{% block content %}
+<div class="section-container">
+    <div class="section-header">
+        <h2 class="section-title">{{ topic.title }}</h2>
+        <a href="{{ url_for('main.community') }}" class="show-all-link">Terug naar forum →</a>
+    </div>
+</div>
+
+<div class="section-container">
+    <div class="post-card">
+        <div class="post-author">
+            <div class="avatar large">{{ topic.user.username[0]|upper if topic.user else 'G' }}</div>
+        </div>
+        <div class="post-main">
+            <h3 class="post-title">{{ topic.title }}</h3>
+            <p class="post-body">{{ topic.body }}</p>
+            <p class="post-meta">Geplaatst door <strong>{{ topic.user.username if topic.user else 'Gebruiker' }}</strong> op {{ topic.created_at.strftime('%d-%m-%Y %H:%M') }}</p>
+                <div style="margin-top:0.6rem; display:flex; gap:0.6rem; align-items:center">
+                    <button class="btn btn-small" id="subscribeBtn" data-topic-id="{{ topic.id }}">{% if subscribed %}Geabonneerd{% else %}Abonneer{% endif %}</button>
+                    <a href="{{ url_for('main.community') }}" class="btn btn-secondary btn-small">Terug</a>
+                </div>
+        </div>
+    </div>
+
+    <div class="section-container">
+        <h3 class="section-title">Antwoorden</h3>
+        <div class="reply-list">
+        {% if replies %}
+            {% for r in replies %}
+            <div class="reply-card">
+                <div class="reply-left">
+                    <div class="avatar">{{ r.user.username[0]|upper if r.user else 'G' }}</div>
+                </div>
+                <div class="reply-main">
+                    <p class="reply-body">{{ r.body }}</p>
+                    <p class="reply-meta">Door <strong>{{ r.user.username if r.user else 'Gebruiker' }}</strong> op {{ r.created_at.strftime('%d-%m-%Y %H:%M') }}</p>
+                </div>
+                <div style="display:flex; align-items:center; gap:0.6rem;">
+                    <button class="btn btn-small like-btn {% if like_info[r.id].liked %}liked{% endif %}" data-reply-id="{{ r.id }}">👍 <span class="like-count">{{ like_info[r.id].count }}</span></button>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>Wees de eerste die reageert.</p>
+        {% endif %}
+        </div>
+    </div>
+
+    <div class="section-container">
+        <h3 class="section-title">Reageer</h3>
+        <div class="card">
+            <form method="post" class="form">
+                {{ form.hidden_tag() }}
+                <div class="form-group">
+                    {{ form.body(class="form-textarea") }}
+                </div>
+                <div>
+                    {{ form.submit(class="btn btn-primary") }}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    const subscribeBtn = document.getElementById('subscribeBtn');
+    if(subscribeBtn){
+        subscribeBtn.addEventListener('click', function(){
+            const topicId = this.dataset.topicId;
+            fetch(`/community/topic/${topicId}/subscribe`, {method:'POST'}).then(r=>r.json()).then(data=>{
+                if(data.status === 'subscribed') this.textContent = 'Geabonneerd';
+                else this.textContent = 'Abonneer';
+            });
+        });
+    }
+
+    document.querySelectorAll('.like-btn').forEach(btn=>{
+        btn.addEventListener('click', function(){
+            const replyId = this.dataset.replyId;
+            const countSpan = this.querySelector('.like-count');
+            fetch(`/reply/${replyId}/like`, {method:'POST'}).then(r=>r.json()).then(data=>{
+                if(!data || !('like_count' in data)) return;
+                countSpan.textContent = data.like_count;
+                if(data.liked) this.classList.add('liked'); else this.classList.remove('liked');
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

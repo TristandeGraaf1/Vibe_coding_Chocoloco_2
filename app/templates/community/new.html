@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Nieuw onderwerp - Community{% endblock %}
+
+{% block content %}
+<div class="section-container">
+    <div class="section-header">
+        <h2 class="section-title">Nieuw onderwerp</h2>
+    </div>
+    <div class="grid-2">
+        <div>
+            <div class="card">
+                <form method="post" class="form" id="topicForm">
+                    {{ form.hidden_tag() }}
+                    <div class="form-group">
+                        {{ form.title.label }}
+                        {{ form.title(class="form-input", placeholder='Korte, duidelijke titel') }}
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Bericht</label>
+                        <div class="editor-toolbar" role="toolbar">
+                            <button type="button" class="toolbar-btn" data-action="h1">H1</button>
+                            <button type="button" class="toolbar-btn" data-action="bold">B</button>
+                            <button type="button" class="toolbar-btn" data-action="italic">I</button>
+                            <button type="button" class="toolbar-btn" data-action="link">🔗</button>
+                            <span class="toolbar-spacer"></span>
+                            <span class="char-count muted" id="charCount">0 tekens</span>
+                        </div>
+                        {{ form.body(class="form-textarea", id='bodyInput', placeholder='Schrijf hier je bericht (ondersteunt **bold** en *italic*)') }}
+                    </div>
+
+                    <div style="display:flex; gap:0.75rem; margin-top:0.5rem; align-items:center;">
+                        {{ form.submit(class="btn btn-primary", id='submitBtn') }}
+                        <a href="{{ url_for('main.community') }}" class="btn btn-secondary">Annuleer</a>
+                        <a href="#preview" class="btn btn-small btn-secondary" id="togglePreview">Toon preview</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div>
+            <div class="card">
+                <h3 class="section-title" style="margin-bottom:0.6rem;">Live preview</h3>
+                <div id="preview" class="preview-box muted">De preview verschijnt hier terwijl je typt.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function(){
+        const body = document.getElementById('bodyInput');
+        const preview = document.getElementById('preview');
+        const charCount = document.getElementById('charCount');
+        const submitBtn = document.getElementById('submitBtn');
+
+        function escapeHtml(s){
+            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function renderMarkdown(md){
+            let out = escapeHtml(md);
+            out = out.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+            out = out.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+            out = out.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+            out = out.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
+            out = out.replace(/\*(.*?)\*/gim, '<em>$1</em>');
+            out = out.replace(/\n/g, '<br>');
+            return out;
+        }
+
+        function updatePreview(){
+            const val = body.value || '';
+            preview.innerHTML = renderMarkdown(val) || '<span class="muted">(Leeg)</span>';
+            charCount.textContent = val.length + ' tekens';
+            submitBtn.disabled = ( (document.getElementById('title') && document.getElementById('title').value.trim().length===0) || val.trim().length < 5 );
+        }
+
+        document.addEventListener('input', function(e){
+            if(e.target === body || e.target.id === 'title') updatePreview();
+        });
+
+        // toolbar actions
+        document.querySelectorAll('.toolbar-btn').forEach(btn=>{
+            btn.addEventListener('click', ()=>{
+                const action = btn.dataset.action;
+                const start = body.selectionStart; const end = body.selectionEnd; const selected = body.value.substring(start,end);
+                let insert = '';
+                if(action==='bold') insert = '**' + (selected || 'vet') + '**';
+                if(action==='italic') insert = '*' + (selected || 'cursief') + '*';
+                if(action==='h1') insert = '# ' + (selected || 'Koptekst');
+                if(action==='link') insert = '[' + (selected || 'linktekst') + '](https://)';
+                body.setRangeText(insert, start, end, 'end');
+                body.focus();
+                updatePreview();
+            });
+        });
+
+        // initial
+        updatePreview();
+    })();
+    </script>
+</div>
+{% endblock %}

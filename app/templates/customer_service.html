@@ -3,189 +3,79 @@
 {% block title %}Klantenservice - Chocoloco{% endblock %}
 
 {% block content %}
-<div class="customer-service-container">
-    <!-- Header Image -->
-    <div class="cs-header-image">
-        <img src="https://images.unsplash.com/photo-1552520514-06d20c91ffb2?w=1200&h=300&fit=crop" alt="Klantenservice" class="header-img">
+<div class="dashboard">
+    <div class="dashboard-hero" style="background-image: url('https://images.unsplash.com/photo-1552520514-06d20c91ffb2?w=1400&h=500&fit=crop'); background-size: cover; background-position: center;">
         <h1>Klantenservice</h1>
-        <p>Hoe kunnen we je helpen?</p>
+        <p>Hoe kunnen we je helpen? Vind snel hulp of neem contact op met ons team.</p>
     </div>
 
-    <!-- Service Options Grid -->
-    <div class="cs-grid">
-        <a href="#" class="cs-card">
-            <div class="cs-icon">📋</div>
-            <h3>Klacht indienen</h3>
-            <p>Indienen van een klacht over je product</p>
-        </a>
+    <div class="section-container">
+        <div class="section-header">
+            <h2 class="section-title">Service Opties</h2>
+            <a href="{{ url_for('main.faq') }}" class="show-all-link">Naar FAQ →</a>
+        </div>
 
-        <a href="#" class="cs-card">
-            <div class="cs-icon">📊</div>
-            <h3>Status van de klacht</h3>
-            <p>Controleer de status van je indiening</p>
-        </a>
+        <div class="nav-cards-grid">
+            <a href="#" class="nav-card">
+                <div class="nav-card-icon">📋</div>
+                <h3>Klacht indienen</h3>
+                <p>Dien eenvoudig een klacht in over een product.</p>
+            </a>
 
-        <a href="#" class="cs-card">
-            <div class="cs-icon">🤖</div>
-            <h3>Chocobot</h3>
-            <p>Chat met onze AI-assistent</p>
-        </a>
+            <a href="#" class="nav-card">
+                <div class="nav-card-icon">📊</div>
+                <h3>Status van de klacht</h3>
+                <p>Bekijk de voortgang van je meldingen.</p>
+            </a>
 
-        <a href="#" class="cs-card">
-            <div class="cs-icon">📞</div>
-            <h3>Terugbelfunctie</h3>
-            <p>We bellen je terug op je moment</p>
-        </a>
+            <a href="#" class="nav-card">
+                <div class="nav-card-icon">🤖</div>
+                <h3>Chocobot</h3>
+                <p>Krijg snelle antwoorden van onze AI-assistent.</p>
+            </a>
 
-        <a href="#" class="cs-card">
-            <div class="cs-icon">💬</div>
-            <h3>Chat met medewerker</h3>
-            <p>Direct spreken met ons team</p>
-        </a>
+            <a href="#" class="nav-card">
+                <div class="nav-card-icon">📞</div>
+                <h3>Terugbellen</h3>
+                <p>Vraag ons om je terug te bellen op een geschikt moment.</p>
+            </a>
 
-        <a href="{{ url_for('main.faq') }}" class="cs-card">
-            <div class="cs-icon">❓</div>
-            <h3>FAQ</h3>
-            <p>Veelgestelde vragen beantwoord</p>
-        </a>
+            <a href="#" class="nav-card">
+                <div class="nav-card-icon">💬</div>
+                <h3>Live chat</h3>
+                <p>Start direct een gesprek met een medewerker.</p>
+            </a>
+
+            <a href="{{ url_for('main.faq') }}" class="nav-card">
+                <div class="nav-card-icon">❓</div>
+                <h3>FAQ</h3>
+                <p>Antwoorden op veelgestelde vragen.</p>
+            </a>
+        </div>
     </div>
 
-    <!-- Back Button -->
-    <div class="cs-back">
+    <div class="section-container">
+        <div class="section-header">
+            <h2 class="section-title">Contact</h2>
+        </div>
+
+        <div class="widgets-section">
+            <div class="video-widget">
+                <h3>📞 Bel ons</h3>
+                <p>Ons team is bereikbaar op werkdagen van 09:00–17:00.</p>
+                <p class="widget-caption">Telefoon: <strong>0800-CHOCOLA</strong></p>
+            </div>
+
+            <div class="news-widget">
+                <h3>✉️ Stuur een bericht</h3>
+                <p>Vul het contactformulier in en we reageren binnen 24 uur.</p>
+                <a href="#" class="nav-card" style="display:inline-block; margin-top:0.8rem; padding:0.6rem 1rem;">Contactformulier openen</a>
+            </div>
+        </div>
+    </div>
+
+    <div style="text-align:center; margin:2rem 0;">
         <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">← Terug naar dashboard</a>
     </div>
 </div>
-
-<style>
-    .customer-service-container {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 0 1rem;
-    }
-
-    .cs-header-image {
-        position: relative;
-        border-radius: 1rem;
-        overflow: hidden;
-        margin-bottom: 3rem;
-        text-align: center;
-        color: white;
-    }
-
-    .header-img {
-        width: 100%;
-        height: 300px;
-        object-fit: cover;
-        display: block;
-    }
-
-    .cs-header-image h1 {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        font-size: 3rem;
-        font-weight: bold;
-        text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
-        margin: 0;
-    }
-
-    .cs-header-image p {
-        position: absolute;
-        top: 65%;
-        left: 50%;
-        transform: translateX(-50%);
-        font-size: 1.2rem;
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-        margin: 0;
-    }
-
-    .cs-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 2rem;
-        margin-bottom: 3rem;
-    }
-
-    .cs-card {
-        background: var(--bg-secondary);
-        border: 2px solid var(--border-color);
-        border-radius: 1rem;
-        padding: 2rem;
-        text-decoration: none;
-        color: inherit;
-        transition: all 0.3s;
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .cs-card:hover {
-        border-color: var(--primary-color);
-        box-shadow: 0 4px 12px rgba(201, 124, 39, 0.2);
-        transform: translateY(-4px);
-    }
-
-    .cs-icon {
-        font-size: 3rem;
-    }
-
-    .cs-card h3 {
-        font-size: 1.3rem;
-        color: var(--primary-color);
-        margin: 0;
-    }
-
-    .cs-card p {
-        color: var(--text-secondary);
-        margin: 0;
-        font-size: 0.95rem;
-    }
-
-    .cs-back {
-        display: flex;
-        justify-content: center;
-        padding: 2rem 0;
-    }
-
-    .btn {
-        display: inline-block;
-        padding: 0.7rem 1.5rem;
-        border-radius: 0.4rem;
-        border: none;
-        cursor: pointer;
-        font-weight: 600;
-        text-align: center;
-        transition: all 0.2s;
-        text-decoration: none;
-    }
-
-    .btn-secondary {
-        background: var(--bg-secondary);
-        color: var(--primary-color);
-        border: 2px solid var(--primary-color);
-    }
-
-    .btn-secondary:hover {
-        background: var(--primary-color);
-        color: white;
-    }
-
-    @media (max-width: 768px) {
-        .cs-header-image h1 {
-            font-size: 2rem;
-        }
-
-        .cs-header-image p {
-            font-size: 1rem;
-        }
-
-        .cs-grid {
-            grid-template-columns: 1fr;
-            gap: 1.5rem;
-        }
-    }
-</style>
 {% endblock %}

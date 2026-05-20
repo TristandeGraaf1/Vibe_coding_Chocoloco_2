@@ -1,8 +1,8 @@
 from flask import Blueprint, render_template, redirect, url_for, request, jsonify, session
 from flask_login import login_user, logout_user, current_user, login_required
 from app import db
-from app.models import User, Product, ExpiryWarningRead, ExpiryWarningDismissed
-from app.forms import LoginForm, RegisterForm, ProductForm, ProductRegisterForm
+from app.models import User, Product, ExpiryWarningRead, ExpiryWarningDismissed, ForumTopic, ForumReply, TopicSubscription, ForumNotification, ReplyLike
+from app.forms import LoginForm, RegisterForm, ProductForm, ProductRegisterForm, TopicForm, ReplyForm
 from datetime import datetime, timedelta
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -232,3 +232,152 @@ def customer_service():
 @login_required
 def faq():
     return render_template('faq.html')
+
+
+# Community forum
+@main_bp.route('/community')
+@login_required
+def community():
+    q = request.args.get('q', '').strip()
+    if q:
+        # basic search on title or body
+        topics = ForumTopic.query.filter(
+            db.or_(
+                ForumTopic.title.ilike(f"%{q}%"),
+                ForumTopic.body.ilike(f"%{q}%")
+            )
+        ).order_by(ForumTopic.created_at.desc()).all()
+    else:
+        topics = ForumTopic.query.order_by(ForumTopic.created_at.desc()).all()
+
+    # compute contributor leaderboard (topics + replies)
+    from sqlalchemy import func
+    topic_counts = db.session.query(ForumTopic.user_id, func.count(ForumTopic.id).label('tcount')).group_by(ForumTopic.user_id).all()
+    reply_counts = db.session.query(ForumReply.user_id, func.count(ForumReply.id).label('rcount')).group_by(ForumReply.user_id).all()
+
+    counts = {}
+    for uid, tc in topic_counts:
+        counts[uid] = counts.get(uid, 0) + tc
+    for uid, rc in reply_counts:
+        counts[uid] = counts.get(uid, 0) + rc
+
+    # build list of users with totals
+    contributors = []
+    if counts:
+        user_ids = list(counts.keys())
+        users = User.query.filter(User.id.in_(user_ids)).all()
+        user_map = {u.id: u for u in users}
+        for uid, total in counts.items():
+            u = user_map.get(uid)
+            if u:
+                contributors.append({'user': u, 'count': total})
+
+    contributors.sort(key=lambda x: x['count'], reverse=True)
+    top_contributors = contributors[:8]
+
+    return render_template('community/list.html', topics=topics, top_contributors=top_contributors, q=q)
+
+
+@main_bp.route('/community/new', methods=['GET', 'POST'])
+@login_required
+def community_new():
+    form = TopicForm()
+    if form.validate_on_submit():
+        topic = ForumTopic(user_id=current_user.id, title=form.title.data, body=form.body.data)
+        db.session.add(topic)
+        db.session.commit()
+        return redirect(url_for('main.community'))
+    return render_template('community/new.html', form=form)
+
+
+@main_bp.route('/community/topic/<int:topic_id>', methods=['GET', 'POST'])
+@login_required
+def community_topic(topic_id):
+    topic = ForumTopic.query.get_or_404(topic_id)
+    form = ReplyForm()
+    if form.validate_on_submit():
+        reply = ForumReply(topic_id=topic.id, user_id=current_user.id, body=form.body.data)
+        db.session.add(reply)
+        db.session.commit()
+        # create notifications for subscribers (except the replier)
+        subs = TopicSubscription.query.filter_by(topic_id=topic.id).all()
+        for s in subs:
+            if s.user_id == current_user.id:
+                continue
+            notif = ForumNotification(user_id=s.user_id, topic_id=topic.id, reply_id=reply.id)
+            db.session.add(notif)
+        db.session.commit()
+        return redirect(url_for('main.community_topic', topic_id=topic.id))
+
+    replies = ForumReply.query.filter_by(topic_id=topic.id).order_by(ForumReply.created_at.asc()).all()
+
+    # subscription and likes
+    subscribed = TopicSubscription.query.filter_by(user_id=current_user.id, topic_id=topic.id).first() is not None
+    like_info = {}
+    for r in replies:
+        like_info[r.id] = {
+            'count': ReplyLike.query.filter_by(reply_id=r.id).count(),
+            'liked': ReplyLike.query.filter_by(reply_id=r.id, user_id=current_user.id).first() is not None
+        }
+
+    return render_template('community/topic.html', topic=topic, replies=replies, form=form, subscribed=subscribed, like_info=like_info)
+
+
+@main_bp.route('/community/topic/<int:topic_id>/subscribe', methods=['POST'])
+@login_required
+def community_subscribe(topic_id):
+    topic = ForumTopic.query.get_or_404(topic_id)
+    existing = TopicSubscription.query.filter_by(user_id=current_user.id, topic_id=topic.id).first()
+    if existing:
+        db.session.delete(existing)
+        db.session.commit()
+        return jsonify({'status': 'unsubscribed'})
+    sub = TopicSubscription(user_id=current_user.id, topic_id=topic.id)
+    db.session.add(sub)
+    db.session.commit()
+    return jsonify({'status': 'subscribed'})
+
+
+@main_bp.route('/reply/<int:reply_id>/like', methods=['POST'])
+@login_required
+def like_reply(reply_id):
+    reply = ForumReply.query.get_or_404(reply_id)
+    existing = ReplyLike.query.filter_by(user_id=current_user.id, reply_id=reply.id).first()
+    if existing:
+        db.session.delete(existing)
+        db.session.commit()
+        liked = False
+    else:
+        db.session.add(ReplyLike(user_id=current_user.id, reply_id=reply.id))
+        db.session.commit()
+        liked = True
+
+    like_count = ReplyLike.query.filter_by(reply_id=reply.id).count()
+    return jsonify({'status': 'success', 'liked': liked, 'like_count': like_count})
+
+
+@main_bp.route('/notifications/forum/<int:notification_id>/read', methods=['POST'])
+@login_required
+def mark_forum_notification_read(notification_id):
+    notif = ForumNotification.query.get_or_404(notification_id)
+    if notif.user_id != current_user.id:
+        return jsonify({'error': 'Unauthorized'}), 403
+    notif.is_read = True
+    db.session.commit()
+    # return combined unread count
+    from app.models import ForumNotification as FN
+    unread = FN.query.filter_by(user_id=current_user.id, is_read=False).count()
+    return jsonify({'status': 'success', 'unread_count': unread})
+
+
+@main_bp.route('/notifications/forum/<int:notification_id>/dismiss', methods=['POST'])
+@login_required
+def dismiss_forum_notification(notification_id):
+    notif = ForumNotification.query.get_or_404(notification_id)
+    if notif.user_id != current_user.id:
+        return jsonify({'error': 'Unauthorized'}), 403
+    db.session.delete(notif)
+    db.session.commit()
+    from app.models import ForumNotification as FN
+    unread = FN.query.filter_by(user_id=current_user.id, is_read=False).count()
+    return jsonify({'status': 'success', 'unread_count': unread})

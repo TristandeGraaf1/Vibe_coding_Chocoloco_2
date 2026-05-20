@@ -38,3 +38,14 @@ class ProductRegisterForm(FlaskForm):
     name = StringField('Productnaam', validators=[DataRequired(), Length(min=2, max=120)])
     expiry_date = DateField('Houdbaarheid / vervaldatum', validators=[DataRequired()])
     submit = SubmitField('Product registreren')
+
+
+class TopicForm(FlaskForm):
+    title = StringField('Titel', validators=[DataRequired(), Length(min=3, max=200)])
+    body = TextAreaField('Bericht', validators=[DataRequired(), Length(min=5)])
+    submit = SubmitField('Plaats onderwerp')
+
+
+class ReplyForm(FlaskForm):
+    body = TextAreaField('Antwoord', validators=[DataRequired(), Length(min=1)])
+    submit = SubmitField('Plaats antwoord')

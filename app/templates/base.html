@@ -15,35 +15,54 @@
                 <a href="{{ url_for('main.dashboard') }}" class="nav-link">Dashboard</a>
                 <a href="{{ url_for('main.product_hub') }}" class="nav-link">Producten</a>
                 <div class="nav-notification-wrapper" id="nav-notification-wrapper">
-                    <button type="button" class="nav-notification-toggle" id="nav-notification-toggle" aria-haspopup="true" aria-expanded="false" title="Melding">
+                        <button type="button" class="nav-notification-toggle" id="nav-notification-toggle" aria-haspopup="true" aria-expanded="false" title="Melding">
                         <span class="nav-notification-icon">🔔</span>
-                        {% if nav_expiry_unread_count > 0 %}
-                        <span class="nav-notification-badge">{{ nav_expiry_unread_count }}</span>
+                        {% if nav_unread_count > 0 %}
+                        <span class="nav-notification-badge">{{ nav_unread_count }}</span>
                         {% endif %}
                     </button>
                     <div class="nav-notification-panel" id="nav-notification-panel" hidden>
                         <p class="nav-notification-title">Meldingen</p>
-                        {% if nav_expiry_notifications %}
+                        {% if nav_notifications %}
                         <div class="nav-notification-list" id="nav-notification-list">
-                            {% for notification in nav_expiry_notifications %}
-                            <div class="nav-notification-item" data-product-id="{{ notification.product_id }}">
-                                <div class="nav-notification-item-header">
-                                    <p class="nav-notification-message">{{ notification.name }}</p>
-                                    <span class="nav-notification-item-state {% if notification.is_read %}is-read{% else %}is-unread{% endif %}">
-                                        {% if notification.is_read %}Gelezen{% else %}Nieuw{% endif %}
-                                    </span>
+                            {% for notification in nav_notifications %}
+                                {% if notification.kind == 'expiry' %}
+                                <div class="nav-notification-item {% if notification.is_read %}is-read{% else %}is-unread{% endif %}" data-product-id="{{ notification.product_id }}">
+                                    <div class="nav-notification-item-header">
+                                        <p class="nav-notification-message">{{ notification.name }}</p>
+                                        <span class="nav-notification-item-state {% if notification.is_read %}is-read{% else %}is-unread{% endif %}">
+                                            {% if notification.is_read %}Gelezen{% else %}Nieuw{% endif %}
+                                        </span>
+                                    </div>
+                                    <p class="nav-notification-item-meta">Vervalt over {{ notification.days }} dag{{ 'en' if notification.days != 1 else '' }}</p>
+                                    <div class="nav-notification-actions">
+                                        {% if not notification.is_read %}
+                                        <button type="button" class="nav-notification-mark-read" data-read-url="{{ url_for('main.mark_expiry_warning_read', product_id=notification.product_id) }}">Markeer als gelezen</button>
+                                        {% endif %}
+                                        <button type="button" class="nav-notification-dismiss" data-dismiss-url="{{ url_for('main.dismiss_expiry_warning', product_id=notification.product_id) }}">Verwijder melding</button>
+                                    </div>
                                 </div>
-                                <p class="nav-notification-item-meta">Vervalt over {{ notification.days }} dag{{ 'en' if notification.days != 1 else '' }}</p>
-                                <div class="nav-notification-actions">
-                                    {% if not notification.is_read %}
-                                    <button type="button" class="nav-notification-mark-read" data-read-url="{{ url_for('main.mark_expiry_warning_read', product_id=notification.product_id) }}">Markeer als gelezen</button>
-                                    {% endif %}
-                                    <button type="button" class="nav-notification-dismiss" data-dismiss-url="{{ url_for('main.dismiss_expiry_warning', product_id=notification.product_id) }}">Verwijder melding</button>
+                                {% elif notification.kind == 'forum' %}
+                                <div class="nav-notification-item {% if notification.is_read %}is-read{% else %}is-unread{% endif %}" data-notification-id="{{ notification.notification_id }}">
+                                    <div class="nav-notification-item-header">
+                                        <p class="nav-notification-message">Nieuw antwoord in: {{ notification.topic_title }}</p>
+                                        <span class="nav-notification-item-state {% if notification.is_read %}is-read{% else %}is-unread{% endif %}">
+                                            {% if notification.is_read %}Gelezen{% else %}Nieuw{% endif %}
+                                        </span>
+                                    </div>
+                                    <p class="nav-notification-item-meta">{{ notification.text }}</p>
+                                    <div class="nav-notification-actions">
+                                        {% if not notification.is_read %}
+                                        <button type="button" class="nav-notification-mark-read" data-read-url="{{ url_for('main.mark_forum_notification_read', notification_id=notification.notification_id) }}">Markeer als gelezen</button>
+                                        {% endif %}
+                                        <button type="button" class="nav-notification-dismiss" data-dismiss-url="{{ url_for('main.dismiss_forum_notification', notification_id=notification.notification_id) }}">Verwijder melding</button>
+                                        <a href="{{ url_for('main.community_topic', topic_id=notification.topic_id) }}" class="nav-notification-link">Bekijk onderwerp</a>
+                                    </div>
                                 </div>
-                            </div>
+                                {% endif %}
                             {% endfor %}
                         </div>
-                        <a href="{{ url_for('main.all_products') }}" class="nav-notification-link">Bekijk producten</a>
+                        <a href="{{ url_for('main.community') }}" class="nav-notification-link">Bekijk community</a>
                         {% else %}
                         <p class="nav-notification-message">Geen actieve meldingen.</p>
                         <div class="nav-notification-actions">
@@ -158,6 +177,9 @@
                                     state.classList.add('is-read');
                                 }
 
+                                item.classList.remove('is-unread');
+                                item.classList.add('is-read');
+
                                 readButton.remove();
                             }
 
@@ -185,5 +207,6 @@
             }
         });
     </script>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

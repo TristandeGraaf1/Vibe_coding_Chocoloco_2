@@ -51,6 +51,56 @@ favorites = db.Table('favorites',
     db.Column('product_id', db.Integer, db.ForeignKey('product.id'))
 )
 
+
+class ForumTopic(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    title = db.Column(db.String(200), nullable=False)
+    body = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    replies = db.relationship('ForumReply', backref='topic', lazy=True, cascade='all, delete-orphan')
+    user = db.relationship('User', backref=db.backref('forum_topics', lazy=True))
+
+
+class ForumReply(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    topic_id = db.Column(db.Integer, db.ForeignKey('forum_topic.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    body = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('forum_replies', lazy=True))
+
+
+class TopicSubscription(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    topic_id = db.Column(db.Integer, db.ForeignKey('forum_topic.id'), nullable=False)
+    subscribed_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    __table_args__ = (db.UniqueConstraint('user_id', 'topic_id', name='uq_subscription_user_topic'),)
+
+
+class ForumNotification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    topic_id = db.Column(db.Integer, db.ForeignKey('forum_topic.id'), nullable=False)
+    reply_id = db.Column(db.Integer, db.ForeignKey('forum_reply.id'), nullable=True)
+    is_read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class ReplyLike(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    reply_id = db.Column(db.Integer, db.ForeignKey('forum_reply.id'), nullable=False)
+    liked_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    __table_args__ = (db.UniqueConstraint('user_id', 'reply_id', name='uq_like_user_reply'),)
+
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))

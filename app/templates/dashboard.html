@@ -26,6 +26,37 @@
         </div>
     </div>
 
+    <!-- Recent Products Section -->
+    {% if products %}
+    <div class="section-container">
+        <div class="section-header">
+            <h2 class="section-title">📦 Je Producten</h2>
+            {% if products|length > 4 %}
+            <a href="{{ url_for('main.all_products') }}" class="show-all-link">Alles weergeven →</a>
+            {% endif %}
+        </div>
+        <div class="products-grid">
+        {% for product in products[:4] %}
+            <a href="{{ url_for('main.product_detail', product_id=product.id) }}" class="product-card">
+                <div class="product-header">
+                    <h3>{{ product.name }}</h3>
+                    {% if product.expiry_date %}
+                    <span class="expiry-badge">{{ product.expiry_date.strftime('%d-%m') }}</span>
+                    {% endif %}
+                </div>
+                {% if product.flavor %}
+                <p class="product-flavor">🍫 {{ product.flavor }}</p>
+                {% endif %}
+                {% if product.description %}
+                <p class="product-description">{{ product.description[:60] }}{% if product.description|length > 60 %}...{% endif %}</p>
+                {% endif %}
+                <p class="product-date">Toegevoegd: {{ product.added_at.strftime('%d-%m-%Y') }}</p>
+            </a>
+        {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Navigation Cards Section -->
     <div class="nav-cards-grid">
         <a href="{{ url_for('main.add_product') }}" class="nav-card" style="animation-delay: 0s;">

@@ -853,8 +853,8 @@ html[data-theme="dark"] .warning-days {
 
 .products-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 2rem;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
     margin-top: 1.5rem;
 }
 
@@ -869,6 +869,9 @@ html[data-theme="dark"] .warning-days {
     flex-direction: column;
     position: relative;
     animation: fadeInUp 0.6s ease-out backwards;
+    padding: 1.2rem;
+    text-decoration: none;
+    color: inherit;
 }
 
 .product-card::before {
@@ -893,6 +896,140 @@ html[data-theme="dark"] .warning-days {
     transform: translateY(-8px) scale(1.02);
     box-shadow: 0 20px 40px rgba(107, 68, 35, 0.25);
     border-color: var(--primary-color);
+}
+
+.product-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 0.8rem;
+    gap: 1rem;
+}
+
+.product-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--primary-color);
+    font-weight: 700;
+    flex: 1;
+    word-break: break-word;
+}
+
+.expiry-badge {
+    background: linear-gradient(135deg, var(--warning-color) 0%, #FF7F00 100%);
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border-radius: 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.product-flavor {
+    margin: 0.5rem 0;
+    color: var(--text-color);
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.product-description {
+    margin: 0.8rem 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.product-date {
+    margin-top: auto;
+    padding-top: 0.8rem;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.show-all-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    padding: 0.5rem 1rem;
+    border-radius: 0.4rem;
+}
+
+.show-all-link:hover {
+    background-color: rgba(212, 165, 116, 0.2);
+    transform: translateX(4px);
+}
+
+.full-products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.product-card-full {
+    background-color: var(--card-bg);
+    border: 2px solid var(--accent-color);
+    border-radius: 0.8rem;
+    padding: 1.5rem;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: var(--shadow-light);
+    animation: fadeInUp 0.6s ease-out backwards;
+}
+
+.product-card-full:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(107, 68, 35, 0.25);
+    border-color: var(--primary-color);
+}
+
+.product-card-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.page-header {
+    margin-bottom: 3rem;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.page-header h1 {
+    font-size: 2.2rem;
+    color: var(--primary-color);
+    margin: 1rem 0 0.5rem 0;
+}
+
+.page-header p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.back-link {
+    display: inline-block;
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: 0.4rem;
+    transition: all 0.3s ease;
+    margin-bottom: 1rem;
+}
+
+.back-link:hover {
+    background-color: rgba(212, 165, 116, 0.2);
+    transform: translateX(-4px);
+}
+
+.products-list-page {
+    width: 100%;
 }
 
 .product-card-header {

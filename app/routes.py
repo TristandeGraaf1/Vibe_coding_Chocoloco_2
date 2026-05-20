@@ -46,7 +46,7 @@ def logout():
 @main_bp.route('/')
 @login_required
 def dashboard():
-    products = Product.query.filter_by(user_id=current_user.id).all()
+    products = Product.query.filter_by(user_id=current_user.id).order_by(Product.added_at.desc()).all()
 
     expiry_warnings = []
     for product in products:
@@ -59,6 +59,12 @@ def dashboard():
                 })
 
     return render_template('dashboard.html', products=products, warnings=expiry_warnings)
+
+@main_bp.route('/products')
+@login_required
+def all_products():
+    products = Product.query.filter_by(user_id=current_user.id).order_by(Product.added_at.desc()).all()
+    return render_template('product/list.html', products=products)
 
 @main_bp.route('/product/add', methods=['GET', 'POST'])
 @login_required

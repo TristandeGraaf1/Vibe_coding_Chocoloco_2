@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Afrekenen - Chocoloco{% endblock %}
+
+{% block content %}
+<div class="checkout-page">
+    <section class="checkout-hero">
+        <p class="shop-eyebrow">Afrekenen</p>
+        <h1>Betaal je chocolade in een paar heldere stappen.</h1>
+        <p>Controleer je mandje, kies een betaalmethode of demo-betaling en rond de bestelling af. De selectie uit de shop wordt hieronder geladen uit je winkelmand.</p>
+    </section>
+
+    <div class="checkout-layout">
+        <form method="POST" class="checkout-form card">
+            {{ form.hidden_tag() }}
+            <div class="form-group">
+                {{ form.full_name.label }}
+                {{ form.full_name(class="form-input", placeholder="Voor- en achternaam") }}
+                {% for error in form.full_name.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+            </div>
+            <div class="form-group">
+                {{ form.email.label }}
+                {{ form.email(class="form-input", placeholder="naam@voorbeeld.nl") }}
+                {% for error in form.email.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+            </div>
+            <div class="form-group">
+                {{ form.payment_method.label }}
+                {{ form.payment_method(class="form-input") }}
+                {% for error in form.payment_method.errors %}<span class="form-error">{{ error }}</span>{% endfor %}
+            </div>
+
+            {{ form.cart_payload(id="cartPayload") }}
+
+            <div class="checkout-actions">
+                <a href="{{ url_for('main.shop') }}" class="btn btn-secondary">Terug naar shop</a>
+                {{ form.submit(class="btn btn-primary") }}
+            </div>
+
+            {% if cart_empty %}
+            <p class="checkout-warning">Je mandje is leeg. Voeg eerst chocolade toe in de shop.</p>
+            {% endif %}
+        </form>
+
+        <aside class="checkout-summary card">
+            <div class="shop-cart-header">
+                <div>
+                    <p class="hub-kicker">Bestelling</p>
+                    <h3>Overzicht</h3>
+                </div>
+                <span class="shop-cart-count" id="checkoutCount">0</span>
+            </div>
+            <div class="shop-cart-items" id="checkoutItems">
+                <p class="shop-cart-empty">Je winkelmand wordt geladen...</p>
+            </div>
+            <div class="shop-cart-summary">
+                <div>
+                    <span>Totaal</span>
+                    <strong id="checkoutTotal">€ 0,00</strong>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const storageKey = 'chocoloco_shop_cart';
+        const money = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' });
+        const cartField = document.getElementById('cartPayload');
+        const itemsBox = document.getElementById('checkoutItems');
+        const countBox = document.getElementById('checkoutCount');
+        const totalBox = document.getElementById('checkoutTotal');
+
+        let items = [];
+
+        try {
+            items = JSON.parse(localStorage.getItem(storageKey) || '[]');
+        } catch (error) {
+            items = [];
+        }
+
+        cartField.value = JSON.stringify(items);
+        countBox.textContent = String(items.length);
+
+        if (!items.length) {
+            itemsBox.innerHTML = '<p class="shop-cart-empty">Je mandje is leeg. Keer terug naar de shop om chocolade toe te voegen.</p>';
+            totalBox.textContent = money.format(0);
+            return;
+        }
+
+        const total = items.reduce(function (sum, item) {
+            return sum + Number(item.price || 0);
+        }, 0);
+
+        itemsBox.innerHTML = items.map(function (item) {
+            return '<div class="shop-cart-item"><div><strong>' + item.name + '</strong><p>' + money.format(Number(item.price || 0)) + '</p></div></div>';
+        }).join('');
+
+        totalBox.textContent = money.format(total);
+    })();
+</script>
+{% endblock %}

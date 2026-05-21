@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, TextAreaField, DateField
-from wtforms.validators import DataRequired, Email, EqualTo, ValidationError, Length
+from wtforms import StringField, PasswordField, SubmitField, TextAreaField, DateField, SelectField, HiddenField
+from wtforms.validators import DataRequired, Email, EqualTo, ValidationError, Length, Optional
 from app.models import User
 
 class LoginForm(FlaskForm):
@@ -49,3 +49,21 @@ class TopicForm(FlaskForm):
 class ReplyForm(FlaskForm):
     body = TextAreaField('Antwoord', validators=[DataRequired(), Length(min=1)])
     submit = SubmitField('Plaats antwoord')
+
+
+class CheckoutForm(FlaskForm):
+    full_name = StringField('Naam', validators=[DataRequired(), Length(min=2, max=120)])
+    email = StringField('E-mail', validators=[DataRequired(), Email(), Length(max=120)])
+    payment_method = SelectField(
+        'Betaalmethode',
+        choices=[
+            ('demo', 'Demo betaling'),
+            ('ideal', 'iDEAL'),
+            ('card', 'Creditcard'),
+            ('bancontact', 'Bancontact'),
+            ('apple_pay', 'Apple Pay'),
+        ],
+        validators=[DataRequired()],
+    )
+    cart_payload = HiddenField('Winkelmand data', validators=[Optional()])
+    submit = SubmitField('Betaal nu')

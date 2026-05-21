@@ -52,6 +52,17 @@ Je kunt je registreren via het registratieformulier.
 └── requirements.txt         # Dependencies
 ```
 
+## Odoo orderkoppeling
+
+Zorg dat deze environment-variabelen gezet zijn zodat geslaagde checkout-orders automatisch in Odoo worden aangemaakt:
+
+- `ODOO_URL`
+- `ODOO_DB`
+- `ODOO_USERNAME`
+- `ODOO_PASSWORD`
+
+De app gebruikt XML-RPC om een klant te vinden of aan te maken, een verkooporder te maken en de order te bevestigen.
+
 ## Volgende Stappen (voor volle app)
 
 - [ ] QR-code scanning

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Betaling gelukt - Chocoloco{% endblock %}
+
+{% block content %}
+<div class="checkout-success">
+    <section class="checkout-success-hero">
+        <p class="shop-eyebrow">Betaling ontvangen</p>
+        <h1>Je chocolade is onderweg.</h1>
+        <p>Bedankt, {{ payment.name }}. Je betaling via {{ payment.payment_method_label }} is {{ payment.payment_status }} met referentie {{ payment.payment_ref }}.</p>
+        {% if payment.odoo_order_name %}
+        <p>De order is vastgelegd in Odoo als {{ payment.odoo_order_name }}.</p>
+        {% endif %}
+    </section>
+
+    <div class="checkout-success-grid">
+        <div class="card checkout-success-card">
+            <h2>Besteloverzicht</h2>
+            <div class="shop-cart-items">
+                {% for item in payment.cart_items %}
+                <div class="shop-cart-item">
+                    <div>
+                        <strong>{{ item.name }}</strong>
+                        <p>€ {{ '%.2f'|format(item.price|float) }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="shop-cart-summary">
+                <div>
+                    <span>Totaal betaald</span>
+                    <strong>€ {{ '%.2f'|format(payment.cart_total|float) }}</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="card checkout-success-card">
+            <h2>Volgende stap</h2>
+            <p>We bereiden de chocolade voor op verzending en sturen je een bevestiging per e-mail naar {{ payment.email }}.</p>
+            <div class="checkout-actions">
+                <a href="{{ url_for('main.shop') }}" class="btn btn-secondary">Terug naar shop</a>
+                <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">Naar dashboard</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        localStorage.removeItem('chocoloco_shop_cart');
+    })();
+</script>
+{% endblock %}

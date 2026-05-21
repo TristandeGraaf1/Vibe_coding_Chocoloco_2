@@ -77,6 +77,8 @@
     <script src="https://unpkg.com/jsqr/dist/jsQR.js"></script>
 <!-- Quagga for 1D barcode scanning fallback -->
 <script src="https://unpkg.com/quagga@0.12.1/dist/quagga.min.js"></script>
+<!-- ZXing (multi-format) for robust live decoding of 1D/2D codes -->
+<script src="https://unpkg.com/@zxing/library@0.18.6/umd/index.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function(){
     console.log('QR scanner init');
@@ -85,6 +87,7 @@
     const readerId = 'qr-reader';
     let html5QrCode = null;
     let scanning = false;
+    let zxingReader = null;
 
     function setProductCode(value){
         let el = document.getElementById('product_code');
@@ -147,12 +150,12 @@
                 const config = { fps: 10, qrbox: { width: 250, height: 250 } };
                 await html5QrCode.start({ facingMode: 'environment' }, config,
                     qrCodeMessage => {
-                                    showResult('Gescand: ' + qrCodeMessage);
-                                    setProductCode(qrCodeMessage);
+                        showResult('Gescand: ' + qrCodeMessage);
+                        setProductCode(qrCodeMessage);
                         stopScanner();
                     },
                     errorMessage => {
-                        // per-frame errors
+                        // ignore intermittent scan errors
                         console.debug('html5-qrcode error:', errorMessage);
                     }
                 );
@@ -166,7 +169,52 @@
             }
         }
 
+        // Try ZXing multi-format reader if available (handles QR + 1D reliably)
+        try {
+            const BrowserCodeReader = (window.ZXing && window.ZXing.BrowserMultiFormatReader) || window.BrowserMultiFormatReader || (window.ZXing && window.ZXing.BrowserBarcodeReader);
+            if (BrowserCodeReader) {
+                try {
+                    // stop any existing streams
+                    try{ await stopScanner(); }catch(e){}
+                    const reader = document.getElementById(readerId);
+                    reader.innerHTML = '';
+                    const video = document.createElement('video');
+                    video.id = 'qr-video';
+                    video.style.width = '100%';
+                    reader.appendChild(video);
+
+                    zxingReader = new BrowserCodeReader();
+                    zxingReader.decodeFromVideoDevice(null, video, (result, err) => {
+                        if (result && result.text) {
+                            console.log('ZXing result', result.text);
+                            showResult('Gescand (zxing): ' + result.text);
+                            setProductCode(result.text);
+                            try{ zxingReader.reset(); }catch(e){}
+                            scanning = false;
+                            if(toggleButton) toggleButton.textContent = 'Start scanner';
+                        }
+                        if (err) {
+                            // non-fatal per-frame errors come here
+                            // console.debug('zxing err', err);
+                        }
+                    });
+                    scanning = true;
+                    if(toggleButton) toggleButton.textContent = 'Stop scanner';
+                    console.log('ZXing started');
+                    return;
+                } catch (zxErr) {
+                    console.warn('ZXing start failed', zxErr);
+                    showResult('ZXing start faalde: ' + (zxErr.message || zxErr));
+                }
+            }
+        } catch(e){ console.debug('zxing check failed', e); }
+
         // Fallback: use BarcodeDetector API if available (support QR + common barcode formats)
+                    // ensure any existing camera streams are stopped before Quagga tries to open the device
+                    try{ await stopScanner(); } catch(e){ console.debug('stop before quagga failed', e); }
+                    // small delay to let device release complete
+                    await new Promise(r=>setTimeout(r, 250));
+
         if ('BarcodeDetector' in window) {
             try {
                 const formats = ['qr_code','ean_13','ean_8','code_128','code_39','code_93','codabar','itf','pdf417','upc_e','upc_a'];
@@ -323,6 +371,11 @@
 
     function stopScanner() {
         console.log('stopScanner called');
+        // stop ZXing reader if running
+        if (typeof zxingReader !== 'undefined' && zxingReader && zxingReader.reset) {
+            try{ zxingReader.reset(); }catch(e){ console.debug('zxing reset failed', e); }
+            zxingReader = null;
+        }
         if (html5QrCode) {
             html5QrCode.stop().then(() => {
                 html5QrCode.clear().catch(()=>{});
@@ -341,6 +394,10 @@
             const stream = video.srcObject;
             stream.getTracks().forEach(t => t.stop());
             video.srcObject = null;
+        }
+        // stop Quagga if running
+        if (window.Quagga && Quagga.stop) {
+            try{ Quagga.stop(); }catch(e){ console.debug('Quagga stop failed', e); }
         }
         scanning = false;
         if(toggleButton) toggleButton.textContent = 'Start scanner';

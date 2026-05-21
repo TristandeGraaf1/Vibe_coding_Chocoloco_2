@@ -59,23 +59,319 @@
 
         <div class="qr-card">
             <div class="qr-preview">
-                <div class="qr-grid"></div>
-                <span class="qr-icon">◻︎</span>
+                <div id="qr-reader" style="width:100%;"></div>
+                <div id="qr-reader-results" class="qr-grid" aria-live="polite"></div>
             </div>
-            <h2>Dummy QR-scan</h2>
-            <p>Deze knop simuleert een scan en vult een voorbeeldcode in.</p>
-            <button type="button" class="btn btn-secondary btn-block" id="scan-qr-button">QR-code scannen</button>
+            <h2>Scanner (QR of barcode)</h2>
+            <p>Gebruik je camera om een QR-code of barcode te scannen; de productcode wordt automatisch ingevuld.</p>
+            <button type="button" class="btn btn-secondary btn-block" id="toggle-scan-button">Start scanner</button>
+            <button type="button" class="btn btn-secondary btn-block" id="dummy-scan-button" style="display:none;margin-top:8px;">Gebruik dummy code</button>
             <p class="qr-hint">Na de scan kun je het product direct registreren.</p>
         </div>
     </div>
 </div>
 
+<!-- html5-qrcode CDN (with local fallback) -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/minified/html5-qrcode.min.js"></script>
+    <!-- jsQR for canvas-based decoding fallback (works in browsers without BarcodeDetector) -->
+    <script src="https://unpkg.com/jsqr/dist/jsQR.js"></script>
+<!-- Quagga for 1D barcode scanning fallback -->
+<script src="https://unpkg.com/quagga@0.12.1/dist/quagga.min.js"></script>
 <script>
-    document.getElementById('scan-qr-button').addEventListener('click', function() {
-        const productCodeField = document.getElementById('product_code');
-        const dummyCode = 'QR-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random() * 9000) + 1000);
-        productCodeField.value = dummyCode;
-        productCodeField.focus();
+    document.addEventListener('DOMContentLoaded', function(){
+    console.log('QR scanner init');
+    const toggleButton = document.getElementById('toggle-scan-button');
+    const resultsEl = document.getElementById('qr-reader-results');
+    const readerId = 'qr-reader';
+    let html5QrCode = null;
+    let scanning = false;
+
+    function setProductCode(value){
+        let el = document.getElementById('product_code');
+        if(!el) el = document.querySelector('input[name="product_code"]');
+        if(!el) el = document.querySelector('input[id$="product_code"]');
+        if(el){
+            el.value = value;
+            el.focus();
+            try{ el.dispatchEvent(new Event('input', { bubbles: true })); }catch(e){}
+            try{ el.dispatchEvent(new Event('change', { bubbles: true })); }catch(e){}
+        } else {
+            console.warn('product_code input not found to set value');
+        }
+    }
+
+    function showResult(text) {
+        console.log('QR:', text);
+        if(resultsEl) resultsEl.textContent = text;
+    }
+
+    function loadLocalFallback(cb){
+        if(window.Html5Qrcode) return cb(true);
+        try{
+            var s = document.createElement('script');
+            s.src = "{{ url_for('static', filename='js/html5-qrcode.min.js') }}";
+            s.onload = function(){ cb(!!window.Html5Qrcode); };
+            s.onerror = function(){ cb(false); };
+            document.head.appendChild(s);
+        }catch(e){ cb(false); }
+    }
+
+    // try CDN then fallback to local copy
+    if(!window.Html5Qrcode){
+        setTimeout(function(){
+            if(!window.Html5Qrcode){
+                loadLocalFallback(function(ok){
+                    if(!ok){
+                        showResult('QR library niet geladen — fallback niet beschikbaar.');
+                        var dummyBtn = document.getElementById('dummy-scan-button');
+                        if(dummyBtn) dummyBtn.style.display = 'block';
+                    } else {
+                        console.log('Loaded local html5-qrcode');
+                    }
+                });
+            }
+        }, 600);
+    }
+
+    async function startScanner() {
+        console.log('startScanner called');
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            showResult('Geen camera-API beschikbaar in deze browser.');
+            return;
+        }
+
+        // Prefer html5-qrcode if available
+        if (window.Html5Qrcode) {
+            try{
+                html5QrCode = new Html5Qrcode(readerId);
+                const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+                await html5QrCode.start({ facingMode: 'environment' }, config,
+                    qrCodeMessage => {
+                                    showResult('Gescand: ' + qrCodeMessage);
+                                    setProductCode(qrCodeMessage);
+                        stopScanner();
+                    },
+                    errorMessage => {
+                        // per-frame errors
+                        console.debug('html5-qrcode error:', errorMessage);
+                    }
+                );
+                scanning = true;
+                if(toggleButton) toggleButton.textContent = 'Stop scanner';
+                console.log('html5-qrcode started');
+                return;
+            }catch(err){
+                console.warn('html5-qrcode start failed', err);
+                showResult('Camera toegang mislukt (html5-qrcode): ' + err.message || err);
+            }
+        }
+
+        // Fallback: use BarcodeDetector API if available (support QR + common barcode formats)
+        if ('BarcodeDetector' in window) {
+            try {
+                const formats = ['qr_code','ean_13','ean_8','code_128','code_39','code_93','codabar','itf','pdf417','upc_e','upc_a'];
+                const detector = new BarcodeDetector({ formats });
+                const video = document.createElement('video');
+                video.id = 'qr-video';
+                video.style.width = '100%';
+                const reader = document.getElementById(readerId);
+                reader.innerHTML = '';
+                reader.appendChild(video);
+
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                video.srcObject = stream;
+                await video.play();
+                scanning = true;
+                if(toggleButton) toggleButton.textContent = 'Stop scanner';
+
+                const scanFrame = async () => {
+                    if (!scanning) return;
+                    try {
+                        const detections = await detector.detect(video);
+                            if (detections && detections.length) {
+                                const d = detections[0];
+                                const text = d.rawValue || d.raw_data || '';
+                                const fmt = d.format || d.symbology || '';
+                                if (text) {
+                                    showResult('Gescand (' + fmt + '): ' + text);
+                                    setProductCode(text);
+                                stream.getTracks().forEach(t => t.stop());
+                                scanning = false;
+                                if(toggleButton) toggleButton.textContent = 'Start scanner';
+                                return;
+                            }
+                        }
+                    } catch (e) {
+                        console.debug('BarcodeDetector detect error', e);
+                    }
+                    requestAnimationFrame(scanFrame);
+                };
+                requestAnimationFrame(scanFrame);
+                console.log('BarcodeDetector fallback started');
+                return;
+            } catch (err) {
+                console.warn('BarcodeDetector fallback failed', err);
+                showResult('BarcodeDetector fallback faalde: ' + (err.message || err));
+            }
+        }
+
+            // Fallback: try jsQR (canvas-based decoder) if available
+            if (window.jsQR) {
+                try {
+                    const video = document.createElement('video');
+                    video.id = 'qr-video';
+                    video.style.width = '100%';
+                    const reader = document.getElementById(readerId);
+                    reader.innerHTML = '';
+                    reader.appendChild(video);
+
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                    video.srcObject = stream;
+                    await video.play();
+                    scanning = true;
+                    if(toggleButton) toggleButton.textContent = 'Stop scanner';
+
+                    const scanLoop = () => {
+                        if (!scanning) return;
+                        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                            canvas.width = video.videoWidth;
+                            canvas.height = video.videoHeight;
+                            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                            const code = jsQR(imageData.data, canvas.width, canvas.height);
+                            if (code) {
+                                showResult('Gescand: ' + code.data);
+                                setProductCode(code.data);
+                                stream.getTracks().forEach(t => t.stop());
+                                scanning = false;
+                                if(toggleButton) toggleButton.textContent = 'Start scanner';
+                                return;
+                            }
+                        }
+                        requestAnimationFrame(scanLoop);
+                    };
+                    requestAnimationFrame(scanLoop);
+                    console.log('jsQR fallback started');
+                    return;
+                } catch (err) {
+                    console.warn('jsQR fallback failed', err);
+                    showResult('jsQR fallback faalde: ' + (err.message || err));
+                }
+            }
+            // If jsQR didn't work, try Quagga (1D barcodes)
+            if (window.Quagga) {
+                try {
+                    const reader = document.getElementById(readerId);
+                    reader.innerHTML = '';
+                    const config = {
+                        inputStream: {
+                            type: "LiveStream",
+                            target: reader,
+                            constraints: { facingMode: 'environment' }
+                        },
+                        decoder: {
+                            readers: [
+                                "code_128_reader",
+                                "ean_reader",
+                                "ean_8_reader",
+                                "upc_reader",
+                                "upc_e_reader",
+                                "code_39_reader",
+                                "code_93_reader"
+                            ]
+                        },
+                        locate: true
+                    };
+
+                    Quagga.init(config, function(err) {
+                        if (err) {
+                            console.warn('Quagga init error', err);
+                            showResult('Quagga init faalde: ' + err.message || err);
+                            return;
+                        }
+                        Quagga.start();
+                        scanning = true;
+                        if(toggleButton) toggleButton.textContent = 'Stop scanner';
+                        showResult('Scanning (Quagga) — richt de camera op een barcode');
+                    });
+
+                    Quagga.onDetected(function(result){
+                        if (result && result.codeResult && result.codeResult.code) {
+                            const code = result.codeResult.code;
+                            showResult('Gescand (barcode): ' + code);
+                            setProductCode(code);
+                            Quagga.stop();
+                            scanning = false;
+                            if(toggleButton) toggleButton.textContent = 'Start scanner';
+                        }
+                    });
+
+                    return;
+                } catch (err) {
+                    console.warn('Quagga fallback failed', err);
+                    showResult('Quagga fallback faalde: ' + (err.message || err));
+                }
+            }
+
+            showResult('Geen ondersteunde QR/barcode-scanner beschikbaar op dit apparaat.');
+            var dummyBtn = document.getElementById('dummy-scan-button');
+            if (dummyBtn) dummyBtn.style.display = 'block';
+    }
+
+    function stopScanner() {
+        console.log('stopScanner called');
+        if (html5QrCode) {
+            html5QrCode.stop().then(() => {
+                html5QrCode.clear().catch(()=>{});
+                html5QrCode = null;
+                scanning = false;
+                if(toggleButton) toggleButton.textContent = 'Start scanner';
+            }).catch(err => {
+                console.warn('html5QrCode.stop() failed', err);
+                scanning = false;
+                if(toggleButton) toggleButton.textContent = 'Start scanner';
+            });
+            return;
+        }
+        const video = document.getElementById('qr-video');
+        if (video && video.srcObject) {
+            const stream = video.srcObject;
+            stream.getTracks().forEach(t => t.stop());
+            video.srcObject = null;
+        }
+        scanning = false;
+        if(toggleButton) toggleButton.textContent = 'Start scanner';
+        const reader = document.getElementById(readerId);
+        if (reader) {
+            reader.innerHTML = '<div id="qr-reader-results" class="qr-grid" aria-live="polite"></div>';
+        }
+    }
+
+    if(!toggleButton){
+        console.error('toggle-scan-button not found');
+        return;
+    }
+
+    toggleButton.addEventListener('click', function() {
+        console.log('toggle clicked, scanning=', scanning);
+        if (scanning) {
+            stopScanner();
+        } else {
+            startScanner();
+        }
     });
+
+    var dummyScanBtn = document.getElementById('dummy-scan-button');
+    if(dummyScanBtn){
+        dummyScanBtn.addEventListener('click', function(){
+            const dummyCode = 'QR-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random() * 9000) + 1000);
+            setProductCode(dummyCode);
+            if(resultsEl) resultsEl.textContent = 'Dummy-code ingevuld: ' + dummyCode;
+        });
+    }
+});
 </script>
 {% endblock %}

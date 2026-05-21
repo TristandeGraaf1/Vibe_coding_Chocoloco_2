@@ -63,6 +63,17 @@ Zorg dat deze environment-variabelen gezet zijn zodat geslaagde checkout-orders 
 
 De app gebruikt XML-RPC om een klant te vinden of aan te maken, een verkooporder te maken en de order te bevestigen.
 
+### Render deployment
+
+Op Render moet je deze variabelen handmatig invullen in je web service, of de service vanaf `render.yaml` aanmaken en daarna de env vars invullen:
+
+- `ODOO_URL = https://edu-chocoloco2.odoo.com/`
+- `ODOO_DB = edu-chocoloco2`
+- `ODOO_USERNAME = tristan31tx@hotmail.com`
+- `ODOO_PASSWORD = <jouw wachtwoord>`
+
+Belangrijk: je lokale `.env` wordt op Render niet automatisch meegepakt. Zonder deze variabelen krijg je precies de fout dat de Odoo-config ontbreekt.
+
 ## Volgende Stappen (voor volle app)
 
 - [ ] QR-code scanning

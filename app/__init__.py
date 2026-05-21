@@ -140,6 +140,14 @@ def create_app():
             def handle_data(self, data):
                 self.parts.append(html_escape(data))
 
+            def handle_entityref(self, name):
+                from html import unescape as html_unescape
+                self.parts.append(html_escape(html_unescape(f'&{name};')))
+
+            def handle_charref(self, name):
+                from html import unescape as html_unescape
+                self.parts.append(html_escape(html_unescape(f'&#{name};')))
+
             def get_html(self):
                 return ''.join(self.parts)
 
@@ -148,9 +156,10 @@ def create_app():
                 return ''
 
             raw = md.strip()
-            if raw.startswith('<') and raw.endswith('>'):
+            if '<' in raw and '>' in raw:
                 sanitizer = RichTextSanitizer()
                 sanitizer.feed(raw)
+                sanitizer.close()
                 return Markup(sanitizer.get_html().replace('\n', '<br>'))
 
             out = escape(md)

@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+  <h2>Chocobot</h2>
+  <div id="chat" style="border:1px solid #ddd;padding:12px;height:300px;overflow:auto;background:#fff;">
+    <div class="bot-message">Hallo! Stel een vraag over de app of je bestelling.</div>
+  </div>
+  <div style="margin-top:8px;display:flex;gap:8px;">
+    <input id="msg" type="text" placeholder="Typ je vraag..." style="flex:1;padding:8px;" />
+    <button id="send" class="btn">Stuur</button>
+  </div>
+</div>
+
+<script>
+document.getElementById('send').addEventListener('click', sendMessage);
+document.getElementById('msg').addEventListener('keydown', function(e){ if(e.key==='Enter'){ sendMessage(); }});
+
+function appendMessage(kind, text){
+  const chat = document.getElementById('chat');
+  const el = document.createElement('div');
+  el.className = kind === 'user' ? 'user-message' : 'bot-message';
+  el.style.margin = '6px 0';
+  el.textContent = text;
+  chat.appendChild(el);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+async function sendMessage(){
+  const input = document.getElementById('msg');
+  const text = input.value.trim();
+  if(!text) return;
+  appendMessage('user', text);
+  input.value = '';
+  try{
+    const resp = await fetch('/chocobot/message', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({text})});
+    const data = await resp.json();
+    if(data && data.reply){
+      appendMessage('bot', data.reply);
+    } else if(data && data.error){
+      appendMessage('bot', 'Fout: ' + data.error);
+    } else {
+      appendMessage('bot', 'Geen antwoord ontvangen.');
+    }
+  }catch(err){
+    appendMessage('bot', 'Verbindingsfout: ' + err.message);
+  }
+}
+</script>
+
+<style>
+.bot-message{background:#f7f7f7;padding:8px;border-radius:6px;}
+.user-message{background:#e8f0ff;padding:8px;border-radius:6px;text-align:right}
+</style>
+
+{% endblock %}

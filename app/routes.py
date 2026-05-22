@@ -489,6 +489,39 @@ def checkout_success():
 
     return render_template('checkout_success.html', payment=payment)
 
+
+@main_bp.route('/chocobot')
+@login_required
+def chocobot():
+    return render_template('chocobot.html')
+
+
+@main_bp.route('/chocobot/message', methods=['POST'])
+@login_required
+def chocobot_message():
+    payload = request.get_json(silent=True) or {}
+    text = (payload.get('text') or '').strip()
+    if not text:
+        return jsonify({'error': 'No text provided'}), 400
+
+    t = text.lower()
+
+    # Very small set of canned answers for common UI questions
+    if 'uitlog' in t or 'uitloggen' in t or 'logout' in t:
+        reply = "De knop 'Uitloggen' vind je rechtsboven in het hoofdmenu. Klik op je profielfoto of naam en kies 'Uitloggen'."
+    elif 'bestel' in t or 'status' in t or 'tracking' in t or 'volg' in t:
+        reply = "Bekijk 'Dashboard' → 'Bestellingen' om de status van je bestellingen en eventuele track & trace-nummers te zien."
+    elif 'betaal' in t or 'ideal' in t or 'credit' in t or 'demo' in t:
+        reply = "Bij afrekenen kun je iDEAL, creditcard of demo-betalingen kiezen. Kies een methode en volg de instructies op het scherm."
+    elif 'wachtwoord' in t or 'inloggen' in t or 'account' in t:
+        reply = "Ga naar 'Inloggen' om in te loggen. Als je je wachtwoord bent vergeten, gebruik dan de wachtwoord-reset op het inlogscherm."
+    elif 'contact' in t or 'klantenservice' in t:
+        reply = "Onze klantenservice is te vinden via de Klantenservice-pagina; daar staat het contactformulier en telefoonnummer."
+    else:
+        reply = f"Chocobot: Ik begrijp '{text}' niet helemaal. Probeer vragen zoals 'Waar is de knop uitloggen?' of 'Hoe betaal ik?'."
+
+    return jsonify({'reply': reply})
+
 @main_bp.route('/products')
 @login_required
 def all_products():

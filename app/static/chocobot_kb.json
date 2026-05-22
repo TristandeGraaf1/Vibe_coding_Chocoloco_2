@@ -1,0 +1,57 @@
+[
+  {
+    "id": "logout",
+    "keywords": ["uitlog", "uitloggen", "logout", "afmelden"],
+    "response": "De knop 'Uitloggen' staat rechtsboven in de navigatie; klik op je naam of profielfoto en kies 'Uitloggen'."
+  },
+  {
+    "id": "order_status",
+    "keywords": ["bestel", "bestelling", "status", "track", "tracking", "volg"],
+    "response": "Controleer 'Dashboard' → 'Bestellingen' voor status en track & trace. Geef anders je ordernummer (bijv. CHOC-202305051234) en ik kijk wat ik kan adviseren."
+  },
+  {
+    "id": "payment",
+    "keywords": ["betaal", "betaling", "ideal", "creditcard", "card", "bancontact", "apple_pay", "demo"],
+    "response": "Bij het afrekenen kun je iDEAL, creditcard, Bancontact of Apple Pay kiezen. Voor testen kun je de demo-betaling gebruiken."
+  },
+  {
+    "id": "shipping",
+    "keywords": ["verzend", "lever", "bezorg", "pakket", "levering"],
+    "response": "Wij verzenden maandag–vrijdag. Bestellingen voor 17:00 worden meestal dezelfde dag verzonden, mits op voorraad. Controleer verzendtijden bij het afrekenen."
+  },
+  {
+    "id": "returns",
+    "keywords": ["retour", "terug", "restitutie", "terugbetaling", "retourneren"],
+    "response": "Retourneren kan binnen 14 dagen na ontvangst, ongeopend en in originele staat. Start een retour via het contactformulier en vermeld je ordernummer."
+  },
+  {
+    "id": "ingredients",
+    "keywords": ["allerg", "noten", "ingredient", "ingrediënten", "gluten", "lactose", "ei"],
+    "response": "Bekijk bij elk product de productbeschrijving voor ingrediënten en allergenen. Heb je een specifieke allergie? Vertel het, dan zoek ik geschikte opties."
+  },
+  {
+    "id": "giftwrap",
+    "keywords": ["cadeau", "verpakking", "gift", "giftwrap"],
+    "response": "Bij het afrekenen kun je cadeauverpakking selecteren en een persoonlijk bericht toevoegen."
+  },
+  {
+    "id": "bulk",
+    "keywords": ["bulk", "groothandel", "bedrijf", "zakelijk", "grote bestelling"],
+    "response": "Voor zakelijke of bulkbestellingen bieden we speciale prijzen en logistiek. Vul het contactformulier in met gewenste aantallen en datum."
+  },
+  {
+    "id": "rewards",
+    "keywords": ["reward", "punten", "chocorewards", "korting"],
+    "response": "Je ChocoRewards-punten zie je op je Dashboard. Punten kun je inwisselen tijdens het afrekenen als korting."
+  },
+  {
+    "id": "support",
+    "keywords": ["contact", "klantenservice", "support", "help"],
+    "response": "Onze klantenservice helpt via de Klantenservice-pagina (contactformulier) of telefonisch op werkdagen."
+  },
+  {
+    "id": "storage",
+    "keywords": ["bewaar", "opbergen", "houdbaarheid", "houdbaar", "houden"],
+    "response": "Bewaar chocolade koel en droog (bij voorkeur rond 15-18°C), uit direct zonlicht. Raadpleeg de verpakking voor de exacte houdbaarheidsdatum."
+  }
+]

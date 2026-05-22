@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, request, jsonif
 from flask_login import login_user, logout_user, current_user, login_required
 from app import db
 from app.models import User, Product, ExpiryWarningRead, ExpiryWarningDismissed, ForumTopic, ForumReply, TopicSubscription, ForumNotification, ReplyLike
-from app.forms import LoginForm, RegisterForm, ProductForm, ProductRegisterForm, TopicForm, ReplyForm, CheckoutForm
+from app.forms import LoginForm, RegisterForm, ProductForm, ProductRegisterForm, TopicForm, ReplyForm, CheckoutForm, ComplaintForm
 from datetime import datetime, timedelta
 from flask import current_app, flash
 import html
@@ -10,6 +10,8 @@ import json
 import re
 import uuid
 import xmlrpc.client
+import urllib.parse
+import urllib.request
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 main_bp = Blueprint('main', __name__)
@@ -239,6 +241,199 @@ def _odoo_credentials():
 
     models = xmlrpc.client.ServerProxy(f'{odoo_url}/xmlrpc/2/object')
     return odoo_db, uid, models, odoo_password
+
+
+def _resolve_helpdesk_ticket_model(models, odoo_db, uid, odoo_password):
+    fields = models.execute_kw(
+        odoo_db,
+        uid,
+        odoo_password,
+        'helpdesk.ticket',
+        'fields_get',
+        [],
+        {'attributes': ['type']},
+    )
+    return 'helpdesk.ticket', fields or {}
+
+
+def _resolve_helpdesk_team(models, odoo_db, uid, odoo_password):
+    team_id_config = current_app.config.get('ODOO_HELPDESK_TEAM_ID', '').strip()
+    if team_id_config:
+        try:
+            return int(team_id_config)
+        except ValueError:
+            current_app.logger.warning('ODOO_HELPDESK_TEAM_ID is not a valid number.')
+
+    team_name = current_app.config.get('ODOO_HELPDESK_TEAM_NAME', '').strip()
+    try:
+        models.execute_kw(
+            odoo_db,
+            uid,
+            odoo_password,
+            'helpdesk.team',
+            'fields_get',
+            [],
+            {'attributes': ['type']},
+        )
+    except Exception:
+        return None
+
+    search_domain = []
+    if team_name:
+        search_domain = [('name', '=', team_name)]
+
+    if search_domain:
+        team_search = models.execute_kw(
+            odoo_db,
+            uid,
+            odoo_password,
+            'helpdesk.team',
+            'search',
+            [search_domain],
+            {'limit': 1},
+        )
+        if team_search:
+            return team_search[0]
+
+    fallback_search = models.execute_kw(
+        odoo_db,
+        uid,
+        odoo_password,
+        'helpdesk.team',
+        'search',
+        [[]],
+        {'limit': 1},
+    )
+    if fallback_search:
+        return fallback_search[0]
+
+    return None
+
+
+def _build_helpdesk_complaint(product, title, description):
+    clean_title = (title or '').strip() or f'Klacht over {product.name}'
+    complaint_lines = [
+        f'Klant: {current_user.username} <{current_user.email}>',
+        f'Product: {product.name} (ID {product.id})',
+    ]
+    if product.flavor:
+        complaint_lines.append(f'Smaak: {product.flavor}')
+    if product.expiry_date:
+        complaint_lines.append(f'Vervaldatum: {product.expiry_date.strftime("%d-%m-%Y")}')
+    if product.description:
+        complaint_lines.append(f'Productnotitie: {product.description}')
+    complaint_lines.extend(['', 'Klachtomschrijving:', description])
+    return clean_title, '\n'.join(complaint_lines)
+
+
+def _submit_helpdesk_complaint_via_website_form(product, title, description):
+    odoo_url = current_app.config.get('ODOO_URL', '').strip().rstrip('/')
+    if not odoo_url:
+        return None
+
+    clean_title, complaint_text = _build_helpdesk_complaint(product, title, description)
+    payload = {
+        'name': clean_title,
+        'subject': clean_title,
+        'description': complaint_text,
+        'email_from': current_user.email,
+        'partner_name': current_user.username,
+    }
+
+    try:
+        odoo_db, uid, models, odoo_password = _odoo_credentials()
+        team_id = _resolve_helpdesk_team(models, odoo_db, uid, odoo_password)
+        if team_id:
+            payload['team_id'] = str(team_id)
+    except Exception:
+        pass
+
+    current_app.logger.debug('Submitting helpdesk website form payload: %s', json.dumps(payload, ensure_ascii=False))
+    request_obj = urllib.request.Request(
+        f'{odoo_url}/website/form/helpdesk.ticket',
+        data=urllib.parse.urlencode(payload).encode('utf-8'),
+        headers={'Content-Type': 'application/x-www-form-urlencoded'},
+        method='POST',
+    )
+
+    with urllib.request.urlopen(request_obj, timeout=20) as response:
+        raw_response = response.read().decode('utf-8', errors='replace')
+        current_app.logger.debug('Helpdesk website form raw response: %s', raw_response)
+
+    try:
+        parsed_response = json.loads(raw_response)
+    except Exception:
+        return None
+
+    if isinstance(parsed_response, dict) and parsed_response.get('id'):
+        return parsed_response['id']
+    return None
+
+
+def _create_helpdesk_complaint_ticket_via_xmlrpc(product, title, description):
+    odoo_db, uid, models, odoo_password = _odoo_credentials()
+    ticket_model, ticket_fields = _resolve_helpdesk_ticket_model(models, odoo_db, uid, odoo_password)
+
+    partner_search = models.execute_kw(
+        odoo_db,
+        uid,
+        odoo_password,
+        'res.partner',
+        'search',
+        [[('email', '=', current_user.email)]],
+        {'limit': 1},
+    )
+    if partner_search:
+        partner_id = partner_search[0]
+    elif current_user.email:
+        partner_id = models.execute_kw(
+            odoo_db,
+            uid,
+            odoo_password,
+            'res.partner',
+            'create',
+            [{
+                'name': current_user.username,
+                'email': current_user.email,
+            }],
+        )
+    else:
+        partner_id = None
+
+    clean_title, complaint_text = _build_helpdesk_complaint(product, title, description)
+    ticket_vals = {
+        'name': clean_title,
+        'description': complaint_text,
+    }
+
+    team_id = _resolve_helpdesk_team(models, odoo_db, uid, odoo_password)
+    if team_id and 'team_id' in ticket_fields:
+        ticket_vals['team_id'] = team_id
+    if partner_id and 'partner_id' in ticket_fields:
+        ticket_vals['partner_id'] = partner_id
+    if 'priority' in ticket_fields:
+        ticket_vals['priority'] = '0'
+
+    current_app.logger.debug('Creating helpdesk ticket directly with values: %s', ticket_vals)
+    return models.execute_kw(
+        odoo_db,
+        uid,
+        odoo_password,
+        ticket_model,
+        'create',
+        [ticket_vals],
+    )
+
+
+def _create_helpdesk_complaint_ticket(product, title, description):
+    try:
+        website_ticket_id = _submit_helpdesk_complaint_via_website_form(product, title, description)
+        if website_ticket_id:
+            return website_ticket_id
+    except Exception as error:
+        current_app.logger.warning('Helpdesk website form submit failed, falling back to XML-RPC: %s', error)
+
+    return _create_helpdesk_complaint_ticket_via_xmlrpc(product, title, description)
 
 
 def _split_csv(value):
@@ -1006,6 +1201,40 @@ def settings():
 @login_required
 def customer_service():
     return render_template('customer_service.html')
+
+
+@main_bp.route('/complaints', methods=['GET', 'POST'])
+@main_bp.route('/complaints/<int:product_id>', methods=['GET', 'POST'])
+@login_required
+def complaints(product_id=None):
+    products = Product.query.filter_by(user_id=current_user.id).order_by(Product.added_at.desc()).all()
+    if not products:
+        flash('Registreer eerst een product voordat je een klacht indient.', 'warning')
+        return redirect(url_for('main.all_products'))
+
+    form = ComplaintForm()
+    form.product_id.choices = [(product.id, product.name) for product in products]
+
+    selected_product_id = product_id if product_id is not None else products[0].id
+    if request.method == 'GET':
+        form.product_id.data = selected_product_id
+
+    if form.validate_on_submit():
+        selected_product = Product.query.filter_by(id=form.product_id.data, user_id=current_user.id).first_or_404()
+        try:
+            ticket_id = _create_helpdesk_complaint_ticket(
+                selected_product,
+                form.title.data.strip(),
+                form.description.data.strip(),
+            )
+            flash(f'Je klacht is verzonden naar Odoo Helpdesk als ticket #{ticket_id}.', 'success')
+            return redirect(url_for('main.complaints', product_id=selected_product.id))
+        except Exception as error:
+            current_app.logger.exception('Helpdesk complaint submission failed')
+            flash(f'Je klacht kon niet worden verzonden naar Odoo Helpdesk: {error}', 'danger')
+
+    selected_product = Product.query.filter_by(id=form.product_id.data or selected_product_id, user_id=current_user.id).first()
+    return render_template('complaints.html', form=form, products=products, selected_product=selected_product)
 
 @main_bp.route('/faq')
 @login_required

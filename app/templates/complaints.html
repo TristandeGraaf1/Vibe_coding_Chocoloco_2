@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block title %}Klacht indienen - Chocoloco{% endblock %}
+
+{% block content %}
+<div class="complaint-page">
+  <div class="complaint-hero">
+    <div>
+      <p class="complaint-eyebrow">Helpdesk</p>
+      <h1>Klacht indienen</h1>
+      <p>Vul het formulier in en we sturen je klacht automatisch door naar Odoo Helpdesk.</p>
+    </div>
+    {% if selected_product %}
+    <div class="complaint-product-chip">
+      <span>Geselecteerd product</span>
+      <strong>{{ selected_product.name }}</strong>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="complaint-layout">
+    <div class="complaint-panel">
+      <form method="POST" class="complaint-form">
+        {{ form.hidden_tag() }}
+
+        <div class="form-group">
+          {{ form.product_id.label(class_='form-label') }}
+          {{ form.product_id(class_='form-control') }}
+          {% for error in form.product_id.errors %}
+          <div class="form-error">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <div class="form-group">
+          {{ form.title.label(class_='form-label') }}
+          {{ form.title(class_='form-control', placeholder='Bijvoorbeeld: beschadigde verpakking of vreemde smaak') }}
+          {% for error in form.title.errors %}
+          <div class="form-error">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <div class="form-group">
+          {{ form.description.label(class_='form-label') }}
+          {{ form.description(class_='form-control complaint-textarea', rows='7', placeholder='Beschrijf wat er aan de hand is, wanneer je het product hebt gekocht en wat je graag wilt laten onderzoeken.') }}
+          {% for error in form.description.errors %}
+          <div class="form-error">{{ error }}</div>
+          {% endfor %}
+        </div>
+
+        <button type="submit" class="btn btn-primary complaint-submit">{{ form.submit.label.text }}</button>
+      </form>
+    </div>
+
+    <aside class="complaint-sidebar">
+      <div class="complaint-card">
+        <h2>Wat er wordt meegestuurd</h2>
+        <ul>
+          <li>Je accountnaam en e-mailadres</li>
+          <li>Het gekozen product uit je lijst</li>
+          <li>Jouw klachtomschrijving</li>
+        </ul>
+      </div>
+
+      <div class="complaint-card complaint-card-soft">
+        <h2>Tip</h2>
+        <p>Hoe concreter je beschrijving, hoe sneller Odoo Helpdesk het ticket kan oppakken.</p>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<style>
+.complaint-page {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.complaint-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 1.5rem;
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(255, 247, 238, 0.96), rgba(255, 238, 221, 0.88));
+  border: 1px solid rgba(107, 68, 35, 0.12);
+  box-shadow: 0 18px 44px rgba(107, 68, 35, 0.12);
+  margin-bottom: 1.2rem;
+}
+
+.complaint-eyebrow {
+  margin: 0 0 0.25rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.complaint-hero h1 {
+  margin: 0;
+}
+
+.complaint-hero p {
+  margin: 0.5rem 0 0;
+  color: var(--text-secondary);
+}
+
+.complaint-product-chip {
+  min-width: 220px;
+  padding: 0.9rem 1rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(107, 68, 35, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.complaint-product-chip span {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}
+
+.complaint-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.9fr);
+  gap: 1.2rem;
+}
+
+.complaint-panel,
+.complaint-sidebar {
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(107, 68, 35, 0.1);
+  border-radius: 22px;
+  box-shadow: 0 16px 40px rgba(107, 68, 35, 0.08);
+}
+
+.complaint-panel {
+  padding: 1.25rem;
+}
+
+.complaint-sidebar {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.complaint-card {
+  padding: 1rem;
+  border-radius: 18px;
+  background: rgba(212, 165, 116, 0.12);
+}
+
+.complaint-card-soft {
+  background: rgba(94, 143, 46, 0.08);
+}
+
+.complaint-card h2 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.05rem;
+}
+
+.complaint-card ul {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: var(--text-secondary);
+}
+
+.complaint-form .form-group {
+  margin-bottom: 1rem;
+}
+
+.complaint-form .form-label {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-weight: 700;
+}
+
+.complaint-form .form-control {
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid rgba(107, 68, 35, 0.16);
+  padding: 0.9rem 1rem;
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.complaint-textarea {
+  resize: vertical;
+  min-height: 180px;
+}
+
+.form-error {
+  margin-top: 0.35rem;
+  color: var(--danger-color);
+  font-size: 0.9rem;
+}
+
+.complaint-submit {
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 860px) {
+  .complaint-hero,
+  .complaint-layout {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+
+  .complaint-hero {
+    display: grid;
+  }
+}
+</style>
+{% endblock %}

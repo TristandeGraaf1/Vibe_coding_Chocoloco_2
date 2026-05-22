@@ -68,3 +68,10 @@ class CheckoutForm(FlaskForm):
     cart_payload = HiddenField('Winkelmand data', validators=[Optional()])
     cart_total = HiddenField('Winkelmand totaal', validators=[Optional()])
     submit = SubmitField('Betaal nu')
+
+
+class ComplaintForm(FlaskForm):
+    product_id = SelectField('Product', coerce=int, validators=[DataRequired()])
+    title = StringField('Onderwerp', validators=[DataRequired(), Length(min=3, max=120)])
+    description = TextAreaField('Klachtomschrijving', validators=[DataRequired(), Length(min=10)])
+    submit = SubmitField('Klacht indienen')

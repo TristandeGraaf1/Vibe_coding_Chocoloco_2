@@ -43,6 +43,7 @@
         </div>
 
         <div class="detail-actions mt-20">
+            <a href="{{ url_for('main.complaints', product_id=product.id) }}" class="btn btn-primary" style="margin-right:0.75rem;">Klacht indienen</a>
             <form method="POST" action="{{ url_for('main.delete_product', product_id=product.id) }}" style="display:inline;">
                 <button type="submit" class="btn btn-danger" onclick="return confirm('Dit product verwijderen?')">Verwijderen</button>
             </form>

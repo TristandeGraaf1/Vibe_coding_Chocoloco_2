@@ -16,7 +16,7 @@
         </div>
 
         <div class="nav-cards-grid">
-            <a href="#" class="nav-card">
+            <a href="{{ url_for('main.complaints') }}" class="nav-card">
                 <div class="nav-card-icon">📋</div>
                 <h3>Klacht indienen</h3>
                 <p>Dien eenvoudig een klacht in over een product.</p>
@@ -69,7 +69,7 @@
             <div class="news-widget">
                 <h3>✉️ Stuur een bericht</h3>
                 <p>Vul het contactformulier in en we reageren binnen 24 uur.</p>
-                <a href="#" class="nav-card" style="display:inline-block; margin-top:0.8rem; padding:0.6rem 1rem;">Contactformulier openen</a>
+                <a href="{{ url_for('main.complaints') }}" class="nav-card" style="display:inline-block; margin-top:0.8rem; padding:0.6rem 1rem;">Klacht indienen</a>
             </div>
         </div>
     </div>

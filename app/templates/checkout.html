@@ -92,13 +92,18 @@
         }
 
         const total = items.reduce(function (sum, item) {
-            return sum + Number(item.price || 0);
+            const qty = Number(item.qty || 1);
+            const price = Number(item.price || 0);
+            return sum + (price * qty);
         }, 0);
 
         totalField.value = String(total.toFixed(2));
 
         itemsBox.innerHTML = items.map(function (item) {
-            return '<div class="shop-cart-item"><div><strong>' + item.name + '</strong><p>' + money.format(Number(item.price || 0)) + '</p></div></div>';
+            const qty = Number(item.qty || 1);
+            const price = Number(item.price || 0);
+            const subtotal = price * qty;
+            return '<div class="shop-cart-item"><div><strong>' + item.name + '</strong><p>' + money.format(price) + ' × ' + qty + ' = ' + money.format(subtotal) + '</p></div></div>';
         }).join('');
 
         totalBox.textContent = money.format(total);

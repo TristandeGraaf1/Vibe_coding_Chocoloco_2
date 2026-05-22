@@ -56,6 +56,10 @@ def send_order_to_odoo(payment_data):
     for item in payment_data.get('cart_items', []):
         product_name = item.get('name', 'Chocoloco bestelling')
         product_price = float(item.get('price', 0) or 0)
+        try:
+            product_qty = int(item.get('qty', 1) or 1)
+        except Exception:
+            product_qty = 1
         product_lookup = models.execute_kw(
             odoo_db,
             uid,
@@ -68,7 +72,7 @@ def send_order_to_odoo(payment_data):
 
         line_values = {
             'name': product_name,
-            'product_uom_qty': 1,
+            'product_uom_qty': product_qty,
             'price_unit': product_price,
         }
 
@@ -370,12 +374,32 @@ def save_cart():
     if not isinstance(cart_items, list):
         cart_items = []
 
+    # normalize items and compute a reliable total
+    normalized = []
     try:
-        cart_total = round(float(cart_total or 0), 2)
-    except (TypeError, ValueError):
-        cart_total = 0.0
+        for it in cart_items:
+            if not isinstance(it, dict):
+                continue
+            name = it.get('name')
+            price = float(it.get('price', 0) or 0)
+            try:
+                qty = int(it.get('qty', 1) or 1)
+            except Exception:
+                qty = 1
+            if not name:
+                continue
+            normalized.append({'name': name, 'price': price, 'qty': qty})
+    except Exception:
+        normalized = []
 
-    session['shop_cart'] = cart_items
+    computed_total = round(sum(it['price'] * it['qty'] for it in normalized), 2) if normalized else 0.0
+
+    try:
+        cart_total = round(float(cart_total or computed_total or 0), 2)
+    except (TypeError, ValueError):
+        cart_total = computed_total
+
+    session['shop_cart'] = normalized
     session['shop_cart_total'] = cart_total
 
     return jsonify({'status': 'success', 'items': len(cart_items), 'total': cart_total})
@@ -424,7 +448,10 @@ def checkout():
             return render_template('checkout.html', form=form, cart_items=[], cart_total=0, cart_empty=True)
 
         if not cart_total:
-            cart_total = round(sum(float(item.get('price', 0)) for item in cart_items), 2)
+            try:
+                cart_total = round(sum(float(item.get('price', 0)) * int(item.get('qty', 1) or 1) for item in cart_items), 2)
+            except Exception:
+                cart_total = round(sum(float(item.get('price', 0)) for item in cart_items), 2)
         payment_ref = f"DEMO-{datetime.now().strftime('%Y%m%d%H%M%S')}" if is_demo_payment else f"CC-{datetime.now().strftime('%Y%m%d%H%M%S')}"
         payment_labels = dict(form.payment_method.choices)
 

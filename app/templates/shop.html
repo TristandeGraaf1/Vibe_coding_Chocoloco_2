@@ -86,7 +86,11 @@
                         <span>{{ product.weight }}</span>
                         <strong>€ {{ '%.2f'|format(product.price) }}</strong>
                     </div>
-                    <button type="button" class="shop-add-btn" data-product-name="{{ product.name }}" data-product-price="{{ product.price }}">Voeg toe aan mandje</button>
+                    <div class="shop-card-controls">
+                        <label for="qty-{{ loop.index }}" class="visually-hidden">Aantal</label>
+                        <input id="qty-{{ loop.index }}" class="shop-qty-input" type="number" min="1" value="1" data-product-name="{{ product.name }}">
+                        <button type="button" class="shop-add-btn" data-product-name="{{ product.name }}" data-product-price="{{ product.price }}">Voeg toe aan mandje</button>
+                    </div>
                 </article>
                 {% endfor %}
             </div>
@@ -130,6 +134,10 @@
 
         const money = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' });
 
+        function computeTotal(items) {
+            return items.reduce((sum, item) => sum + (Number(item.price || 0) * Number(item.qty || 0)), 0);
+        }
+
         function syncStorage() {
             const serialized = JSON.stringify(Array.from(activeCart.values()));
             localStorage.setItem(storageKey, serialized);
@@ -141,7 +149,7 @@
                 },
                 body: JSON.stringify({
                     items: Array.from(activeCart.values()),
-                    total: Array.from(activeCart.values()).reduce((sum, item) => sum + item.price, 0)
+                    total: computeTotal(Array.from(activeCart.values()))
                 })
             }).catch(function () {
                 return null;
@@ -150,9 +158,10 @@
 
         function updateCart() {
             const items = Array.from(activeCart.values());
-            cartCount.textContent = String(items.length);
+            const totalQty = items.reduce((s, it) => s + (Number(it.qty || 0)), 0);
+            cartCount.textContent = String(totalQty);
 
-            const total = items.reduce((sum, item) => sum + item.price, 0);
+            const total = computeTotal(items);
             cartTotal.textContent = money.format(total);
 
             if (!items.length) {
@@ -162,7 +171,16 @@
             }
 
             cartItems.innerHTML = items.map(function (item) {
-                return '<div class="shop-cart-item"><div><strong>' + item.name + '</strong><p>' + money.format(item.price) + '</p></div><button type="button" class="shop-cart-remove" data-product-name="' + item.name + '">Verwijder</button></div>';
+                const subtotal = Number(item.price || 0) * Number(item.qty || 0);
+                return '<div class="shop-cart-item">'
+                    + '<div><strong>' + item.name + '</strong><p>' + money.format(Number(item.price || 0)) + ' × ' + Number(item.qty || 0) + ' = ' + money.format(subtotal) + '</p></div>'
+                    + '<div class="shop-cart-controls">'
+                    + '<button type="button" class="shop-cart-decrease" data-product-name="' + item.name + '">-</button>'
+                    + '<span class="shop-cart-qty">' + Number(item.qty || 0) + '</span>'
+                    + '<button type="button" class="shop-cart-increase" data-product-name="' + item.name + '">+</button>'
+                    + '</div>'
+                    + '<button type="button" class="shop-cart-remove" data-product-name="' + item.name + '">Verwijder</button>'
+                    + '</div>';
             }).join('');
 
             syncStorage();
@@ -203,19 +221,57 @@
 
         document.getElementById('shopGrid').addEventListener('click', function (event) {
             const addButton = event.target.closest('.shop-add-btn');
-            const removeButton = event.target.closest('.shop-cart-remove');
 
             if (addButton) {
                 const productName = addButton.dataset.productName;
                 const productPrice = Number(addButton.dataset.productPrice);
-                activeCart.set(productName, { name: productName, price: productPrice });
+                const card = addButton.closest('.shop-card');
+                const qtyInput = card && card.querySelector('.shop-qty-input');
+                const qty = Math.max(1, Number(qtyInput && qtyInput.value) || 1);
+
+                if (activeCart.has(productName)) {
+                    const existing = activeCart.get(productName);
+                    existing.qty = (Number(existing.qty || 0) + qty);
+                    activeCart.set(productName, existing);
+                } else {
+                    activeCart.set(productName, { name: productName, price: productPrice, qty: qty });
+                }
                 updateCart();
                 return;
             }
+        });
+
+        cartItems.addEventListener('click', function (event) {
+            const removeButton = event.target.closest('.shop-cart-remove');
+            const decButton = event.target.closest('.shop-cart-decrease');
+            const incButton = event.target.closest('.shop-cart-increase');
 
             if (removeButton) {
                 activeCart.delete(removeButton.dataset.productName);
                 updateCart();
+                return;
+            }
+
+            if (decButton) {
+                const name = decButton.dataset.productName;
+                if (activeCart.has(name)) {
+                    const it = activeCart.get(name);
+                    it.qty = Math.max(1, Number(it.qty || 0) - 1);
+                    activeCart.set(name, it);
+                    updateCart();
+                }
+                return;
+            }
+
+            if (incButton) {
+                const name = incButton.dataset.productName;
+                if (activeCart.has(name)) {
+                    const it = activeCart.get(name);
+                    it.qty = Number(it.qty || 0) + 1;
+                    activeCart.set(name, it);
+                    updateCart();
+                }
+                return;
             }
         });
 
@@ -223,6 +279,9 @@
             const storedCart = JSON.parse(localStorage.getItem(storageKey) || '[]');
             storedCart.forEach(function (item) {
                 if (item && item.name) {
+                    // ensure qty is a number
+                    item.qty = Number(item.qty || 1);
+                    item.price = Number(item.price || 0);
                     activeCart.set(item.name, item);
                 }
             });

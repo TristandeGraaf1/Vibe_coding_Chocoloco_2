@@ -47,7 +47,8 @@
 
 <script>
     (function () {
-        localStorage.removeItem('chocoloco_shop_cart');
+        // Keep the cart after payment so the customer can review or reuse it.
+        // Remove it manually from the shop if a fresh cart is desired.
     })();
 </script>
 {% endblock %}

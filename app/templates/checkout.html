@@ -30,6 +30,7 @@
             </div>
 
             {{ form.cart_payload(id="cartPayload") }}
+            {{ form.cart_total(id="cartTotal") }}
 
             <div class="checkout-actions">
                 <a href="{{ url_for('main.shop') }}" class="btn btn-secondary">Terug naar shop</a>
@@ -67,6 +68,7 @@
         const storageKey = 'chocoloco_shop_cart';
         const money = new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' });
         const cartField = document.getElementById('cartPayload');
+        const totalField = document.getElementById('cartTotal');
         const itemsBox = document.getElementById('checkoutItems');
         const countBox = document.getElementById('checkoutCount');
         const totalBox = document.getElementById('checkoutTotal');
@@ -85,12 +87,15 @@
         if (!items.length) {
             itemsBox.innerHTML = '<p class="shop-cart-empty">Je mandje is leeg. Keer terug naar de shop om chocolade toe te voegen.</p>';
             totalBox.textContent = money.format(0);
+            totalField.value = '0';
             return;
         }
 
         const total = items.reduce(function (sum, item) {
             return sum + Number(item.price || 0);
         }, 0);
+
+        totalField.value = String(total.toFixed(2));
 
         itemsBox.innerHTML = items.map(function (item) {
             return '<div class="shop-cart-item"><div><strong>' + item.name + '</strong><p>' + money.format(Number(item.price || 0)) + '</p></div></div>';

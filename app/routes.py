@@ -360,6 +360,27 @@ def shop():
     )
 
 
+@main_bp.route('/cart/save', methods=['POST'])
+@login_required
+def save_cart():
+    payload = request.get_json(silent=True) or {}
+    cart_items = payload.get('items', [])
+    cart_total = payload.get('total', 0)
+
+    if not isinstance(cart_items, list):
+        cart_items = []
+
+    try:
+        cart_total = round(float(cart_total or 0), 2)
+    except (TypeError, ValueError):
+        cart_total = 0.0
+
+    session['shop_cart'] = cart_items
+    session['shop_cart_total'] = cart_total
+
+    return jsonify({'status': 'success', 'items': len(cart_items), 'total': cart_total})
+
+
 @main_bp.route('/checkout', methods=['GET', 'POST'])
 @login_required
 def checkout():
@@ -375,20 +396,35 @@ def checkout():
         except (TypeError, json.JSONDecodeError):
             cart_items = []
 
+        if not cart_items:
+            cart_items = session.get('shop_cart', []) or []
+
+        try:
+            cart_total = round(float(form.cart_total.data or 0), 2)
+        except (TypeError, ValueError):
+            cart_total = 0.0
+
+        if not cart_total:
+            try:
+                cart_total = round(float(session.get('shop_cart_total', 0) or 0), 2)
+            except (TypeError, ValueError):
+                cart_total = 0.0
+
         is_demo_payment = form.payment_method.data == 'demo'
 
-        if is_demo_payment and not cart_items:
+        if is_demo_payment and not cart_items and cart_total > 0:
             cart_items = [
                 {
                     'name': 'Demo Chocoloco Selection',
-                    'price': 0.00,
+                    'price': cart_total,
                 }
             ]
 
         if not cart_items:
             return render_template('checkout.html', form=form, cart_items=[], cart_total=0, cart_empty=True)
 
-        cart_total = round(sum(float(item.get('price', 0)) for item in cart_items), 2)
+        if not cart_total:
+            cart_total = round(sum(float(item.get('price', 0)) for item in cart_items), 2)
         payment_ref = f"DEMO-{datetime.now().strftime('%Y%m%d%H%M%S')}" if is_demo_payment else f"CC-{datetime.now().strftime('%Y%m%d%H%M%S')}"
         payment_labels = dict(form.payment_method.choices)
 

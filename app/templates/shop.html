@@ -133,6 +133,19 @@
         function syncStorage() {
             const serialized = JSON.stringify(Array.from(activeCart.values()));
             localStorage.setItem(storageKey, serialized);
+
+            fetch('{{ url_for('main.save_cart') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    items: Array.from(activeCart.values()),
+                    total: Array.from(activeCart.values()).reduce((sum, item) => sum + item.price, 0)
+                })
+            }).catch(function () {
+                return null;
+            });
         }
 
         function updateCart() {

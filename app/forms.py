@@ -66,4 +66,5 @@ class CheckoutForm(FlaskForm):
         validators=[DataRequired()],
     )
     cart_payload = HiddenField('Winkelmand data', validators=[Optional()])
+    cart_total = HiddenField('Winkelmand totaal', validators=[Optional()])
     submit = SubmitField('Betaal nu')

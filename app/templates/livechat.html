@@ -1,0 +1,329 @@
+{% extends 'base.html' %}
+
+{% block title %}Live chat - Chocoloco{% endblock %}
+
+{% block content %}
+<div class="container livechat-page">
+  <div class="livechat-card">
+    <div class="livechat-header">
+      <div>
+        <p class="livechat-eyebrow">Medewerkerchat</p>
+        <h2>Live chat</h2>
+      </div>
+      <span class="livechat-status">Verbonden met Odoo</span>
+    </div>
+
+    <p class="livechat-note">Je berichten worden doorgestuurd naar Odoo Discuss zodat een medewerker direct kan reageren.</p>
+
+    {% if livechat_error %}
+    <div class="livechat-alert">
+      {{ livechat_error }}
+    </div>
+    {% endif %}
+
+    <div class="livechat-thread" id="livechatThread" aria-live="polite" aria-label="Livechat berichten">
+      {% if messages %}
+        {% for message in messages %}
+          <div class="livechat-row {% if message.is_user %}user-row{% else %}agent-row{% endif %}">
+            <div class="livechat-avatar {% if message.is_user %}user-avatar{% else %}agent-avatar{% endif %}">
+              {% if message.is_user %}J{% else %}M{% endif %}
+            </div>
+            <div class="livechat-bubble {% if message.is_user %}user-bubble{% else %}agent-bubble{% endif %}">
+              <div class="livechat-meta">{{ message.author_name }}</div>
+              <div class="livechat-text">{{ message.body }}</div>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="livechat-empty">Stel je eerste vraag. Een medewerker ziet je bericht in Odoo.</div>
+      {% endif %}
+    </div>
+
+    <div class="livechat-composer">
+      <input id="livechatInput" type="text" placeholder="Typ je bericht aan een medewerker..." autocomplete="off" />
+      <button id="livechatSend" class="btn livechat-send">Verstuur</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const livechatThread = document.getElementById('livechatThread');
+const livechatInput = document.getElementById('livechatInput');
+const livechatSend = document.getElementById('livechatSend');
+
+function escapeHtml(text) {
+  return text
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function renderMessages(messages) {
+  if (!messages || !messages.length) {
+    livechatThread.innerHTML = '<div class="livechat-empty">Stel je eerste vraag. Een medewerker ziet je bericht in Odoo.</div>';
+    return;
+  }
+
+  livechatThread.innerHTML = messages.map(message => {
+    const rowClass = message.is_user ? 'user-row' : 'agent-row';
+    const avatarClass = message.is_user ? 'user-avatar' : 'agent-avatar';
+    const bubbleClass = message.is_user ? 'user-bubble' : 'agent-bubble';
+    const initial = message.is_user ? 'J' : 'M';
+    return `
+      <div class="livechat-row ${rowClass}">
+        <div class="livechat-avatar ${avatarClass}">${initial}</div>
+        <div class="livechat-bubble ${bubbleClass}">
+          <div class="livechat-meta">${escapeHtml(message.author_name || 'Odoo')}</div>
+          <div class="livechat-text">${escapeHtml(message.body || '')}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  livechatThread.scrollTop = livechatThread.scrollHeight;
+}
+
+async function refreshMessages() {
+  try {
+    const response = await fetch('/livechat/history');
+    const data = await response.json();
+    if (data && data.messages) {
+      renderMessages(data.messages);
+    }
+  } catch (error) {
+    console.error('Livechat history failed', error);
+  }
+}
+
+async function sendMessage() {
+  const text = livechatInput.value.trim();
+  if (!text) {
+    return;
+  }
+
+  livechatSend.disabled = true;
+  livechatInput.disabled = true;
+  try {
+    const response = await fetch('/livechat/message', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    });
+    const data = await response.json();
+    if (data && data.messages) {
+      renderMessages(data.messages);
+      livechatInput.value = '';
+    } else if (data && data.error) {
+      alert(data.error);
+    }
+  } catch (error) {
+    alert('Verbindingsfout: ' + error.message);
+  } finally {
+    livechatSend.disabled = false;
+    livechatInput.disabled = false;
+    livechatInput.focus();
+  }
+}
+
+livechatSend.addEventListener('click', sendMessage);
+livechatInput.addEventListener('keydown', function(event) {
+  if (event.key === 'Enter') {
+    sendMessage();
+  }
+});
+
+refreshMessages();
+setInterval(refreshMessages, 5000);
+</script>
+
+<style>
+.livechat-page {
+  max-width: 980px;
+}
+
+.livechat-card {
+  background: linear-gradient(180deg, rgba(255, 251, 247, 0.98), rgba(255, 245, 237, 0.98));
+  border: 1px solid rgba(107, 68, 35, 0.12);
+  border-radius: 24px;
+  box-shadow: 0 18px 50px rgba(107, 68, 35, 0.14);
+  padding: 1.5rem;
+}
+
+.livechat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.6rem;
+}
+
+.livechat-eyebrow {
+  margin: 0 0 0.25rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.livechat-header h2 {
+  margin: 0;
+}
+
+.livechat-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(94, 143, 46, 0.12);
+  color: var(--accent-green);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.livechat-note {
+  margin: 0 0 1rem 0;
+  color: var(--text-secondary);
+}
+
+.livechat-alert {
+  margin-bottom: 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: 14px;
+  background: rgba(220, 53, 69, 0.12);
+  color: var(--danger-color);
+  border: 1px solid rgba(220, 53, 69, 0.18);
+}
+
+.livechat-thread {
+  min-height: 420px;
+  max-height: 560px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1rem;
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.65), rgba(255,248,241,0.95));
+  border: 1px solid rgba(107, 68, 35, 0.1);
+}
+
+.livechat-empty {
+  padding: 1rem;
+  border-radius: 16px;
+  background: rgba(212, 165, 116, 0.12);
+  color: var(--text-secondary);
+}
+
+.livechat-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.7rem;
+}
+
+.user-row {
+  flex-direction: row-reverse;
+  margin-left: auto;
+}
+
+.agent-row {
+  margin-right: auto;
+}
+
+.livechat-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 42px;
+  font-weight: 700;
+  color: white;
+  box-shadow: 0 8px 18px rgba(107, 68, 35, 0.12);
+}
+
+.user-avatar {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+}
+
+.agent-avatar {
+  background: linear-gradient(135deg, #7a4d2c, #c49060);
+}
+
+.livechat-bubble {
+  max-width: min(78%, 36rem);
+  padding: 0.9rem 1rem;
+  border-radius: 18px;
+  box-shadow: 0 8px 20px rgba(107, 68, 35, 0.08);
+}
+
+.user-bubble {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+  color: white;
+  border-top-right-radius: 8px;
+}
+
+.agent-bubble {
+  background: #fff9f4;
+  color: var(--text-color);
+  border: 1px solid rgba(107, 68, 35, 0.1);
+  border-top-left-radius: 8px;
+}
+
+.livechat-meta {
+  margin-bottom: 0.25rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  opacity: 0.82;
+}
+
+.livechat-text {
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.livechat-composer {
+  display: flex;
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.livechat-composer input {
+  flex: 1;
+  border: 1px solid rgba(107, 68, 35, 0.18);
+  border-radius: 16px;
+  background: var(--card-bg);
+  color: var(--text-color);
+  padding: 0.95rem 1rem;
+  font-size: 1rem;
+}
+
+.livechat-send {
+  min-width: 8rem;
+}
+
+@media (max-width: 640px) {
+  .livechat-card {
+    padding: 1rem;
+    border-radius: 18px;
+  }
+
+  .livechat-header,
+  .livechat-composer {
+    flex-direction: column;
+  }
+
+  .livechat-status,
+  .livechat-send {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .livechat-bubble {
+    max-width: 100%;
+  }
+}
+</style>
+{% endblock %}

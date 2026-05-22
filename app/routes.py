@@ -5,7 +5,9 @@ from app.models import User, Product, ExpiryWarningRead, ExpiryWarningDismissed,
 from app.forms import LoginForm, RegisterForm, ProductForm, ProductRegisterForm, TopicForm, ReplyForm, CheckoutForm
 from datetime import datetime, timedelta
 from flask import current_app, flash
+import html
 import json
+import re
 import xmlrpc.client
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -218,6 +220,241 @@ def send_order_to_odoo(payment_data):
     )
 
     return order_id, order_name
+
+
+def _odoo_credentials():
+    odoo_url = current_app.config.get('ODOO_URL', '').strip()
+    odoo_db = current_app.config.get('ODOO_DB', '').strip()
+    odoo_username = current_app.config.get('ODOO_USERNAME', '').strip()
+    odoo_password = current_app.config.get('ODOO_PASSWORD', '').strip()
+
+    if not all([odoo_url, odoo_db, odoo_username, odoo_password]):
+        raise RuntimeError('Odoo configuratie ontbreekt. Stel ODOO_URL, ODOO_DB, ODOO_USERNAME en ODOO_PASSWORD in.')
+
+    common = xmlrpc.client.ServerProxy(f'{odoo_url}/xmlrpc/2/common')
+    uid = common.authenticate(odoo_db, odoo_username, odoo_password, {})
+    if not uid:
+        raise RuntimeError('Odoo authenticatie mislukt.')
+
+    models = xmlrpc.client.ServerProxy(f'{odoo_url}/xmlrpc/2/object')
+    return odoo_db, uid, models, odoo_password
+
+
+def _split_csv(value):
+    return [item.strip() for item in (value or '').split(',') if item.strip()]
+
+
+def _odoo_html_to_text(value):
+    cleaned = re.sub(r'<[^>]+>', '', value or '')
+    return html.unescape(cleaned).strip()
+
+
+def _find_or_create_partner(models, odoo_db, uid, odoo_password, name, email):
+    partner_id = None
+    if email:
+        partner_search = models.execute_kw(
+            odoo_db,
+            uid,
+            odoo_password,
+            'res.partner',
+            'search',
+            [[('email', '=', email)]],
+            {'limit': 1},
+        )
+        if partner_search:
+            partner_id = partner_search[0]
+
+    if not partner_id:
+        partner_id = models.execute_kw(
+            odoo_db,
+            uid,
+            odoo_password,
+            'res.partner',
+            'create',
+            [{
+                'name': name,
+                'email': email,
+            }],
+        )
+
+    return partner_id
+
+
+def _resolve_livechat_model(models, odoo_db, uid, odoo_password):
+    candidate_models = (
+        'discuss.channel',
+        'mail.channel',
+        'im_livechat.channel',
+    )
+
+    for model_name in candidate_models:
+        try:
+            fields = models.execute_kw(
+                odoo_db,
+                uid,
+                odoo_password,
+                model_name,
+                'fields_get',
+                [],
+                {'attributes': ['type']},
+            )
+            return model_name, fields or {}
+        except Exception as error:
+            error_text = str(error).lower()
+            if "doesn't exist" in error_text or 'does not exist' in error_text or 'unknown model' in error_text:
+                continue
+            continue
+
+    raise RuntimeError(
+        'Geen geschikt Odoo chatmodel gevonden. Controleer of Discuss in Odoo is geïnstalleerd '
+        'en of je Odoo-gebruiker toegang heeft tot de chat-app.'
+    )
+
+
+def _get_channel_membership_field(fields):
+    for field_name in ('channel_partner_ids', 'channel_member_ids', 'member_ids', 'partner_ids', 'channel_ids'):
+        if field_name in fields:
+            return field_name
+    return None
+
+
+def _get_livechat_thread():
+    odoo_db, uid, models, odoo_password = _odoo_credentials()
+    support_emails = _split_csv(current_app.config.get('ODOO_LIVECHAT_SUPPORT_EMAILS', ''))
+    if not support_emails:
+        raise RuntimeError('Stel ODOO_LIVECHAT_SUPPORT_EMAILS in zodat live chat naar een Odoo-medewerker wordt doorgestuurd.')
+
+    user_partner_id = _find_or_create_partner(
+        models,
+        odoo_db,
+        uid,
+        odoo_password,
+        current_user.username,
+        current_user.email,
+    )
+
+    support_partner_ids = []
+    for email in support_emails:
+        partner_search = models.execute_kw(
+            odoo_db,
+            uid,
+            odoo_password,
+            'res.partner',
+            'search',
+            [[('email', '=', email)]],
+            {'limit': 1},
+        )
+        if partner_search:
+            support_partner_ids.append(partner_search[0])
+
+    support_partner_ids = sorted(set(support_partner_ids))
+    if not support_partner_ids:
+        raise RuntimeError('Geen Odoo-medewerker gevonden voor live chat. Controleer ODOO_LIVECHAT_SUPPORT_EMAILS.')
+
+    livechat_model, livechat_fields = _resolve_livechat_model(models, odoo_db, uid, odoo_password)
+    membership_field = _get_channel_membership_field(livechat_fields)
+    channel_name = f'Chocoloco livechat - {current_user.id}'
+    search_domain = [('name', '=', channel_name)]
+    if 'channel_type' in livechat_fields:
+        search_domain.append(('channel_type', '=', 'channel'))
+    channel_search = models.execute_kw(
+        odoo_db,
+        uid,
+        odoo_password,
+        livechat_model,
+        'search',
+        [search_domain],
+        {'limit': 1},
+    )
+
+    partner_ids = sorted(set([user_partner_id] + support_partner_ids))
+    if channel_search:
+        channel_id = channel_search[0]
+        if membership_field:
+            models.execute_kw(
+                odoo_db,
+                uid,
+                odoo_password,
+                livechat_model,
+                'write',
+                [[channel_id], {membership_field: [(6, 0, partner_ids)]}],
+            )
+    else:
+        create_vals = {'name': channel_name}
+        if 'channel_type' in livechat_fields:
+            create_vals['channel_type'] = 'channel'
+        if membership_field:
+            create_vals[membership_field] = [(6, 0, partner_ids)]
+
+        try:
+            channel_id = models.execute_kw(
+                odoo_db,
+                uid,
+                odoo_password,
+                livechat_model,
+                'create',
+                [create_vals],
+            )
+        except Exception:
+            channel_id = models.execute_kw(
+                odoo_db,
+                uid,
+                odoo_password,
+                livechat_model,
+                'create',
+                [{
+                    'name': channel_name,
+                }],
+            )
+            if membership_field:
+                models.execute_kw(
+                    odoo_db,
+                    uid,
+                    odoo_password,
+                    livechat_model,
+                    'write',
+                    [[channel_id], {membership_field: [(6, 0, partner_ids)]}],
+                )
+
+    session['livechat_channel_id'] = channel_id
+    session['livechat_model'] = livechat_model
+    session['livechat_user_partner_id'] = user_partner_id
+    session['livechat_channel_name'] = channel_name
+    return odoo_db, uid, models, odoo_password, livechat_model, channel_id, user_partner_id
+
+
+def _fetch_livechat_messages(models, odoo_db, uid, odoo_password, livechat_model, channel_id, user_partner_id):
+    messages = models.execute_kw(
+        odoo_db,
+        uid,
+        odoo_password,
+        'mail.message',
+        'search_read',
+        [[('model', '=', livechat_model), ('res_id', '=', channel_id)]],
+        {
+            'fields': ['id', 'author_id', 'body', 'date', 'create_date', 'message_type'],
+            'order': 'id asc',
+        },
+    )
+
+    formatted = []
+    for message in messages:
+        author = message.get('author_id') or []
+        author_id = author[0] if isinstance(author, list) and author else None
+        author_name = author[1] if isinstance(author, list) and len(author) > 1 and author[1] else 'Odoo'
+        body = _odoo_html_to_text(message.get('body'))
+        if not body:
+            continue
+
+        formatted.append({
+            'id': message.get('id'),
+            'author_name': author_name,
+            'body': body,
+            'timestamp': message.get('date') or message.get('create_date'),
+            'is_user': author_id == user_partner_id,
+        })
+
+    return formatted
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def register():
@@ -521,6 +758,65 @@ def chocobot_message():
         reply = f"Chocobot: Ik begrijp '{text}' niet helemaal. Probeer vragen zoals 'Waar is de knop uitloggen?' of 'Hoe betaal ik?'."
 
     return jsonify({'reply': reply})
+
+
+@main_bp.route('/livechat')
+@login_required
+def livechat():
+    livechat_error = None
+    messages = []
+
+    try:
+        odoo_db, uid, models, odoo_password, livechat_model, channel_id, user_partner_id = _get_livechat_thread()
+        messages = _fetch_livechat_messages(models, odoo_db, uid, odoo_password, livechat_model, channel_id, user_partner_id)
+    except Exception as error:
+        livechat_error = str(error)
+
+    return render_template('livechat.html', livechat_error=livechat_error, messages=messages)
+
+
+@main_bp.route('/livechat/history')
+@login_required
+def livechat_history():
+    try:
+        odoo_db, uid, models, odoo_password, livechat_model, channel_id, user_partner_id = _get_livechat_thread()
+        messages = _fetch_livechat_messages(models, odoo_db, uid, odoo_password, livechat_model, channel_id, user_partner_id)
+        return jsonify({'messages': messages})
+    except Exception as error:
+        return jsonify({'error': str(error)}), 400
+
+
+@main_bp.route('/livechat/message', methods=['POST'])
+@login_required
+def livechat_message():
+    payload = request.get_json(silent=True) or {}
+    text = (payload.get('text') or '').strip()
+    if not text:
+        return jsonify({'error': 'No text provided'}), 400
+
+    try:
+        odoo_db, uid, models, odoo_password, livechat_model, channel_id, user_partner_id = _get_livechat_thread()
+        models.execute_kw(
+            odoo_db,
+            uid,
+            odoo_password,
+            livechat_model,
+            'message_post',
+            [[channel_id]],
+            {
+                'body': html.escape(text),
+                'message_type': 'comment',
+                'subtype_xmlid': 'mail.mt_comment',
+                'author_id': user_partner_id,
+                'email_from': current_user.email,
+            },
+        )
+
+        messages = _fetch_livechat_messages(models, odoo_db, uid, odoo_password, livechat_model, channel_id, user_partner_id)
+        return jsonify({'messages': messages})
+    except Exception as error:
+        current_app.logger.exception('Livechat message send failed')
+        return jsonify({'error': str(error)}), 400
 
 @main_bp.route('/products')
 @login_required

@@ -8,3 +8,4 @@ class Config:
     ODOO_DB = os.environ.get('ODOO_DB', '')
     ODOO_USERNAME = os.environ.get('ODOO_USERNAME', '')
     ODOO_PASSWORD = os.environ.get('ODOO_PASSWORD', '')
+    ODOO_LIVECHAT_SUPPORT_EMAILS = os.environ.get('ODOO_LIVECHAT_SUPPORT_EMAILS') or os.environ.get('ODOO_USERNAME', '')

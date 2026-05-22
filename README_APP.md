@@ -60,6 +60,7 @@ Zorg dat deze environment-variabelen gezet zijn zodat geslaagde checkout-orders 
 - `ODOO_DB`
 - `ODOO_USERNAME`
 - `ODOO_PASSWORD`
+- `ODOO_LIVECHAT_SUPPORT_EMAILS` - optioneel; als je dit niet zet, gebruikt de app automatisch `ODOO_USERNAME`
 
 De app gebruikt XML-RPC om een klant te vinden of aan te maken, een verkooporder te maken en de order te bevestigen.
 
@@ -73,6 +74,16 @@ Op Render moet je deze variabelen handmatig invullen in je web service, of de se
 - `ODOO_PASSWORD = <jouw wachtwoord>`
 
 Belangrijk: je lokale `.env` wordt op Render niet automatisch meegepakt. Zonder deze variabelen krijg je precies de fout dat de Odoo-config ontbreekt.
+
+## Odoo livechat
+
+De livechat-pagina stuurt berichten door naar een Odoo Discuss-kanaal en haalt de thread daarna weer op.
+
+Stel hiervoor naast de order-instellingen ook deze variabele in:
+
+- `ODOO_LIVECHAT_SUPPORT_EMAILS` - komma-gescheiden lijst met Odoo-partner-e-mails van medewerkers die de chat moeten ontvangen
+
+De app maakt voor elke ingelogde gebruiker een eigen Odoo-channel aan en voegt de opgegeven support-partners toe.
 
 ## Volgende Stappen (voor volle app)
 

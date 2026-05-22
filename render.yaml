@@ -15,3 +15,5 @@ services:
         sync: false
       - key: ODOO_PASSWORD
         sync: false
+      - key: ODOO_LIVECHAT_SUPPORT_EMAILS
+        sync: false

@@ -318,6 +318,13 @@ def _get_channel_membership_field(fields):
     return None
 
 
+def _membership_commands_for_partners(membership_field, partner_ids):
+    # Use add-only commands so Odoo does not try to unlink existing members.
+    if membership_field in ('channel_partner_ids', 'partner_ids'):
+        return [(4, partner_id) for partner_id in partner_ids]
+    return None
+
+
 def _get_livechat_thread():
     odoo_db, uid, models, odoo_password = _odoo_credentials()
     support_emails = _split_csv(current_app.config.get('ODOO_LIVECHAT_SUPPORT_EMAILS', ''))
@@ -368,23 +375,27 @@ def _get_livechat_thread():
     )
 
     partner_ids = sorted(set([user_partner_id] + support_partner_ids))
+    membership_commands = _membership_commands_for_partners(membership_field, partner_ids)
     if channel_search:
         channel_id = channel_search[0]
-        if membership_field:
-            models.execute_kw(
-                odoo_db,
-                uid,
-                odoo_password,
-                livechat_model,
-                'write',
-                [[channel_id], {membership_field: [(6, 0, partner_ids)]}],
-            )
+        if membership_field and membership_commands:
+            try:
+                models.execute_kw(
+                    odoo_db,
+                    uid,
+                    odoo_password,
+                    livechat_model,
+                    'write',
+                    [[channel_id], {membership_field: membership_commands}],
+                )
+            except Exception:
+                current_app.logger.warning('Livechat kanaalleden konden niet worden bijgewerkt door Odoo-rechten.')
     else:
         create_vals = {'name': channel_name}
         if 'channel_type' in livechat_fields:
             create_vals['channel_type'] = 'channel'
-        if membership_field:
-            create_vals[membership_field] = [(6, 0, partner_ids)]
+        if membership_field and membership_commands:
+            create_vals[membership_field] = membership_commands
 
         try:
             channel_id = models.execute_kw(
@@ -406,15 +417,18 @@ def _get_livechat_thread():
                     'name': channel_name,
                 }],
             )
-            if membership_field:
-                models.execute_kw(
-                    odoo_db,
-                    uid,
-                    odoo_password,
-                    livechat_model,
-                    'write',
-                    [[channel_id], {membership_field: [(6, 0, partner_ids)]}],
-                )
+            if membership_field and membership_commands:
+                try:
+                    models.execute_kw(
+                        odoo_db,
+                        uid,
+                        odoo_password,
+                        livechat_model,
+                        'write',
+                        [[channel_id], {membership_field: membership_commands}],
+                    )
+                except Exception:
+                    current_app.logger.warning('Livechat kanaalleden konden niet worden gekoppeld door Odoo-rechten.')
 
     session['livechat_channel_id'] = channel_id
     session['livechat_model'] = livechat_model

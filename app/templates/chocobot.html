@@ -12,11 +12,6 @@
     </div>
 
     <div class="chocobot-chat" id="chat" aria-live="polite" aria-label="Chatberichtenscherm">
-      <div class="bot-message chocobot-bubble">Hallo! Stel een vraag over de app of je bestelling.</div>
-      <div class="typing-indicator" id="typingIndicator" hidden>
-        <span class="typing-label">Chocobot is aan het typen</span>
-        <span class="typing-dots" aria-hidden="true"><span></span><span></span><span></span></span>
-      </div>
     </div>
 
     <div class="chocobot-composer">
@@ -29,30 +24,109 @@
 <script>
 const sendButton = document.getElementById('send');
 const messageInput = document.getElementById('msg');
-const typingIndicator = document.getElementById('typingIndicator');
+const chat = document.getElementById('chat');
+let typingIndicator = null;
+let welcomeTimer = null;
 
 sendButton.addEventListener('click', sendMessage);
 messageInput.addEventListener('keydown', function(e){ if(e.key==='Enter'){ sendMessage(); }});
 
 function appendMessage(kind, text){
-  const chat = document.getElementById('chat');
-  const el = document.createElement('div');
-  el.className = kind === 'user' ? 'user-message chocobot-bubble' : 'bot-message chocobot-bubble';
-  el.textContent = text;
-  chat.appendChild(el);
+  if (kind === 'bot') {
+    const row = document.createElement('div');
+    row.className = 'chocobot-message-row bot-row';
+
+    const avatar = document.createElement('img');
+    avatar.className = 'chocobot-avatar';
+    avatar.src = "{{ url_for('static', filename='images/chocobot-avatar.svg') }}";
+    avatar.alt = 'Chocobot profielfoto';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'bot-message chocobot-bubble';
+    bubble.textContent = text;
+
+    row.appendChild(avatar);
+    row.appendChild(bubble);
+    chat.appendChild(row);
+  } else {
+    const el = document.createElement('div');
+    el.className = 'user-message chocobot-bubble';
+    el.textContent = text;
+    chat.appendChild(el);
+  }
   chat.scrollTop = chat.scrollHeight;
 }
 
+function createTypingIndicator(){
+  if (typingIndicator) {
+    return typingIndicator;
+  }
+  const row = document.createElement('div');
+  row.className = 'chocobot-message-row bot-row typing-row';
+
+  const avatar = document.createElement('img');
+  avatar.className = 'chocobot-avatar';
+  avatar.src = "{{ url_for('static', filename='images/chocobot-avatar.svg') }}";
+  avatar.alt = 'Chocobot profielfoto';
+
+  typingIndicator = document.createElement('div');
+  typingIndicator.className = 'typing-indicator';
+  typingIndicator.setAttribute('aria-live', 'polite');
+  typingIndicator.innerHTML = '<span class="typing-label">Chocobot is aan het typen</span><span class="typing-dots" aria-hidden="true"><span></span><span></span><span></span></span>';
+
+  row.appendChild(avatar);
+  row.appendChild(typingIndicator);
+  typingIndicator.dataset.wrapper = 'true';
+  typingIndicator = row;
+  return typingIndicator;
+}
+
 function setTyping(isTyping){
-  typingIndicator.hidden = !isTyping;
   sendButton.disabled = isTyping;
   messageInput.disabled = isTyping;
   if (isTyping) {
-    document.getElementById('chat').scrollTop = document.getElementById('chat').scrollHeight;
+    const indicatorRow = createTypingIndicator();
+    if (!indicatorRow.isConnected) {
+      chat.appendChild(indicatorRow);
+    }
+    chat.scrollTop = chat.scrollHeight;
   } else {
     messageInput.focus();
   }
 }
+
+function hideTypingIndicator(){
+  if (typingIndicator && typingIndicator.isConnected) {
+    typingIndicator.remove();
+  }
+  typingIndicator = null;
+  sendButton.disabled = false;
+  messageInput.disabled = false;
+}
+
+function showWelcomeMessage(){
+  const el = document.createElement('div');
+  el.className = 'bot-message chocobot-bubble';
+  el.textContent = 'Hallo! Stel een vraag over de app of je bestelling.';
+  const row = document.createElement('div');
+  row.className = 'chocobot-message-row bot-row';
+
+  const avatar = document.createElement('img');
+  avatar.className = 'chocobot-avatar';
+  avatar.src = "{{ url_for('static', filename='images/chocobot-avatar.svg') }}";
+  avatar.alt = 'Chocobot profielfoto';
+
+  row.appendChild(avatar);
+  row.appendChild(el);
+  chat.appendChild(row);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+setTyping(true);
+welcomeTimer = window.setTimeout(function(){
+  showWelcomeMessage();
+  hideTypingIndicator();
+}, 1400);
 
 async function sendMessage(){
   const text = messageInput.value.trim();
@@ -73,7 +147,7 @@ async function sendMessage(){
   }catch(err){
     appendMessage('bot', 'Verbindingsfout: ' + err.message);
   } finally {
-    setTyping(false);
+    hideTypingIndicator();
   }
 }
 </script>
@@ -143,6 +217,32 @@ async function sendMessage(){
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+.chocobot-message-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.7rem;
+  max-width: 100%;
+}
+
+.bot-row {
+  margin-right: auto;
+}
+
+.typing-row {
+  align-items: center;
+}
+
+.chocobot-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  flex: 0 0 42px;
+  background: #fff;
+  border: 2px solid rgba(107, 68, 35, 0.15);
+  box-shadow: 0 8px 18px rgba(107, 68, 35, 0.12);
+  padding: 4px;
 }
 
 .chocobot-bubble {
@@ -260,6 +360,12 @@ async function sendMessage(){
 
   .chocobot-bubble {
     max-width: 100%;
+  }
+
+  .chocobot-avatar {
+    width: 36px;
+    height: 36px;
+    flex-basis: 36px;
   }
 }
 </style>

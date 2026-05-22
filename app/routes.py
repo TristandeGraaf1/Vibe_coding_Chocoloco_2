@@ -8,6 +8,7 @@ from flask import current_app, flash
 import html
 import json
 import re
+import uuid
 import xmlrpc.client
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -325,11 +326,21 @@ def _membership_commands_for_partners(membership_field, partner_ids):
     return None
 
 
+def _get_livechat_session_key():
+    session_key = session.get('livechat_session_key')
+    if not session_key:
+        session_key = uuid.uuid4().hex
+        session['livechat_session_key'] = session_key
+    return session_key
+
+
 def _get_livechat_thread():
     odoo_db, uid, models, odoo_password = _odoo_credentials()
     support_emails = _split_csv(current_app.config.get('ODOO_LIVECHAT_SUPPORT_EMAILS', ''))
     if not support_emails:
         raise RuntimeError('Stel ODOO_LIVECHAT_SUPPORT_EMAILS in zodat live chat naar een Odoo-medewerker wordt doorgestuurd.')
+
+    livechat_session_key = _get_livechat_session_key()
 
     user_partner_id = _find_or_create_partner(
         models,
@@ -360,7 +371,7 @@ def _get_livechat_thread():
 
     livechat_model, livechat_fields = _resolve_livechat_model(models, odoo_db, uid, odoo_password)
     membership_field = _get_channel_membership_field(livechat_fields)
-    channel_name = f'Chocoloco livechat - {current_user.id}'
+    channel_name = f'Chocoloco livechat - {current_user.id} - {livechat_session_key}'
     search_domain = [('name', '=', channel_name)]
     if 'channel_type' in livechat_fields:
         search_domain.append(('channel_type', '=', 'channel'))
@@ -434,6 +445,7 @@ def _get_livechat_thread():
     session['livechat_model'] = livechat_model
     session['livechat_user_partner_id'] = user_partner_id
     session['livechat_channel_name'] = channel_name
+    session['livechat_channel_key'] = livechat_session_key
     return odoo_db, uid, models, odoo_password, livechat_model, channel_id, user_partner_id
 
 

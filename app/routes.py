@@ -245,6 +245,294 @@ def _odoo_credentials():
     return odoo_db, uid, models, odoo_password
 
 
+def _lookup_odoo_product_by_barcode(barcode):
+    barcode = (barcode or '').strip()
+    if not barcode:
+        return None
+
+    odoo_db, uid, models, odoo_password = _odoo_credentials()
+    search_specs = [
+        ('product.product', ['barcode', 'default_code']),
+        ('product.template', ['barcode', 'default_code']),
+        ('product.product', ['name']),
+        ('product.template', ['name']),
+    ]
+
+    for model_name, fields_to_search in search_specs:
+        for operator in ('=', 'ilike'):
+            domain = ['|'] * (len(fields_to_search) - 1)
+            for index, field_name in enumerate(fields_to_search):
+                if index == 0:
+                    domain.append((field_name, operator, barcode))
+                else:
+                    domain.append((field_name, operator, barcode))
+
+            fields = ['id', 'name', 'display_name', 'barcode', 'default_code']
+            if model_name == 'product.product':
+                fields.append('product_tmpl_id')
+
+            matches = models.execute_kw(
+                odoo_db,
+                uid,
+                odoo_password,
+                model_name,
+                'search_read',
+                [domain],
+                {'fields': fields, 'limit': 1},
+            )
+            if matches:
+                match = matches[0]
+                if model_name == 'product.template':
+                    variant_id = models.execute_kw(
+                        odoo_db,
+                        uid,
+                        odoo_password,
+                        'product.product',
+                        'search',
+                        [[('product_tmpl_id', '=', match['id'])]],
+                        {'limit': 1},
+                    )
+                    if variant_id:
+                        variant = models.execute_kw(
+                            odoo_db,
+                            uid,
+                            odoo_password,
+                            'product.product',
+                            'search_read',
+                            [[('id', '=', variant_id[0])]],
+                            {'fields': ['id', 'name', 'display_name', 'barcode', 'default_code'], 'limit': 1},
+                        )
+                        if variant:
+                            variant_record = variant[0]
+                            variant_record['odoo_model'] = 'product.product'
+                            return variant_record
+
+                match['odoo_model'] = model_name
+                return match
+
+    return None
+
+
+def _lookup_local_product_by_barcode(barcode):
+    barcode = (barcode or '').strip()
+    if not barcode:
+        return None
+
+    barcode_marker = f'Barcode: {barcode}'
+    product = Product.query.filter(Product.description.contains(barcode_marker)).order_by(Product.added_at.desc()).first()
+    if not product:
+        return None
+
+    return {
+        'id': product.id,
+        'name': product.name,
+        'display_name': product.name,
+        'barcode': barcode,
+        'default_code': barcode,
+        'odoo_model': 'local.product',
+    }
+
+
+def _lookup_barcode_name_from_open_food_facts(barcode):
+    barcode = (barcode or '').strip()
+    if not barcode:
+        return None
+
+    request_obj = urllib.request.Request(
+        f'https://world.openfoodfacts.org/api/v2/product/{urllib.parse.quote(barcode)}.json',
+        headers={
+            'User-Agent': 'ChocolocoBarcodeScanner/1.0',
+            'Accept': 'application/json',
+        },
+        method='GET',
+    )
+
+    with urllib.request.urlopen(request_obj, timeout=10) as response:
+        payload = json.loads(response.read().decode('utf-8', errors='replace'))
+
+    if payload.get('status') != 1:
+        return None
+
+    product = payload.get('product') or {}
+    candidate_name = (
+        product.get('product_name')
+        or product.get('product_name_en')
+        or product.get('generic_name')
+        or product.get('brands')
+        or ''
+    ).strip()
+    if not candidate_name:
+        return None
+
+    return {
+        'id': None,
+        'name': candidate_name,
+        'display_name': candidate_name,
+        'barcode': barcode,
+        'default_code': barcode,
+        'odoo_model': 'openfoodfacts.product',
+        'source_name': 'openfoodfacts',
+    }
+
+
+def _sync_barcode_to_existing_odoo_product(models, odoo_db, uid, odoo_password, product_name, barcode):
+    product_name = (product_name or '').strip()
+    barcode = (barcode or '').strip()
+    if not product_name or not barcode:
+        return None
+
+    search_specs = [
+        ('product.template', [('name', '=', product_name)]),
+        ('product.template', [('name', 'ilike', product_name)]),
+        ('product.product', [('name', '=', product_name)]),
+        ('product.product', [('name', 'ilike', product_name)]),
+    ]
+
+    for model_name, domain in search_specs:
+        matches = models.execute_kw(
+            odoo_db,
+            uid,
+            odoo_password,
+            model_name,
+            'search_read',
+            [domain],
+            {'fields': ['id', 'name', 'display_name', 'barcode', 'default_code'], 'limit': 1},
+        )
+        if not matches:
+            continue
+
+        record = matches[0]
+        values_to_write = {'barcode': barcode, 'default_code': barcode}
+        try:
+            models.execute_kw(
+                odoo_db,
+                uid,
+                odoo_password,
+                model_name,
+                'write',
+                [[record['id']], values_to_write],
+            )
+        except Exception:
+            current_app.logger.exception('Failed to update %s with barcode %s', model_name, barcode)
+            continue
+
+        record.update(values_to_write)
+        record['odoo_model'] = model_name
+        return record
+
+    return None
+
+
+def _create_odoo_product_with_barcode(product_name, barcode):
+    barcode = (barcode or '').strip()
+    product_name = (product_name or '').strip()
+    if not barcode:
+        raise RuntimeError('Geen barcode ontvangen voor Odoo-productregistratie.')
+    if not product_name:
+        raise RuntimeError('Geen productnaam ontvangen voor Odoo-productregistratie.')
+
+    existing_product = _lookup_odoo_product_by_barcode(barcode)
+    if existing_product:
+        return existing_product
+
+    odoo_db, uid, models, odoo_password = _odoo_credentials()
+
+    synced_product = _sync_barcode_to_existing_odoo_product(
+        models,
+        odoo_db,
+        uid,
+        odoo_password,
+        product_name,
+        barcode,
+    )
+    if synced_product:
+        return synced_product
+
+    template_vals = {
+        'name': product_name,
+        'barcode': barcode,
+        'default_code': barcode,
+        'sale_ok': True,
+    }
+
+    product_type_fields = models.execute_kw(
+        odoo_db,
+        uid,
+        odoo_password,
+        'product.template',
+        'fields_get',
+        [],
+        {'attributes': ['type']},
+    )
+    if 'detailed_type' in product_type_fields:
+        template_vals['detailed_type'] = 'product'
+    elif 'type' in product_type_fields:
+        template_vals['type'] = 'product'
+
+    try:
+        template_id = models.execute_kw(
+            odoo_db,
+            uid,
+            odoo_password,
+            'product.template',
+            'create',
+            [template_vals],
+        )
+        template_lookup = models.execute_kw(
+            odoo_db,
+            uid,
+            odoo_password,
+            'product.template',
+            'search_read',
+            [[('id', '=', template_id)]],
+            {'fields': ['id', 'name', 'barcode', 'default_code'], 'limit': 1},
+        )
+        if template_lookup:
+            template_record = template_lookup[0]
+            template_record['odoo_model'] = 'product.template'
+            return template_record
+
+        return {'id': template_id, 'name': product_name, 'barcode': barcode, 'default_code': barcode, 'odoo_model': 'product.template'}
+    except Exception:
+        current_app.logger.exception('product.template create failed for barcode %s, retrying with product.product', barcode)
+
+    product_vals = {
+        'name': product_name,
+        'barcode': barcode,
+        'default_code': barcode,
+        'sale_ok': True,
+    }
+    if 'detailed_type' in product_type_fields:
+        product_vals['detailed_type'] = 'product'
+    elif 'type' in product_type_fields:
+        product_vals['type'] = 'product'
+
+    product_id = models.execute_kw(
+        odoo_db,
+        uid,
+        odoo_password,
+        'product.product',
+        'create',
+        [product_vals],
+    )
+
+    product_lookup = models.execute_kw(
+        odoo_db,
+        uid,
+        odoo_password,
+        'product.product',
+        'search_read',
+        [[('id', '=', product_id)]],
+        {'fields': ['id', 'name', 'barcode', 'default_code'], 'limit': 1},
+    )
+    if product_lookup:
+        product_record = product_lookup[0]
+        product_record['odoo_model'] = 'product.product'
+        return product_record
+
+    return {'id': product_id, 'name': product_name, 'barcode': barcode, 'default_code': barcode, 'odoo_model': 'product.product'}
+
+
 def _resolve_helpdesk_ticket_model(models, odoo_db, uid, odoo_password):
     fields = models.execute_kw(
         odoo_db,
@@ -1373,17 +1661,70 @@ def all_products():
 def add_product():
     form = ProductRegisterForm()
     if form.validate_on_submit():
+        barcode = form.product_code.data.strip()
+        product_name = form.name.data.strip()
+        odoo_product = None
+        odoo_sync_error = None
+        try:
+            odoo_product = _create_odoo_product_with_barcode(product_name, barcode)
+        except Exception as error:
+            odoo_sync_error = str(error)
+            current_app.logger.exception('Odoo product registration failed for barcode %s', barcode)
+
         product = Product(
             user_id=current_user.id,
-            name=form.name.data,
+            name=product_name,
             expiry_date=form.expiry_date.data,
-            description=f'Productcode: {form.product_code.data} | Geregistreerd via dummy QR-scan'
+            description=f'Barcode: {barcode} | Odoo: {(odoo_product or {}).get("name", "niet gesynchroniseerd")} | Geregistreerd via scan'
         )
         db.session.add(product)
         db.session.commit()
+        if odoo_sync_error:
+            flash(f'Product is lokaal geregistreerd, maar Odoo-synchronisatie is mislukt: {odoo_sync_error}', 'warning')
+        else:
+            flash('Product is geregistreerd en voorzien van een barcode in Odoo.', 'success')
         return redirect(url_for('main.all_products'))
 
     return render_template('product/register.html', form=form)
+
+
+@main_bp.route('/api/product-lookup', methods=['GET'])
+@login_required
+def lookup_product_by_barcode():
+    barcode = (request.args.get('barcode') or '').strip()
+    if not barcode:
+        return jsonify({'found': False, 'error': 'Geen barcode ontvangen.'})
+
+    try:
+        product = _lookup_odoo_product_by_barcode(barcode)
+        lookup_source = 'odoo'
+        if not product:
+            product = _lookup_local_product_by_barcode(barcode)
+            lookup_source = 'local'
+        if not product:
+            product = _lookup_barcode_name_from_open_food_facts(barcode)
+            lookup_source = 'openfoodfacts'
+
+        if not product:
+            return jsonify({
+                'found': False,
+                'barcode': barcode,
+                'suggested_name': f'Product {barcode}',
+                'source': 'fallback',
+            })
+
+        return jsonify({
+            'found': True,
+            'barcode': product.get('barcode') or barcode,
+            'name': product.get('display_name') or product.get('name') or '',
+            'odoo_id': product.get('id'),
+            'odoo_model': product.get('odoo_model'),
+            'default_code': product.get('default_code') or '',
+            'source': lookup_source,
+        })
+    except Exception as error:
+        current_app.logger.exception('Product lookup by barcode failed for %s', barcode)
+        return jsonify({'found': False, 'barcode': barcode, 'error': str(error)}), 500
 
 @main_bp.route('/notifications/expiry-warning/<int:product_id>/read', methods=['POST'])
 @login_required

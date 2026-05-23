@@ -7,7 +7,7 @@
     <div class="page-header">
         <a href="{{ url_for('main.product_hub') }}" class="back-link">← Terug naar producten</a>
         <h1>Product registreren</h1>
-        <p>Vul een productcode in of gebruik de dummy QR-scan om een code in te vullen.</p>
+        <p>Vul een barcode in of gebruik de scanner om de code automatisch in te vullen.</p>
     </div>
 
     <div class="register-layout">
@@ -62,11 +62,11 @@
                 <div id="qr-reader" style="width:100%;"></div>
                 <div id="qr-reader-results" class="qr-grid" aria-live="polite"></div>
             </div>
-            <h2>Scanner (QR of barcode)</h2>
-            <p>Gebruik je camera om een QR-code of barcode te scannen; de productcode wordt automatisch ingevuld.</p>
+            <h2>Barcode scanner</h2>
+            <p>Scan de barcode van het product. Als de barcode bekend is in Odoo vullen we de productnaam automatisch in en registreren we het product zodra alle velden compleet zijn.</p>
             <button type="button" class="btn btn-secondary btn-block" id="toggle-scan-button">Start scanner</button>
             <button type="button" class="btn btn-secondary btn-block" id="dummy-scan-button" style="display:none;margin-top:8px;">Gebruik dummy code</button>
-            <p class="qr-hint">Na de scan kun je het product direct registreren.</p>
+            <p class="qr-hint">Na een scan kun je het product direct laten registreren.</p>
         </div>
     </div>
 </div>
@@ -80,355 +80,370 @@
 <!-- ZXing (multi-format) for robust live decoding of 1D/2D codes -->
 <script src="https://unpkg.com/@zxing/library@0.18.6/umd/index.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function(){
-    console.log('QR scanner init');
-    const toggleButton = document.getElementById('toggle-scan-button');
-    const resultsEl = document.getElementById('qr-reader-results');
-    const readerId = 'qr-reader';
-    let html5QrCode = null;
-    let scanning = false;
-    let zxingReader = null;
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('product-register-form');
+        const toggleButton = document.getElementById('toggle-scan-button');
+        const resultsEl = document.getElementById('qr-reader-results');
+        const readerEl = document.getElementById('qr-reader');
+        const dummyScanBtn = document.getElementById('dummy-scan-button');
+        let scanning = false;
+        let activeStream = null;
+        let activeReader = null;
+        let autoSubmitPending = false;
+        let quaggaHandlerRegistered = false;
 
-    function setProductCode(value){
-        let el = document.getElementById('product_code');
-        if(!el) el = document.querySelector('input[name="product_code"]');
-        if(!el) el = document.querySelector('input[id$="product_code"]');
-        if(el){
-            el.value = value;
-            el.focus();
-            try{ el.dispatchEvent(new Event('input', { bubbles: true })); }catch(e){}
-            try{ el.dispatchEvent(new Event('change', { bubbles: true })); }catch(e){}
-        } else {
-            console.warn('product_code input not found to set value');
+        function getField(name) {
+            if (!form) {
+                return document.querySelector('[name="' + name + '"]');
+            }
+            return form.querySelector('[name="' + name + '"]') || document.querySelector('[name="' + name + '"]');
         }
-    }
 
-    function showResult(text) {
-        console.log('QR:', text);
-        if(resultsEl) resultsEl.textContent = text;
-    }
+        function getValue(name) {
+            const field = getField(name);
+            return field ? (field.value || '').trim() : '';
+        }
 
-    function loadLocalFallback(cb){
-        if(window.Html5Qrcode) return cb(true);
-        try{
-            var s = document.createElement('script');
-            s.src = "{{ url_for('static', filename='js/html5-qrcode.min.js') }}";
-            s.onload = function(){ cb(!!window.Html5Qrcode); };
-            s.onerror = function(){ cb(false); };
-            document.head.appendChild(s);
-        }catch(e){ cb(false); }
-    }
+        function setValue(name, value) {
+            const field = getField(name);
+            if (!field) {
+                return false;
+            }
+            field.value = value;
+            field.dispatchEvent(new Event('input', { bubbles: true }));
+            field.dispatchEvent(new Event('change', { bubbles: true }));
+            return true;
+        }
 
-    // try CDN then fallback to local copy
-    if(!window.Html5Qrcode){
-        setTimeout(function(){
-            if(!window.Html5Qrcode){
-                loadLocalFallback(function(ok){
-                    if(!ok){
-                        showResult('QR library niet geladen — fallback niet beschikbaar.');
-                        var dummyBtn = document.getElementById('dummy-scan-button');
-                        if(dummyBtn) dummyBtn.style.display = 'block';
-                    } else {
-                        console.log('Loaded local html5-qrcode');
+        function showResult(message) {
+            if (resultsEl) {
+                resultsEl.textContent = message;
+            }
+        }
+
+        function resetScannerView() {
+            if (readerEl) {
+                readerEl.innerHTML = '';
+            }
+        }
+
+        function stopActiveStream() {
+            if (activeStream) {
+                activeStream.getTracks().forEach(track => track.stop());
+                activeStream = null;
+            }
+        }
+
+        function stopScanner() {
+            scanning = false;
+            if (activeReader && activeReader.reset) {
+                try {
+                    activeReader.reset();
+                } catch (error) {
+                    console.debug('Barcode reader reset failed', error);
+                }
+                activeReader = null;
+            }
+            if (window.Quagga && typeof Quagga.stop === 'function') {
+                try {
+                    Quagga.stop();
+                } catch (error) {
+                    console.debug('Quagga stop failed', error);
+                }
+            }
+            stopActiveStream();
+            if (toggleButton) {
+                toggleButton.textContent = 'Start scanner';
+            }
+            resetScannerView();
+        }
+
+        function maybeAutoSubmit() {
+            if (!autoSubmitPending) {
+                return;
+            }
+
+            if (!getValue('product_code') || !getValue('name') || !getValue('expiry_date')) {
+                return;
+            }
+
+            autoSubmitPending = false;
+            showResult('Alle velden zijn ingevuld. Product wordt automatisch geregistreerd...');
+            window.setTimeout(function() {
+                if (form && typeof form.requestSubmit === 'function') {
+                    form.requestSubmit();
+                } else if (form) {
+                    form.submit();
+                }
+            }, 250);
+        }
+
+        async function lookupBarcode(barcode) {
+            try {
+                const response = await fetch('{{ url_for("main.lookup_product_by_barcode") }}?barcode=' + encodeURIComponent(barcode), {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
                     }
                 });
-            }
-        }, 600);
-    }
+                const data = await response.json();
 
-    async function startScanner() {
-        console.log('startScanner called');
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            showResult('Geen camera-API beschikbaar in deze browser.');
-            return;
-        }
+                const resolvedName = (data && (data.name || data.suggested_name)) ? (data.name || data.suggested_name) : '';
 
-        // Prefer html5-qrcode if available
-        if (window.Html5Qrcode) {
-            try{
-                html5QrCode = new Html5Qrcode(readerId);
-                const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-                await html5QrCode.start({ facingMode: 'environment' }, config,
-                    qrCodeMessage => {
-                        showResult('Gescand: ' + qrCodeMessage);
-                        setProductCode(qrCodeMessage);
-                        stopScanner();
-                    },
-                    errorMessage => {
-                        // ignore intermittent scan errors
-                        console.debug('html5-qrcode error:', errorMessage);
+                if (resolvedName) {
+                    setValue('name', resolvedName);
+                    if (data && data.source === 'odoo') {
+                        showResult('Barcode gevonden in Odoo: ' + resolvedName);
+                    } else if (data && data.source === 'local') {
+                        showResult('Barcode gevonden in je eigen registraties: ' + resolvedName);
+                    } else {
+                        showResult('Geen Odoo-match, voorstelnaam ingevuld: ' + resolvedName);
                     }
-                );
-                scanning = true;
-                if(toggleButton) toggleButton.textContent = 'Stop scanner';
-                console.log('html5-qrcode started');
-                return;
-            }catch(err){
-                console.warn('html5-qrcode start failed', err);
-                showResult('Camera toegang mislukt (html5-qrcode): ' + err.message || err);
+                } else {
+                    showResult('Barcode gescand: ' + barcode + '. Er is geen productnaam gevonden.');
+                }
+
+                maybeAutoSubmit();
+            } catch (error) {
+                console.warn('Barcode lookup failed', error);
+                setValue('name', 'Product ' + barcode);
+                showResult('Barcode gescand: ' + barcode + '. Fallbacknaam ingevuld.');
+                maybeAutoSubmit();
             }
         }
 
-        // Try ZXing multi-format reader if available (handles QR + 1D reliably)
-        try {
-            const BrowserCodeReader = (window.ZXing && window.ZXing.BrowserMultiFormatReader) || window.BrowserMultiFormatReader || (window.ZXing && window.ZXing.BrowserBarcodeReader);
-            if (BrowserCodeReader) {
-                try {
-                    // stop any existing streams
-                    try{ await stopScanner(); }catch(e){}
-                    const reader = document.getElementById(readerId);
-                    reader.innerHTML = '';
-                    const video = document.createElement('video');
-                    video.id = 'qr-video';
-                    video.style.width = '100%';
-                    reader.appendChild(video);
-
-                    zxingReader = new BrowserCodeReader();
-                    zxingReader.decodeFromVideoDevice(null, video, (result, err) => {
-                        if (result && result.text) {
-                            console.log('ZXing result', result.text);
-                            showResult('Gescand (zxing): ' + result.text);
-                            setProductCode(result.text);
-                            try{ zxingReader.reset(); }catch(e){}
-                            scanning = false;
-                            if(toggleButton) toggleButton.textContent = 'Start scanner';
-                        }
-                        if (err) {
-                            // non-fatal per-frame errors come here
-                            // console.debug('zxing err', err);
-                        }
-                    });
-                    scanning = true;
-                    if(toggleButton) toggleButton.textContent = 'Stop scanner';
-                    console.log('ZXing started');
-                    return;
-                } catch (zxErr) {
-                    console.warn('ZXing start failed', zxErr);
-                    showResult('ZXing start faalde: ' + (zxErr.message || zxErr));
-                }
-            }
-        } catch(e){ console.debug('zxing check failed', e); }
-
-        // Fallback: use BarcodeDetector API if available (support QR + common barcode formats)
-                    // ensure any existing camera streams are stopped before Quagga tries to open the device
-                    try{ await stopScanner(); } catch(e){ console.debug('stop before quagga failed', e); }
-                    // small delay to let device release complete
-                    await new Promise(r=>setTimeout(r, 250));
-
-        if ('BarcodeDetector' in window) {
-            try {
-                const formats = ['qr_code','ean_13','ean_8','code_128','code_39','code_93','codabar','itf','pdf417','upc_e','upc_a'];
-                const detector = new BarcodeDetector({ formats });
-                const video = document.createElement('video');
-                video.id = 'qr-video';
-                video.style.width = '100%';
-                const reader = document.getElementById(readerId);
-                reader.innerHTML = '';
-                reader.appendChild(video);
-
-                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                video.srcObject = stream;
-                await video.play();
-                scanning = true;
-                if(toggleButton) toggleButton.textContent = 'Stop scanner';
-
-                const scanFrame = async () => {
-                    if (!scanning) return;
-                    try {
-                        const detections = await detector.detect(video);
-                            if (detections && detections.length) {
-                                const d = detections[0];
-                                const text = d.rawValue || d.raw_data || '';
-                                const fmt = d.format || d.symbology || '';
-                                if (text) {
-                                    showResult('Gescand (' + fmt + '): ' + text);
-                                    setProductCode(text);
-                                stream.getTracks().forEach(t => t.stop());
-                                scanning = false;
-                                if(toggleButton) toggleButton.textContent = 'Start scanner';
-                                return;
-                            }
-                        }
-                    } catch (e) {
-                        console.debug('BarcodeDetector detect error', e);
-                    }
-                    requestAnimationFrame(scanFrame);
-                };
-                requestAnimationFrame(scanFrame);
-                console.log('BarcodeDetector fallback started');
+        function handleScanResult(code, sourceLabel) {
+            const barcode = (code || '').trim();
+            if (!barcode) {
                 return;
-            } catch (err) {
-                console.warn('BarcodeDetector fallback failed', err);
-                showResult('BarcodeDetector fallback faalde: ' + (err.message || err));
             }
+
+            autoSubmitPending = true;
+            stopScanner();
+            setValue('product_code', barcode);
+            showResult('Gescand (' + sourceLabel + '): ' + barcode);
+            lookupBarcode(barcode);
         }
 
-            // Fallback: try jsQR (canvas-based decoder) if available
-            if (window.jsQR) {
-                try {
-                    const video = document.createElement('video');
-                    video.id = 'qr-video';
-                    video.style.width = '100%';
-                    const reader = document.getElementById(readerId);
-                    reader.innerHTML = '';
-                    reader.appendChild(video);
-
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                    video.srcObject = stream;
-                    await video.play();
-                    scanning = true;
-                    if(toggleButton) toggleButton.textContent = 'Stop scanner';
-
-                    const scanLoop = () => {
-                        if (!scanning) return;
-                        if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                            canvas.width = video.videoWidth;
-                            canvas.height = video.videoHeight;
-                            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                            const code = jsQR(imageData.data, canvas.width, canvas.height);
-                            if (code) {
-                                showResult('Gescand: ' + code.data);
-                                setProductCode(code.data);
-                                stream.getTracks().forEach(t => t.stop());
-                                scanning = false;
-                                if(toggleButton) toggleButton.textContent = 'Start scanner';
-                                return;
-                            }
-                        }
-                        requestAnimationFrame(scanLoop);
-                    };
-                    requestAnimationFrame(scanLoop);
-                    console.log('jsQR fallback started');
-                    return;
-                } catch (err) {
-                    console.warn('jsQR fallback failed', err);
-                    showResult('jsQR fallback faalde: ' + (err.message || err));
-                }
+        async function startBarcodeDetector() {
+            if (!('BarcodeDetector' in window) || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                return false;
             }
-            // If jsQR didn't work, try Quagga (1D barcodes)
-            if (window.Quagga) {
-                try {
-                    const reader = document.getElementById(readerId);
-                    reader.innerHTML = '';
-                    const config = {
-                        inputStream: {
-                            type: "LiveStream",
-                            target: reader,
-                            constraints: { facingMode: 'environment' }
-                        },
-                        decoder: {
-                            readers: [
-                                "code_128_reader",
-                                "ean_reader",
-                                "ean_8_reader",
-                                "upc_reader",
-                                "upc_e_reader",
-                                "code_39_reader",
-                                "code_93_reader"
-                            ]
-                        },
-                        locate: true
-                    };
 
-                    Quagga.init(config, function(err) {
-                        if (err) {
-                            console.warn('Quagga init error', err);
-                            showResult('Quagga init faalde: ' + err.message || err);
+            const formats = ['ean_13', 'ean_8', 'code_128', 'code_39', 'code_93', 'codabar', 'itf', 'upc_a', 'upc_e', 'qr_code', 'pdf417'];
+            const detector = new BarcodeDetector({ formats: formats });
+            const video = document.createElement('video');
+            video.setAttribute('playsinline', 'true');
+            video.autoplay = true;
+            video.muted = true;
+            video.style.width = '100%';
+
+            if (readerEl) {
+                readerEl.innerHTML = '';
+                readerEl.appendChild(video);
+            }
+
+            activeStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } } });
+            video.srcObject = activeStream;
+            await video.play();
+
+            scanning = true;
+            if (toggleButton) {
+                toggleButton.textContent = 'Stop scanner';
+            }
+            showResult('Camera gestart. Richt op een barcode.');
+
+            const scanFrame = async function() {
+                if (!scanning) {
+                    return;
+                }
+
+                try {
+                    const detections = await detector.detect(video);
+                    if (detections && detections.length) {
+                        const detection = detections[0];
+                        const value = detection.rawValue || detection.raw_data || '';
+                        if (value) {
+                            handleScanResult(value, detection.format || 'BarcodeDetector');
                             return;
                         }
-                        Quagga.start();
-                        scanning = true;
-                        if(toggleButton) toggleButton.textContent = 'Stop scanner';
-                        showResult('Scanning (Quagga) — richt de camera op een barcode');
-                    });
-
-                    Quagga.onDetected(function(result){
-                        if (result && result.codeResult && result.codeResult.code) {
-                            const code = result.codeResult.code;
-                            showResult('Gescand (barcode): ' + code);
-                            setProductCode(code);
-                            Quagga.stop();
-                            scanning = false;
-                            if(toggleButton) toggleButton.textContent = 'Start scanner';
-                        }
-                    });
-
-                    return;
-                } catch (err) {
-                    console.warn('Quagga fallback failed', err);
-                    showResult('Quagga fallback faalde: ' + (err.message || err));
+                    }
+                } catch (error) {
+                    console.debug('BarcodeDetector detect error', error);
                 }
+
+                requestAnimationFrame(scanFrame);
+            };
+
+            requestAnimationFrame(scanFrame);
+            return true;
+        }
+
+        async function startZXingScanner() {
+            const ReaderClass = window.ZXing && window.ZXing.BrowserMultiFormatReader;
+            if (!ReaderClass || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                return false;
             }
 
-            showResult('Geen ondersteunde QR/barcode-scanner beschikbaar op dit apparaat.');
-            var dummyBtn = document.getElementById('dummy-scan-button');
-            if (dummyBtn) dummyBtn.style.display = 'block';
-    }
+            const videoId = 'qr-video';
+            const video = document.createElement('video');
+            video.id = videoId;
+            video.style.width = '100%';
+            video.setAttribute('playsinline', 'true');
+            video.autoplay = true;
+            video.muted = true;
 
-    function stopScanner() {
-        console.log('stopScanner called');
-        // stop ZXing reader if running
-        if (typeof zxingReader !== 'undefined' && zxingReader && zxingReader.reset) {
-            try{ zxingReader.reset(); }catch(e){ console.debug('zxing reset failed', e); }
-            zxingReader = null;
+            if (readerEl) {
+                readerEl.innerHTML = '';
+                readerEl.appendChild(video);
+            }
+
+            activeReader = new ReaderClass();
+            scanning = true;
+            if (toggleButton) {
+                toggleButton.textContent = 'Stop scanner';
+            }
+            showResult('ZXing scanner gestart. Richt op de barcode.');
+
+            try {
+                activeReader.decodeFromVideoDevice(null, videoId, function(result, error) {
+                    if (result && result.text) {
+                        handleScanResult(result.text, 'ZXing');
+                    }
+                    if (error) {
+                        console.debug('ZXing scan error', error);
+                    }
+                }).catch(function(error) {
+                    console.warn('ZXing scanner failed', error);
+                    scanning = false;
+                    activeReader = null;
+                    resetScannerView();
+                });
+                return true;
+            } catch (error) {
+                console.warn('ZXing scanner failed', error);
+                scanning = false;
+                activeReader = null;
+                resetScannerView();
+                return false;
+            }
         }
-        if (html5QrCode) {
-            html5QrCode.stop().then(() => {
-                html5QrCode.clear().catch(()=>{});
-                html5QrCode = null;
-                scanning = false;
-                if(toggleButton) toggleButton.textContent = 'Start scanner';
-            }).catch(err => {
-                console.warn('html5QrCode.stop() failed', err);
-                scanning = false;
-                if(toggleButton) toggleButton.textContent = 'Start scanner';
+
+        async function startQuaggaScanner() {
+            if (!window.Quagga || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                return false;
+            }
+
+            if (!readerEl) {
+                return false;
+            }
+
+            readerEl.innerHTML = '';
+            const videoHost = document.createElement('div');
+            videoHost.id = 'quagga-reader';
+            videoHost.style.width = '100%';
+            readerEl.appendChild(videoHost);
+
+            return new Promise(function(resolve) {
+                Quagga.init({
+                    inputStream: {
+                        type: 'LiveStream',
+                        target: videoHost,
+                        constraints: {
+                            facingMode: 'environment'
+                        }
+                    },
+                    decoder: {
+                        readers: [
+                            'ean_reader',
+                            'ean_8_reader',
+                            'upc_reader',
+                            'upc_e_reader',
+                            'code_128_reader',
+                            'code_39_reader',
+                            'code_93_reader'
+                        ]
+                    },
+                    locate: true
+                }, function(error) {
+                    if (error) {
+                        console.warn('Quagga init failed', error);
+                        resolve(false);
+                        return;
+                    }
+
+                    Quagga.start();
+                    scanning = true;
+                    if (toggleButton) {
+                        toggleButton.textContent = 'Stop scanner';
+                    }
+                    showResult('Quagga scanner gestart. Richt op een barcode.');
+                    if (!quaggaHandlerRegistered) {
+                        Quagga.onDetected(function(result) {
+                            if (result && result.codeResult && result.codeResult.code) {
+                                handleScanResult(result.codeResult.code, 'Quagga');
+                            }
+                        });
+                        quaggaHandlerRegistered = true;
+                    }
+                    resolve(true);
+                });
             });
+        }
+
+        async function startScanner() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                showResult('Geen camera-API beschikbaar in deze browser.');
+                return;
+            }
+
+            stopScanner();
+            autoSubmitPending = false;
+
+            if (await startBarcodeDetector()) {
+                return;
+            }
+
+            if (await startZXingScanner()) {
+                return;
+            }
+
+            if (await startQuaggaScanner()) {
+                return;
+            }
+
+            showResult('Geen ondersteunde barcode-scanner beschikbaar op dit apparaat.');
+            if (dummyScanBtn) {
+                dummyScanBtn.style.display = 'block';
+            }
+        }
+
+        if (!toggleButton) {
+            console.error('toggle-scan-button not found');
             return;
         }
-        const video = document.getElementById('qr-video');
-        if (video && video.srcObject) {
-            const stream = video.srcObject;
-            stream.getTracks().forEach(t => t.stop());
-            video.srcObject = null;
-        }
-        // stop Quagga if running
-        if (window.Quagga && Quagga.stop) {
-            try{ Quagga.stop(); }catch(e){ console.debug('Quagga stop failed', e); }
-        }
-        scanning = false;
-        if(toggleButton) toggleButton.textContent = 'Start scanner';
-        const reader = document.getElementById(readerId);
-        if (reader) {
-            reader.innerHTML = '<div id="qr-reader-results" class="qr-grid" aria-live="polite"></div>';
-        }
-    }
 
-    if(!toggleButton){
-        console.error('toggle-scan-button not found');
-        return;
-    }
+        toggleButton.addEventListener('click', function() {
+            if (scanning) {
+                stopScanner();
+            } else {
+                startScanner();
+            }
+        });
 
-    toggleButton.addEventListener('click', function() {
-        console.log('toggle clicked, scanning=', scanning);
-        if (scanning) {
-            stopScanner();
-        } else {
-            startScanner();
+        [getField('product_code'), getField('name'), getField('expiry_date')].forEach(function(field) {
+            if (field) {
+                field.addEventListener('change', maybeAutoSubmit);
+                field.addEventListener('input', maybeAutoSubmit);
+            }
+        });
+
+        if (dummyScanBtn) {
+            dummyScanBtn.addEventListener('click', function() {
+                const dummyCode = 'BAR-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random() * 9000) + 1000);
+                setValue('product_code', dummyCode);
+                showResult('Dummy barcode ingevuld: ' + dummyCode);
+            });
         }
     });
-
-    var dummyScanBtn = document.getElementById('dummy-scan-button');
-    if(dummyScanBtn){
-        dummyScanBtn.addEventListener('click', function(){
-            const dummyCode = 'QR-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random() * 9000) + 1000);
-            setProductCode(dummyCode);
-            if(resultsEl) resultsEl.textContent = 'Dummy-code ingevuld: ' + dummyCode;
-        });
-    }
-});
 </script>
 {% endblock %}

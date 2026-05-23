@@ -65,6 +65,14 @@
         <h2>Tip</h2>
         <p>Hoe concreter je beschrijving, hoe sneller Odoo Helpdesk het ticket kan oppakken.</p>
       </div>
+
+      {% if session.get('complaint_status_ticket_id') %}
+      <div class="complaint-card">
+        <h2>Laatste klachtstatus</h2>
+        <p>Je laatste klacht is opgeslagen als ticket #{{ session.get('complaint_status_ticket_id') }}.</p>
+        <a href="{{ url_for('main.complaint_status') }}" class="btn btn-primary">Bekijk status</a>
+      </div>
+      {% endif %}
     </aside>
   </div>
 </div>

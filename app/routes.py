@@ -436,6 +436,78 @@ def _create_helpdesk_complaint_ticket(product, title, description):
     return _create_helpdesk_complaint_ticket_via_xmlrpc(product, title, description)
 
 
+def _format_helpdesk_ticket_status(ticket_data):
+    stage_value = ticket_data.get('stage_id') or []
+    state_value = (ticket_data.get('state') or '').strip().lower()
+    kanban_state_value = (ticket_data.get('kanban_state') or '').strip().lower()
+
+    if isinstance(stage_value, list) and len(stage_value) > 1 and stage_value[1]:
+        status_label = stage_value[1]
+    elif state_value:
+        status_map = {
+            'new': 'Nieuw',
+            'open': 'Open',
+            'in_progress': 'In behandeling',
+            'pending': 'In afwachting',
+            'solved': 'Opgelost',
+            'done': 'Afgerond',
+            'cancelled': 'Geannuleerd',
+            'closed': 'Gesloten',
+        }
+        status_label = status_map.get(state_value, state_value.replace('_', ' ').title())
+    elif kanban_state_value:
+        status_map = {
+            'normal': 'Open',
+            'done': 'Afgerond',
+            'blocked': 'Geblokkeerd',
+        }
+        status_label = status_map.get(kanban_state_value, kanban_state_value.replace('_', ' ').title())
+    else:
+        status_label = 'Status onbekend'
+
+    team_value = ticket_data.get('team_id') or []
+
+    return {
+        'id': ticket_data.get('id'),
+        'name': ticket_data.get('name') or f'Ticket #{ticket_data.get("id")}',
+        'status_label': status_label,
+        'status_raw': state_value or kanban_state_value or status_label,
+        'team_name': team_value[1] if isinstance(team_value, list) and len(team_value) > 1 else None,
+        'stage_name': stage_value[1] if isinstance(stage_value, list) and len(stage_value) > 1 else None,
+        'created_at': ticket_data.get('create_date'),
+        'updated_at': ticket_data.get('write_date'),
+    }
+
+
+def _fetch_helpdesk_ticket_status(ticket_id):
+    if not ticket_id:
+        return None
+
+    odoo_db, uid, models, odoo_password = _odoo_credentials()
+    ticket_model, ticket_fields = _resolve_helpdesk_ticket_model(models, odoo_db, uid, odoo_password)
+
+    fields_to_read = ['id', 'name', 'stage_id', 'state', 'kanban_state', 'team_id', 'create_date', 'write_date']
+    fields_to_read = [field_name for field_name in fields_to_read if field_name in ticket_fields]
+
+    ticket_rows = models.execute_kw(
+        odoo_db,
+        uid,
+        odoo_password,
+        ticket_model,
+        'search_read',
+        [[('id', '=', int(ticket_id))]],
+        {
+            'fields': fields_to_read,
+            'limit': 1,
+        },
+    )
+
+    if not ticket_rows:
+        return None
+
+    return _format_helpdesk_ticket_status(ticket_rows[0])
+
+
 def _split_csv(value):
     return [item.strip() for item in (value or '').split(',') if item.strip()]
 
@@ -1227,14 +1299,41 @@ def complaints(product_id=None):
                 form.title.data.strip(),
                 form.description.data.strip(),
             )
+            session['complaint_status_ticket_id'] = ticket_id
+            session['complaint_status_product_id'] = selected_product.id
             flash(f'Je klacht is verzonden naar Odoo Helpdesk als ticket #{ticket_id}.', 'success')
-            return redirect(url_for('main.complaints', product_id=selected_product.id))
+            return redirect(url_for('main.complaint_status'))
         except Exception as error:
             current_app.logger.exception('Helpdesk complaint submission failed')
             flash(f'Je klacht kon niet worden verzonden naar Odoo Helpdesk: {error}', 'danger')
 
     selected_product = Product.query.filter_by(id=form.product_id.data or selected_product_id, user_id=current_user.id).first()
     return render_template('complaints.html', form=form, products=products, selected_product=selected_product)
+
+
+@main_bp.route('/complaints/status')
+@login_required
+def complaint_status():
+    ticket_id = session.get('complaint_status_ticket_id')
+    if not ticket_id:
+        flash('Er is nog geen klachtstatus beschikbaar. Dien eerst een klacht in.', 'warning')
+        return redirect(url_for('main.complaints'))
+
+    complaint_ticket = _fetch_helpdesk_ticket_status(ticket_id)
+    if not complaint_ticket:
+        flash('De klachtstatus kon niet worden opgehaald uit Odoo Helpdesk.', 'danger')
+        return redirect(url_for('main.complaints'))
+
+    selected_product = None
+    product_id = session.get('complaint_status_product_id')
+    if product_id:
+        selected_product = Product.query.filter_by(id=product_id, user_id=current_user.id).first()
+
+    return render_template(
+        'complaint_status.html',
+        complaint_ticket=complaint_ticket,
+        selected_product=selected_product,
+    )
 
 @main_bp.route('/faq')
 @login_required

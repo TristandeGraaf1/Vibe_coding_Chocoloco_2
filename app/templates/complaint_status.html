@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+
+{% block title %}Status klacht - Chocoloco{% endblock %}
+
+{% block content %}
+<div class="complaint-status-page">
+  <div class="complaint-status-hero">
+    <div>
+      <p class="complaint-status-eyebrow">Odoo Helpdesk</p>
+      <h1>Status van je klacht</h1>
+      <p>Hier zie je de actuele status van je ingediende klacht, rechtstreeks opgehaald uit Odoo Helpdesk.</p>
+    </div>
+
+    <div class="complaint-status-badge">
+      <span>Huidige status</span>
+      <strong>{{ complaint_ticket.status_label }}</strong>
+    </div>
+  </div>
+
+  <div class="complaint-status-layout">
+    <section class="complaint-status-card complaint-status-card-main">
+      <div class="complaint-status-card-header">
+        <div>
+          <p class="complaint-status-label">Ticket</p>
+          <h2>{{ complaint_ticket.name }}</h2>
+        </div>
+        <div class="complaint-status-id">#{{ complaint_ticket.id }}</div>
+      </div>
+
+      <div class="complaint-status-grid">
+        <div class="complaint-status-item">
+          <span>Status</span>
+          <strong>{{ complaint_ticket.status_label }}</strong>
+        </div>
+        {% if complaint_ticket.stage_name %}
+        <div class="complaint-status-item">
+          <span>Fase</span>
+          <strong>{{ complaint_ticket.stage_name }}</strong>
+        </div>
+        {% endif %}
+        {% if complaint_ticket.team_name %}
+        <div class="complaint-status-item">
+          <span>Team</span>
+          <strong>{{ complaint_ticket.team_name }}</strong>
+        </div>
+        {% endif %}
+        {% if complaint_ticket.created_at %}
+        <div class="complaint-status-item">
+          <span>Aangemaakt</span>
+          <strong>{{ complaint_ticket.created_at }}</strong>
+        </div>
+        {% endif %}
+        {% if complaint_ticket.updated_at %}
+        <div class="complaint-status-item">
+          <span>Laatst bijgewerkt</span>
+          <strong>{{ complaint_ticket.updated_at }}</strong>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="complaint-status-note">
+        <h3>Live status uit Odoo</h3>
+        <p>De status op deze pagina wordt telkens opnieuw uit de Odoo Helpdesk gehaald. Als de helpdeskmedewerker de ticketfase wijzigt, zie je dat hier terug na verversen.</p>
+      </div>
+    </section>
+
+    <aside class="complaint-status-sidebar">
+      {% if selected_product %}
+      <section class="complaint-status-card complaint-status-product">
+        <p class="complaint-status-label">Gekoppeld product</p>
+        <h2>{{ selected_product.name }}</h2>
+        {% if selected_product.flavor %}
+        <p>{{ selected_product.flavor }}</p>
+        {% endif %}
+      </section>
+      {% endif %}
+
+      <section class="complaint-status-card complaint-status-actions">
+        <h2>Volgende stap</h2>
+        <p>Je kunt deze pagina later opnieuw openen om de laatste status uit Odoo te bekijken.</p>
+        <div class="complaint-status-buttons">
+          <a href="{{ url_for('main.complaints') }}" class="btn btn-primary">Nieuwe klacht indienen</a>
+          <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">Terug naar dashboard</a>
+        </div>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<style>
+.complaint-status-page {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.complaint-status-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 1.5rem;
+  border-radius: 24px;
+  background: linear-gradient(135deg, rgba(240, 247, 255, 0.96), rgba(225, 236, 255, 0.9));
+  border: 1px solid rgba(39, 74, 125, 0.12);
+  box-shadow: 0 18px 44px rgba(39, 74, 125, 0.12);
+  margin-bottom: 1.2rem;
+}
+
+.complaint-status-eyebrow,
+.complaint-status-label {
+  margin: 0 0 0.25rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.complaint-status-hero h1,
+.complaint-status-card h2,
+.complaint-status-note h3 {
+  margin: 0;
+}
+
+.complaint-status-hero p,
+.complaint-status-card p {
+  margin: 0.5rem 0 0;
+  color: var(--text-secondary);
+}
+
+.complaint-status-badge {
+  min-width: 230px;
+  padding: 0.95rem 1rem;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid rgba(39, 74, 125, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.complaint-status-badge span {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}
+
+.complaint-status-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.85fr);
+  gap: 1.2rem;
+}
+
+.complaint-status-card {
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(39, 74, 125, 0.1);
+  border-radius: 22px;
+  box-shadow: 0 16px 40px rgba(39, 74, 125, 0.08);
+}
+
+.complaint-status-card-main {
+  padding: 1.25rem;
+}
+
+.complaint-status-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.complaint-status-product,
+.complaint-status-actions {
+  padding: 1.25rem;
+}
+
+.complaint-status-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.complaint-status-id {
+  padding: 0.55rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(39, 74, 125, 0.08);
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+.complaint-status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.complaint-status-item {
+  padding: 0.95rem 1rem;
+  border-radius: 18px;
+  background: rgba(39, 74, 125, 0.05);
+  border: 1px solid rgba(39, 74, 125, 0.08);
+}
+
+.complaint-status-item span {
+  display: block;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+  margin-bottom: 0.35rem;
+}
+
+.complaint-status-item strong {
+  font-size: 1rem;
+}
+
+.complaint-status-note {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(236, 242, 255, 0.95));
+  border: 1px solid rgba(39, 74, 125, 0.08);
+}
+
+.complaint-status-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 860px) {
+  .complaint-status-hero,
+  .complaint-status-layout {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+
+  .complaint-status-hero {
+    display: grid;
+  }
+
+  .complaint-status-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Nieuws - Chocoloco{% endblock %}
+
+{% block content %}
+<div class="section-container">
+    <div class="section-header">
+        <h2 class="section-title">📰 Nieuws</h2>
+    </div>
+
+    {% if articles %}
+    <div class="news-list">
+        {% for a in articles %}
+        <div class="news-item">
+            <div class="news-date">{{ a.date or '' }}</div>
+            <div class="news-content">
+                <h4><a href="{{ url_for('main.news_detail', model_name=a.model, article_id=a.id) }}">{{ a.title }}</a></h4>
+                <p>{{ a.summary }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>Er is momenteel geen nieuws beschikbaar.</p>
+    {% endif %}
+</div>
+{% endblock %}

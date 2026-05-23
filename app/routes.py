@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, request, jsonify, session
+from flask import Blueprint, render_template, redirect, url_for, request, jsonify, session, abort
 from flask_login import login_user, logout_user, current_user, login_required
 from app import db
 from app.models import User, Product, ExpiryWarningRead, ExpiryWarningDismissed, ForumTopic, ForumReply, TopicSubscription, ForumNotification, ComplaintStatusNotification, ComplaintTicketWatch, ReplyLike
@@ -526,6 +526,213 @@ def _create_odoo_product_with_barcode(product_name, barcode):
     except Exception:
         current_app.logger.exception('product.template create failed for barcode %s', barcode)
         raise RuntimeError('Odoo kon het product niet aanmaken met deze barcode.')
+
+
+def _fetch_odoo_news(limit=10):
+    """Fetch recent blog posts from the Odoo website blog module.
+    Returns a list of blog posts with keys: id, model, title, summary, body, date.
+    """
+    try:
+        odoo_db, uid, models, odoo_password = _odoo_credentials()
+    except Exception:
+        return []
+
+    model_name = 'blog.post'
+    try:
+        fields_meta = models.execute_kw(
+            odoo_db,
+            uid,
+            odoo_password,
+            model_name,
+            'fields_get',
+            [],
+            {'attributes': ['type']},
+        ) or {}
+    except Exception:
+        return []
+
+    title_field = next((f for f in ('title', 'name') if f in fields_meta), None)
+    body_field = next((f for f in ('content', 'body', 'description', 'website_description', 'post') if f in fields_meta), None)
+    date_field = next((f for f in ('website_published_date', 'published_date', 'create_date', 'date') if f in fields_meta), None)
+
+    read_fields = ['id']
+    if title_field:
+        read_fields.append(title_field)
+    if body_field:
+        read_fields.append(body_field)
+    if date_field:
+        read_fields.append(date_field)
+
+    if len(read_fields) <= 1:
+        return []
+
+    domain = []
+    if 'website_published' in fields_meta:
+        domain = [('website_published', '=', True)]
+
+    try:
+        found = models.execute_kw(
+            odoo_db,
+            uid,
+            odoo_password,
+            model_name,
+            'search_read',
+            [domain or []],
+            {'fields': read_fields, 'limit': limit, 'order': (date_field or 'create_date') + ' desc'},
+        ) or []
+    except Exception:
+        found = models.execute_kw(
+            odoo_db,
+            uid,
+            odoo_password,
+            model_name,
+            'search_read',
+            [[]],
+            {'fields': read_fields, 'limit': limit, 'order': (date_field or 'create_date') + ' desc'},
+        ) or []
+
+    articles = []
+    for rec in found:
+        title = rec.get(title_field) if title_field else None
+        body = rec.get(body_field) if body_field else None
+        date = rec.get(date_field) if date_field else rec.get('create_date')
+        summary = ''
+        if isinstance(body, str) and body:
+            summary = (re.sub('<[^<]+?>', '', body)[:200]).strip()
+        articles.append({
+            'id': rec.get('id'),
+            'model': model_name,
+            'title': title or f'Artikel {rec.get("id")}',
+            'summary': summary,
+            'body': body or '',
+            'date': date,
+        })
+
+    return articles[:limit]
+
+
+def _create_odoo_article(title, body, publish=False, model_name_override=None):
+    odoo_model = 'blog.post'
+    odoo_db, uid, models, odoo_password = _odoo_credentials()
+
+    # inspect fields to choose sensible keys
+    try:
+        fields_meta = models.execute_kw(odoo_db, uid, odoo_password, odoo_model, 'fields_get', [], {'attributes': ['type']}) or {}
+    except Exception:
+        raise RuntimeError('Odoo model niet gevonden of geen rechten om te creëren.')
+
+    title_field = next((f for f in ('title', 'name') if f in fields_meta), None)
+    body_field = next((f for f in ('content', 'body', 'description', 'website_description', 'post') if f in fields_meta), None)
+    publish_field = None
+    if 'website_published' in fields_meta:
+        publish_field = 'website_published'
+    elif 'published' in fields_meta:
+        publish_field = 'published'
+    elif 'state' in fields_meta:
+        publish_field = None
+
+    create_vals = {}
+    if title_field:
+        create_vals[title_field] = title
+    else:
+        create_vals['name'] = title
+
+    if body_field:
+        create_vals[body_field] = body
+    else:
+        create_vals['content'] = body
+
+    if publish_field and publish:
+        create_vals[publish_field] = True
+
+    if 'blog_id' in fields_meta:
+        blog_id = current_app.config.get('ODOO_BLOG_ID', '').strip()
+        resolved_blog_id = None
+        if blog_id:
+            try:
+                resolved_blog_id = int(blog_id)
+            except ValueError:
+                current_app.logger.warning('ODOO_BLOG_ID is not a valid integer.')
+        if not resolved_blog_id:
+            try:
+                blog_matches = models.execute_kw(
+                    odoo_db,
+                    uid,
+                    odoo_password,
+                    'blog.blog',
+                    'search',
+                    [[]],
+                    {'limit': 1},
+                )
+                resolved_blog_id = blog_matches[0] if blog_matches else None
+            except Exception:
+                resolved_blog_id = None
+        if resolved_blog_id:
+            create_vals['blog_id'] = resolved_blog_id
+
+    try:
+        new_id = models.execute_kw(odoo_db, uid, odoo_password, odoo_model, 'create', [create_vals])
+    except Exception as e:
+        current_app.logger.exception('Odoo artikel create failed: %s', e)
+        raise RuntimeError('Kon artikel niet aanmaken in Odoo')
+
+    return {'id': new_id, 'model': odoo_model}
+
+
+@main_bp.route('/news/create', methods=['GET', 'POST'])
+@login_required
+def news_create():
+    from app.forms import NewsForm
+    form = NewsForm()
+    if form.validate_on_submit():
+        try:
+            created = _create_odoo_article(form.title.data, form.body.data, publish=bool(form.publish.data))
+            # redirect to detail view
+            return redirect(url_for('main.news_detail', model_name=created.get('model'), article_id=created.get('id')))
+        except Exception as e:
+            flash(str(e), 'danger')
+
+    return render_template('news_create.html', form=form)
+
+
+@main_bp.route('/news')
+@login_required
+def news_list():
+    try:
+        articles = _fetch_odoo_news(limit=20)
+    except Exception:
+        articles = []
+    return render_template('news.html', articles=articles)
+
+
+@main_bp.route('/news/<path:model_name>/<int:article_id>')
+@login_required
+def news_detail(model_name, article_id):
+    try:
+        odoo_db, uid, models, odoo_password = _odoo_credentials()
+        fields_meta = models.execute_kw(odoo_db, uid, odoo_password, model_name, 'fields_get', [], {'attributes': ['type']}) or {}
+        # choose readable fields
+        candidate = ['id', 'title', 'name', 'content', 'body', 'description', 'website_published_date', 'create_date', 'website_url']
+        read_fields = [f for f in candidate if f in fields_meta]
+        if not read_fields:
+            read_fields = ['id']
+
+        recs = models.execute_kw(
+            odoo_db,
+            uid,
+            odoo_password,
+            model_name,
+            'search_read',
+            [[('id', '=', int(article_id))]],
+            {'fields': read_fields, 'limit': 1},
+        )
+        if not recs:
+            abort(404)
+        article = recs[0]
+    except Exception:
+        abort(404)
+
+    return render_template('news_detail.html', article=article)
 
 
 def _resolve_helpdesk_ticket_model(models, odoo_db, uid, odoo_password):
@@ -1332,7 +1539,13 @@ def dashboard():
                     'days': days_until_expiry
                 })
 
-    return render_template('dashboard.html', products=products, warnings=expiry_warnings)
+    # fetch latest news/articles from Odoo (best-effort)
+    try:
+        recent_news = _fetch_odoo_news(limit=3)
+    except Exception:
+        recent_news = []
+
+    return render_template('dashboard.html', products=products, warnings=expiry_warnings, news=recent_news)
 
 @main_bp.route('/product')
 @login_required

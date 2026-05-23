@@ -104,27 +104,23 @@
         <div class="news-widget">
             <h3>📰 Laatste Nieuws</h3>
             <div class="news-list">
-                <div class="news-item">
-                    <div class="news-date">Vandaag</div>
-                    <div class="news-content">
-                        <h4>Nieuwe Smaak: Caramel Delight</h4>
-                        <p>Ontdek onze nieuwste toevoeging aan het assortiment!</p>
+                {% if news %}
+                    {% for a in news %}
+                    <div class="news-item">
+                        <div class="news-date">{{ a.date or '' }}</div>
+                        <div class="news-content">
+                            <h4><a href="{{ url_for('main.news_detail', model_name=a.model, article_id=a.id) }}">{{ a.title }}</a></h4>
+                            <p>{{ a.summary }}</p>
+                        </div>
                     </div>
-                </div>
-                <div class="news-item">
-                    <div class="news-date">Gisteren</div>
-                    <div class="news-content">
-                        <h4>Zomer Event Aankondiging</h4>
-                        <p>Sluit je aan bij onze exclusieve zomer workshop</p>
+                    {% endfor %}
+                {% else %}
+                    <div class="news-item">
+                        <div class="news-content">
+                            <p>Er is momenteel geen nieuws beschikbaar.</p>
+                        </div>
                     </div>
-                </div>
-                <div class="news-item">
-                    <div class="news-date">3 dagen geleden</div>
-                    <div class="news-content">
-                        <h4>Chocorewards Upgrade</h4>
-                        <p>Nog meer beloningen voor je loyaliteit!</p>
-                    </div>
-                </div>
+                {% endif %}
             </div>
         </div>
     </div>

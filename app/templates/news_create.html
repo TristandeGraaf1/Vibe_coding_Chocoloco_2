@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Nieuw Artikel - Chocoloco{% endblock %}
+
+{% block content %}
+<div class="section-container">
+    <div class="section-header">
+        <h2 class="section-title">Nieuw Artikel</h2>
+    </div>
+
+    <form method="post">
+        {{ form.hidden_tag() }}
+        <div class="form-row">
+            {{ form.title.label }}
+            {{ form.title(class="form-control") }}
+        </div>
+        <div class="form-row">
+            {{ form.body.label }}
+            {{ form.body(class="form-control", rows=10) }}
+        </div>
+        <div class="form-row">
+            {{ form.publish() }} {{ form.publish.label }}
+        </div>
+        <div class="form-row">
+            {{ form.submit(class="btn") }}
+        </div>
+    </form>
+</div>
+{% endblock %}

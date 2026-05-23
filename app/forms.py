@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, TextAreaField, DateField, SelectField, HiddenField
+from wtforms import StringField, PasswordField, SubmitField, TextAreaField, DateField, SelectField, HiddenField, BooleanField
 from wtforms.validators import DataRequired, Email, EqualTo, ValidationError, Length, Optional
 from app.models import User
 
@@ -95,3 +95,10 @@ class CallbackRequestForm(FlaskForm):
     )
     notes = TextAreaField('Aanvullende informatie', validators=[Optional(), Length(max=1000)])
     submit = SubmitField('Terugbellen aanvragen')
+
+
+class NewsForm(FlaskForm):
+    title = StringField('Titel', validators=[DataRequired(), Length(min=3, max=200)])
+    body = TextAreaField('Inhoud (HTML toegestaan)', validators=[DataRequired(), Length(min=5)])
+    publish = BooleanField('Direct publiceren')
+    submit = SubmitField('Maak artikel aan')

@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Terugbellen - Chocoloco{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <div class="dashboard-hero" style="background-image: url('https://images.unsplash.com/photo-1556740749-887f6717d7e4?w=1400&h=500&fit=crop'); background-size: cover; background-position: center;">
+        <h1>Terugbellen</h1>
+        <p>Laat je telefoonnummer en het beste belmoment achter. We maken er direct een ticket van in Odoo Helpdesk.</p>
+    </div>
+
+    <div class="section-container">
+        <div class="widgets-section">
+            <div class="video-widget">
+                <h3>📞 Terugbelverzoek</h3>
+                <p>Vul je gegevens in, dan sturen we het verzoek door naar ons helpdeskteam.</p>
+
+                <form method="POST" class="callback-form">
+                    {{ form.hidden_tag() }}
+
+                    <div class="form-group">
+                        {{ form.phone_number.label(class_='form-label') }}
+                        {{ form.phone_number(class_='form-control', placeholder='Bijvoorbeeld: 06 12345678') }}
+                        {% for error in form.phone_number.errors %}
+                        <div class="form-error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="form-group">
+                        {{ form.preferred_date.label(class_='form-label') }}
+                        {{ form.preferred_date(class_='form-control', type='date') }}
+                        {% for error in form.preferred_date.errors %}
+                        <div class="form-error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="form-group">
+                        {{ form.preferred_time_slot.label(class_='form-label') }}
+                        {{ form.preferred_time_slot(class_='form-control') }}
+                        {% for error in form.preferred_time_slot.errors %}
+                        <div class="form-error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="form-group">
+                        {{ form.notes.label(class_='form-label') }}
+                        {{ form.notes(class_='form-control complaint-textarea', rows='5', placeholder='Eventuele extra informatie voor de medewerker') }}
+                        {% for error in form.notes.errors %}
+                        <div class="form-error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">{{ form.submit.label.text }}</button>
+                </form>
+            </div>
+
+            <div class="news-widget">
+                <h3>Wat we nodig hebben</h3>
+                <p>Alleen je telefoonnummer, het moment waarop we je mogen bellen en eventueel een korte toelichting.</p>
+                <p class="widget-caption">Het verzoek verschijnt als ticket in Odoo Helpdesk.</p>
+                <a href="{{ url_for('main.customer_service') }}" class="nav-card" style="display:inline-block; margin-top:0.8rem; padding:0.6rem 1rem;">Terug naar klantenservice</a>
+            </div>
+        </div>
+    </div>
+
+    <div style="text-align:center; margin:2rem 0;">
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">← Terug naar dashboard</a>
+    </div>
+</div>
+{% endblock %}

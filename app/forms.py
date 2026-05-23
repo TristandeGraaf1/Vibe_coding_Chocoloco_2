@@ -75,3 +75,23 @@ class ComplaintForm(FlaskForm):
     title = StringField('Onderwerp', validators=[DataRequired(), Length(min=3, max=120)])
     description = TextAreaField('Klachtomschrijving', validators=[DataRequired(), Length(min=10)])
     submit = SubmitField('Klacht indienen')
+
+
+class CallbackRequestForm(FlaskForm):
+    phone_number = StringField('Telefoonnummer', validators=[DataRequired(), Length(min=6, max=30)])
+    preferred_date = DateField('Gewenste datum', format='%Y-%m-%d', validators=[DataRequired()])
+    preferred_time_slot = SelectField(
+        'Gewenste tijd',
+        choices=[
+            ('09:00-10:00', '09:00 - 10:00'),
+            ('10:00-11:00', '10:00 - 11:00'),
+            ('11:00-12:00', '11:00 - 12:00'),
+            ('13:00-14:00', '13:00 - 14:00'),
+            ('14:00-15:00', '14:00 - 15:00'),
+            ('15:00-16:00', '15:00 - 16:00'),
+            ('16:00-17:00', '16:00 - 17:00'),
+        ],
+        validators=[DataRequired()],
+    )
+    notes = TextAreaField('Aanvullende informatie', validators=[Optional(), Length(max=1000)])
+    submit = SubmitField('Terugbellen aanvragen')

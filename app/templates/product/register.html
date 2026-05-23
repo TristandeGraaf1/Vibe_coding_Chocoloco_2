@@ -89,7 +89,6 @@
         let scanning = false;
         let activeStream = null;
         let activeReader = null;
-        let autoSubmitPending = false;
         let quaggaHandlerRegistered = false;
 
         function getField(name) {
@@ -158,26 +157,6 @@
             resetScannerView();
         }
 
-        function maybeAutoSubmit() {
-            if (!autoSubmitPending) {
-                return;
-            }
-
-            if (!getValue('product_code') || !getValue('name') || !getValue('expiry_date')) {
-                return;
-            }
-
-            autoSubmitPending = false;
-            showResult('Alle velden zijn ingevuld. Product wordt automatisch geregistreerd...');
-            window.setTimeout(function() {
-                if (form && typeof form.requestSubmit === 'function') {
-                    form.requestSubmit();
-                } else if (form) {
-                    form.submit();
-                }
-            }, 250);
-        }
-
         async function lookupBarcode(barcode) {
             try {
                 const response = await fetch('{{ url_for("main.lookup_product_by_barcode") }}?barcode=' + encodeURIComponent(barcode), {
@@ -201,13 +180,10 @@
                 } else {
                     showResult('Barcode gescand: ' + barcode + '. Er is geen productnaam gevonden.');
                 }
-
-                maybeAutoSubmit();
             } catch (error) {
                 console.warn('Barcode lookup failed', error);
                 setValue('name', 'Product ' + barcode);
                 showResult('Barcode gescand: ' + barcode + '. Fallbacknaam ingevuld.');
-                maybeAutoSubmit();
             }
         }
 
@@ -217,7 +193,6 @@
                 return;
             }
 
-            autoSubmitPending = true;
             stopScanner();
             setValue('product_code', barcode);
             showResult('Gescand (' + sourceLabel + '): ' + barcode);
@@ -397,7 +372,6 @@
             }
 
             stopScanner();
-            autoSubmitPending = false;
 
             if (await startBarcodeDetector()) {
                 return;
@@ -432,8 +406,11 @@
 
         [getField('product_code'), getField('name'), getField('expiry_date')].forEach(function(field) {
             if (field) {
-                field.addEventListener('change', maybeAutoSubmit);
-                field.addEventListener('input', maybeAutoSubmit);
+                field.addEventListener('input', function() {
+                    if (field === getField('product_code') || field === getField('name')) {
+                        showResult('Velden ingevuld. Klik op Product registreren om op te slaan.');
+                    }
+                });
             }
         });
 

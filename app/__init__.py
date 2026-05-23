@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_login import current_user
 from datetime import datetime
+from sqlalchemy import inspect, text
 
 db = SQLAlchemy()
 login_manager = LoginManager()
@@ -202,5 +203,16 @@ def create_app():
 
     with app.app_context():
         db.create_all()
+        _ensure_product_barcode_column()
 
     return app
+
+
+def _ensure_product_barcode_column():
+    inspector = inspect(db.engine)
+    product_columns = {column['name'] for column in inspector.get_columns('product')}
+    if 'barcode' in product_columns:
+        return
+
+    with db.engine.begin() as connection:
+        connection.execute(text('ALTER TABLE product ADD COLUMN barcode VARCHAR(120)'))

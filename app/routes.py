@@ -251,25 +251,53 @@ def _lookup_odoo_product_by_barcode(barcode):
         return None
 
     odoo_db, uid, models, odoo_password = _odoo_credentials()
+    product_fields = models.execute_kw(
+        odoo_db,
+        uid,
+        odoo_password,
+        'product.product',
+        'fields_get',
+        [],
+        {'attributes': ['type']},
+    ) or {}
+    template_fields = models.execute_kw(
+        odoo_db,
+        uid,
+        odoo_password,
+        'product.template',
+        'fields_get',
+        [],
+        {'attributes': ['type']},
+    ) or {}
+
+    def _build_domain(field_names, operator):
+        usable_fields = [field_name for field_name in field_names if field_name]
+        if not usable_fields:
+            return None
+        if len(usable_fields) == 1:
+            return [(usable_fields[0], operator, barcode)]
+
+        domain = ['|'] * (len(usable_fields) - 1)
+        for field_name in usable_fields:
+            domain.append((field_name, operator, barcode))
+        return domain
+
     search_specs = [
-        ('product.product', ['barcode', 'default_code']),
-        ('product.template', ['barcode', 'default_code']),
-        ('product.product', ['name']),
-        ('product.template', ['name']),
+        ('product.product', ['barcode', 'default_code'], ['id', 'name', 'display_name', 'barcode', 'default_code', 'product_tmpl_id'], product_fields),
+        ('product.template', ['barcode', 'default_code'], ['id', 'name', 'display_name'], template_fields),
+        ('product.product', ['name'], ['id', 'name', 'display_name', 'barcode', 'default_code', 'product_tmpl_id'], product_fields),
+        ('product.template', ['name'], ['id', 'name', 'display_name'], template_fields),
     ]
 
-    for model_name, fields_to_search in search_specs:
-        for operator in ('=', 'ilike'):
-            domain = ['|'] * (len(fields_to_search) - 1)
-            for index, field_name in enumerate(fields_to_search):
-                if index == 0:
-                    domain.append((field_name, operator, barcode))
-                else:
-                    domain.append((field_name, operator, barcode))
+    for model_name, candidate_fields, read_fields, available_fields in search_specs:
+        fields_to_search = [field_name for field_name in candidate_fields if field_name in available_fields]
+        if not fields_to_search:
+            continue
 
-            fields = ['id', 'name', 'display_name', 'barcode', 'default_code']
-            if model_name == 'product.product':
-                fields.append('product_tmpl_id')
+        for operator in ('=', 'ilike'):
+            domain = _build_domain(fields_to_search, operator)
+            if not domain:
+                continue
 
             matches = models.execute_kw(
                 odoo_db,
@@ -278,7 +306,7 @@ def _lookup_odoo_product_by_barcode(barcode):
                 model_name,
                 'search_read',
                 [domain],
-                {'fields': fields, 'limit': 1},
+                {'fields': read_fields, 'limit': 1},
             )
             if matches:
                 match = matches[0]
@@ -318,8 +346,10 @@ def _lookup_local_product_by_barcode(barcode):
     if not barcode:
         return None
 
-    barcode_marker = f'Barcode: {barcode}'
-    product = Product.query.filter(Product.description.contains(barcode_marker)).order_by(Product.added_at.desc()).first()
+    product = Product.query.filter_by(barcode=barcode).order_by(Product.added_at.desc()).first()
+    if not product:
+        barcode_marker = f'Barcode: {barcode}'
+        product = Product.query.filter(Product.description.contains(barcode_marker)).order_by(Product.added_at.desc()).first()
     if not product:
         return None
 
@@ -494,43 +524,8 @@ def _create_odoo_product_with_barcode(product_name, barcode):
 
         return {'id': template_id, 'name': product_name, 'barcode': barcode, 'default_code': barcode, 'odoo_model': 'product.template'}
     except Exception:
-        current_app.logger.exception('product.template create failed for barcode %s, retrying with product.product', barcode)
-
-    product_vals = {
-        'name': product_name,
-        'barcode': barcode,
-        'default_code': barcode,
-        'sale_ok': True,
-    }
-    if 'detailed_type' in product_type_fields:
-        product_vals['detailed_type'] = 'product'
-    elif 'type' in product_type_fields:
-        product_vals['type'] = 'product'
-
-    product_id = models.execute_kw(
-        odoo_db,
-        uid,
-        odoo_password,
-        'product.product',
-        'create',
-        [product_vals],
-    )
-
-    product_lookup = models.execute_kw(
-        odoo_db,
-        uid,
-        odoo_password,
-        'product.product',
-        'search_read',
-        [[('id', '=', product_id)]],
-        {'fields': ['id', 'name', 'barcode', 'default_code'], 'limit': 1},
-    )
-    if product_lookup:
-        product_record = product_lookup[0]
-        product_record['odoo_model'] = 'product.product'
-        return product_record
-
-    return {'id': product_id, 'name': product_name, 'barcode': barcode, 'default_code': barcode, 'odoo_model': 'product.product'}
+        current_app.logger.exception('product.template create failed for barcode %s', barcode)
+        raise RuntimeError('Odoo kon het product niet aanmaken met deze barcode.')
 
 
 def _resolve_helpdesk_ticket_model(models, odoo_db, uid, odoo_password):
@@ -1674,6 +1669,7 @@ def add_product():
         product = Product(
             user_id=current_user.id,
             name=product_name,
+            barcode=barcode,
             expiry_date=form.expiry_date.data,
             description=f'Barcode: {barcode} | Odoo: {(odoo_product or {}).get("name", "niet gesynchroniseerd")} | Geregistreerd via scan'
         )

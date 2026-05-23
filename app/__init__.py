@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, current_app
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_login import current_user
@@ -28,11 +28,17 @@ def create_app():
                 'nav_notifications': [],
                 'nav_unread_count': 0,
             }
-        from app.models import Product, ExpiryWarningRead, ExpiryWarningDismissed, ForumNotification, TopicSubscription, ForumReply, ForumTopic
+        from app.models import Product, ExpiryWarningRead, ExpiryWarningDismissed, ForumNotification, ComplaintStatusNotification, ComplaintTicketWatch, TopicSubscription, ForumReply, ForumTopic
+        from app.routes import _sync_complaint_status_notifications
 
         products = Product.query.filter_by(user_id=current_user.id).all()
         notifications = []
         unread_count = 0
+
+        try:
+            _sync_complaint_status_notifications()
+        except Exception:
+            current_app.logger.exception('Complaint status notifications konden niet worden gesynchroniseerd.')
 
         # expiry notifications
         for product in products:
@@ -81,8 +87,24 @@ def create_app():
             if not fn.is_read:
                 unread_count += 1
 
+        complaint_notifs = ComplaintStatusNotification.query.filter_by(user_id=current_user.id).order_by(ComplaintStatusNotification.created_at.desc()).all()
+        for cn in complaint_notifs:
+            notifications.append({
+                'kind': 'complaint_status',
+                'notification_id': cn.id,
+                'ticket_id': cn.ticket_id,
+                'ticket_name': cn.ticket_name,
+                'old_status': cn.old_status,
+                'new_status': cn.new_status,
+                'text': f'Klachtstatus gewijzigd van {cn.old_status or "onbekend"} naar {cn.new_status}',
+                'is_read': cn.is_read,
+                'created_at': cn.created_at,
+            })
+            if not cn.is_read:
+                unread_count += 1
+
         # sort: unread first, then by created time roughly (expiry near first by days)
-        notifications.sort(key=lambda item: (item.get('is_read', True), item.get('days', 9999)))
+        notifications.sort(key=lambda item: (item.get('is_read', True), item.get('days', 9999), item.get('created_at') or datetime.min))
 
         return {
             'nav_notifications': notifications,

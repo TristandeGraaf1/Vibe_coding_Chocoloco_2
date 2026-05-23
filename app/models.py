@@ -92,6 +92,30 @@ class ForumNotification(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
+class ComplaintTicketWatch(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    ticket_id = db.Column(db.Integer, nullable=False)
+    ticket_name = db.Column(db.String(200), nullable=False)
+    last_status = db.Column(db.String(120), nullable=True)
+    last_checked_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (db.UniqueConstraint('user_id', 'ticket_id', name='uq_complaint_ticket_watch_user_ticket'),)
+
+
+class ComplaintStatusNotification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    ticket_id = db.Column(db.Integer, nullable=False)
+    ticket_name = db.Column(db.String(200), nullable=False)
+    old_status = db.Column(db.String(120), nullable=True)
+    new_status = db.Column(db.String(120), nullable=False)
+    is_read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 class ReplyLike(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)

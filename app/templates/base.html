@@ -61,6 +61,23 @@
                                         <a href="{{ url_for('main.community_topic', topic_id=notification.topic_id) }}" class="nav-notification-link">Bekijk onderwerp</a>
                                     </div>
                                 </div>
+                                {% elif notification.kind == 'complaint_status' %}
+                                <div class="nav-notification-item {% if notification.is_read %}is-read{% else %}is-unread{% endif %}" data-notification-id="{{ notification.notification_id }}">
+                                    <div class="nav-notification-item-header">
+                                        <p class="nav-notification-message">Klachtstatus bijgewerkt</p>
+                                        <span class="nav-notification-item-state {% if notification.is_read %}is-read{% else %}is-unread{% endif %}">
+                                            {% if notification.is_read %}Gelezen{% else %}Nieuw{% endif %}
+                                        </span>
+                                    </div>
+                                    <p class="nav-notification-item-meta">Ticket {{ notification.ticket_name }}: {{ notification.old_status or 'onbekend' }} → {{ notification.new_status }}</p>
+                                    <div class="nav-notification-actions">
+                                        {% if not notification.is_read %}
+                                        <button type="button" class="nav-notification-mark-read" data-read-url="{{ url_for('main.mark_complaint_status_notification_read', notification_id=notification.notification_id) }}">Markeer als gelezen</button>
+                                        {% endif %}
+                                        <button type="button" class="nav-notification-dismiss" data-dismiss-url="{{ url_for('main.dismiss_complaint_status_notification', notification_id=notification.notification_id) }}">Verwijder melding</button>
+                                        <a href="{{ url_for('main.complaint_status') }}" class="nav-notification-link">Bekijk status</a>
+                                    </div>
+                                </div>
                                 {% endif %}
                             {% endfor %}
                         </div>
@@ -246,6 +263,9 @@
                                 } else if(n.kind === 'forum'){
                                     item.dataset.notificationId = n.notification_id;
                                     item.innerHTML = `<div class="nav-notification-item-header"><p class="nav-notification-message">Nieuw antwoord in: ${n.topic_title}</p><span class="nav-notification-item-state ${n.is_read? 'is-read':'is-unread'}">${n.is_read? 'Gelezen':'Nieuw'}</span></div><p class="nav-notification-item-meta">${n.text}</p><div class="nav-notification-actions">${n.is_read? '': '<button type="button" class="nav-notification-mark-read" data-read-url="'+ ('{{ url_for("main.mark_forum_notification_read", notification_id=0) }}').replace('/0','/'+n.notification_id)+'">Markeer als gelezen</button>'}<button type="button" class="nav-notification-dismiss" data-dismiss-url="${ ('{{ url_for("main.dismiss_forum_notification", notification_id=0) }}').replace('/0','/'+n.notification_id) }">Verwijder melding</button><a href="${ ('{{ url_for("main.community_topic", topic_id=0) }}').replace('/0','/'+n.topic_id) }" class="nav-notification-link">Bekijk onderwerp</a></div>`;
+                                } else if(n.kind === 'complaint_status'){
+                                    item.dataset.notificationId = n.notification_id;
+                                    item.innerHTML = `<div class="nav-notification-item-header"><p class="nav-notification-message">Klachtstatus bijgewerkt</p><span class="nav-notification-item-state ${n.is_read? 'is-read':'is-unread'}">${n.is_read? 'Gelezen':'Nieuw'}</span></div><p class="nav-notification-item-meta">Ticket ${n.ticket_name}: ${n.old_status || 'onbekend'} → ${n.new_status}</p><div class="nav-notification-actions">${n.is_read? '': '<button type="button" class="nav-notification-mark-read" data-read-url="'+ ('{{ url_for("main.mark_complaint_status_notification_read", notification_id=0) }}').replace('/0','/'+n.notification_id)+'">Markeer als gelezen</button>'}<button type="button" class="nav-notification-dismiss" data-dismiss-url="${ ('{{ url_for("main.dismiss_complaint_status_notification", notification_id=0) }}').replace('/0','/'+n.notification_id) }">Verwijder melding</button><a href="{{ url_for('main.complaint_status') }}" class="nav-notification-link">Bekijk status</a></div>`;
                                 }
 
                                 list.appendChild(item);

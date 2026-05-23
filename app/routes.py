@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, request, jsonify, session
 from flask_login import login_user, logout_user, current_user, login_required
 from app import db
-from app.models import User, Product, ExpiryWarningRead, ExpiryWarningDismissed, ForumTopic, ForumReply, TopicSubscription, ForumNotification, ReplyLike
+from app.models import User, Product, ExpiryWarningRead, ExpiryWarningDismissed, ForumTopic, ForumReply, TopicSubscription, ForumNotification, ComplaintStatusNotification, ComplaintTicketWatch, ReplyLike
 from app.forms import LoginForm, RegisterForm, ProductForm, ProductRegisterForm, TopicForm, ReplyForm, CheckoutForm, ComplaintForm
 from datetime import datetime, timedelta
 from flask import current_app, flash
@@ -506,6 +506,102 @@ def _fetch_helpdesk_ticket_status(ticket_id):
         return None
 
     return _format_helpdesk_ticket_status(ticket_rows[0])
+
+
+def _get_nav_unread_count():
+    complaint_unread = ComplaintStatusNotification.query.filter_by(user_id=current_user.id, is_read=False).count()
+    forum_unread = ForumNotification.query.filter_by(user_id=current_user.id, is_read=False).count()
+
+    expiry_unread = 0
+    products = Product.query.filter_by(user_id=current_user.id).all()
+    for product in products:
+        if not product.expiry_date:
+            continue
+
+        days_until_expiry = (product.expiry_date - datetime.now().date()).days
+        if 0 <= days_until_expiry <= 7:
+            dismissed_entry = ExpiryWarningDismissed.query.filter_by(
+                user_id=current_user.id,
+                product_id=product.id,
+            ).first()
+            if dismissed_entry:
+                continue
+
+            read_entry = ExpiryWarningRead.query.filter_by(
+                user_id=current_user.id,
+                product_id=product.id,
+            ).first()
+            if not read_entry:
+                expiry_unread += 1
+
+    return expiry_unread + forum_unread + complaint_unread
+
+
+def _track_complaint_ticket(ticket_id, ticket_name, status_label):
+    if not ticket_id:
+        return None
+
+    watch = ComplaintTicketWatch.query.filter_by(user_id=current_user.id, ticket_id=int(ticket_id)).first()
+    if watch:
+        watch.ticket_name = ticket_name or watch.ticket_name
+        watch.last_status = status_label or watch.last_status
+        watch.last_checked_at = datetime.utcnow()
+    else:
+        watch = ComplaintTicketWatch(
+            user_id=current_user.id,
+            ticket_id=int(ticket_id),
+            ticket_name=ticket_name or f'Ticket #{ticket_id}',
+            last_status=status_label,
+            last_checked_at=datetime.utcnow(),
+        )
+        db.session.add(watch)
+
+    db.session.commit()
+    return watch
+
+
+def _sync_complaint_status_notifications():
+    complaint_watches = ComplaintTicketWatch.query.filter_by(user_id=current_user.id).all()
+    if not complaint_watches:
+        return
+
+    created_notifications = False
+    for watch in complaint_watches:
+        ticket_data = _fetch_helpdesk_ticket_status(watch.ticket_id)
+        watch.last_checked_at = datetime.utcnow()
+        if not ticket_data:
+            continue
+
+        ticket_name = ticket_data.get('name') or watch.ticket_name
+        current_status = ticket_data.get('status_label') or ticket_data.get('status_raw') or 'Status onbekend'
+        watch.ticket_name = ticket_name
+
+        if not watch.last_status:
+            watch.last_status = current_status
+            continue
+
+        if current_status != watch.last_status:
+            existing_notification = ComplaintStatusNotification.query.filter_by(
+                user_id=current_user.id,
+                ticket_id=watch.ticket_id,
+                old_status=watch.last_status,
+                new_status=current_status,
+            ).first()
+            if not existing_notification:
+                db.session.add(ComplaintStatusNotification(
+                    user_id=current_user.id,
+                    ticket_id=watch.ticket_id,
+                    ticket_name=ticket_name,
+                    old_status=watch.last_status,
+                    new_status=current_status,
+                ))
+                created_notifications = True
+            watch.last_status = current_status
+
+    if created_notifications:
+        db.session.commit()
+    else:
+        db.session.commit()
 
 
 def _split_csv(value):
@@ -1299,6 +1395,12 @@ def complaints(product_id=None):
                 form.title.data.strip(),
                 form.description.data.strip(),
             )
+            ticket_status = _fetch_helpdesk_ticket_status(ticket_id)
+            _track_complaint_ticket(
+                ticket_id,
+                ticket_status['name'] if ticket_status else form.title.data.strip() or f'Ticket #{ticket_id}',
+                ticket_status['status_label'] if ticket_status else None,
+            )
             session['complaint_status_ticket_id'] = ticket_id
             session['complaint_status_product_id'] = selected_product.id
             flash(f'Je klacht is verzonden naar Odoo Helpdesk als ticket #{ticket_id}.', 'success')
@@ -1508,10 +1610,7 @@ def mark_forum_notification_read(notification_id):
         return jsonify({'error': 'Unauthorized'}), 403
     notif.is_read = True
     db.session.commit()
-    # return combined unread count
-    from app.models import ForumNotification as FN
-    unread = FN.query.filter_by(user_id=current_user.id, is_read=False).count()
-    return jsonify({'status': 'success', 'unread_count': unread})
+    return jsonify({'status': 'success', 'unread_count': _get_nav_unread_count()})
 
 
 @main_bp.route('/notifications/forum/<int:notification_id>/dismiss', methods=['POST'])
@@ -1522,15 +1621,40 @@ def dismiss_forum_notification(notification_id):
         return jsonify({'error': 'Unauthorized'}), 403
     db.session.delete(notif)
     db.session.commit()
-    from app.models import ForumNotification as FN
-    unread = FN.query.filter_by(user_id=current_user.id, is_read=False).count()
-    return jsonify({'status': 'success', 'unread_count': unread})
+    return jsonify({'status': 'success', 'unread_count': _get_nav_unread_count()})
+
+
+@main_bp.route('/notifications/complaint-status/<int:notification_id>/read', methods=['POST'])
+@login_required
+def mark_complaint_status_notification_read(notification_id):
+    notif = ComplaintStatusNotification.query.get_or_404(notification_id)
+    if notif.user_id != current_user.id:
+        return jsonify({'error': 'Unauthorized'}), 403
+    notif.is_read = True
+    db.session.commit()
+    return jsonify({'status': 'success', 'unread_count': _get_nav_unread_count()})
+
+
+@main_bp.route('/notifications/complaint-status/<int:notification_id>/dismiss', methods=['POST'])
+@login_required
+def dismiss_complaint_status_notification(notification_id):
+    notif = ComplaintStatusNotification.query.get_or_404(notification_id)
+    if notif.user_id != current_user.id:
+        return jsonify({'error': 'Unauthorized'}), 403
+    db.session.delete(notif)
+    db.session.commit()
+    return jsonify({'status': 'success', 'unread_count': _get_nav_unread_count()})
 
 
 @main_bp.route('/notifications/poll')
 @login_required
 def notifications_poll():
-    from app.models import Product, ExpiryWarningRead, ExpiryWarningDismissed, ForumNotification, ForumTopic, ForumReply
+    from app.models import Product, ExpiryWarningRead, ExpiryWarningDismissed, ForumNotification, ComplaintStatusNotification, ForumTopic, ForumReply
+
+    try:
+        _sync_complaint_status_notifications()
+    except Exception:
+        current_app.logger.exception('Complaint status notifications konden niet worden gesynchroniseerd.')
 
     products = Product.query.filter_by(user_id=current_user.id).all()
     notifications = []
@@ -1585,7 +1709,23 @@ def notifications_poll():
         if not fn.is_read:
             unread_count += 1
 
+    complaint_notifs = ComplaintStatusNotification.query.filter_by(user_id=current_user.id).order_by(ComplaintStatusNotification.created_at.desc()).all()
+    for cn in complaint_notifs:
+        notifications.append({
+            'kind': 'complaint_status',
+            'notification_id': cn.id,
+            'ticket_id': cn.ticket_id,
+            'ticket_name': cn.ticket_name,
+            'old_status': cn.old_status,
+            'new_status': cn.new_status,
+            'text': f'Klachtstatus gewijzigd van {cn.old_status or "onbekend"} naar {cn.new_status}',
+            'is_read': cn.is_read,
+            'created_at': cn.created_at,
+        })
+        if not cn.is_read:
+            unread_count += 1
+
     # simple sort: unread first
-    notifications.sort(key=lambda item: (item.get('is_read', True),))
+    notifications.sort(key=lambda item: (item.get('is_read', True), item.get('created_at') or datetime.min))
 
     return jsonify({'notifications': notifications, 'unread_count': unread_count})

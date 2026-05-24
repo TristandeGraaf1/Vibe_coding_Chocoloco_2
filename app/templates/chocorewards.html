@@ -8,10 +8,15 @@
         <div class="section-header">
             <h2 class="section-title">⭐ ChocoRewards</h2>
         </div>
-        <p class="rewards-intro">Spaar automatisch punten bij elke bestelling. Hoe meer je bestelt, hoe sneller je beloningen vrijspeelt.</p>
+        <div class="rewards-hero-inner">
+            <p class="rewards-intro">Spaar automatisch punten bij elke bestelling. Hoe meer je bestelt, hoe sneller je beloningen vrijspeelt.</p>
+            <div class="hero-decor">🍫</div>
+        </div>
         <div class="rewards-balance">
-            <span class="rewards-balance-number">{{ balance }}</span>
-            <span class="rewards-balance-label">punten beschikbaar</span>
+            <div class="rewards-balance-card">
+                <div class="rewards-balance-number">{{ balance }}</div>
+                <div class="rewards-balance-label">punten beschikbaar</div>
+            </div>
         </div>
         <div class="rewards-rules">
             <div class="reward-rule">1 punt per volle euro van je bestelling</div>
@@ -28,16 +33,52 @@
             <div class="rewards-catalog">
                 {% for reward in reward_catalog %}
                 <article class="reward-card {% if balance >= reward.points %}reward-available{% endif %}">
-                    <div class="reward-card-top">
-                        <h4>{{ reward.title }}</h4>
-                        <span class="reward-points">{{ reward.points }} punten</span>
-                    </div>
-                    <p>{{ reward.description }}</p>
-                    {% if balance >= reward.points %}
-                    <div class="reward-status reward-ready">Beschikbaar om in te wisselen</div>
-                    {% else %}
-                    <div class="reward-status">Nog {{ reward.points - balance }} punten nodig</div>
+                    {% set pct = 0 %}
+                    {% if reward.points > 0 %}
+                        {% set pct = (balance * 100.0 / reward.points) %}
                     {% endif %}
+                    {% if pct > 100 %}
+                        {% set pct = 100 %}
+                    {% elif pct < 0 %}
+                        {% set pct = 0 %}
+                    {% endif %}
+                    <div class="reward-card-left">
+                        <div class="progress-wrap" aria-hidden="true">
+                            <svg class="progress-ring" width="84" height="84" viewBox="0 0 42 42">
+                                {% set radius = 18 %}
+                                {% set circumference = 2 * 3.14159 * radius %}
+                                {% set dashoffset = (circumference * (1 - (pct / 100.0))) %}
+                                <circle class="progress-ring__bg" cx="21" cy="21" r="{{ radius }}" fill="transparent" stroke="rgba(0,0,0,0.06)" stroke-width="4" />
+                                <circle class="progress-ring__progress" cx="21" cy="21" r="{{ radius }}" fill="transparent" stroke="var(--accent-green)" stroke-width="4" stroke-linecap="round"
+                                    stroke-dasharray="{{ '%.2f' % circumference }} {{ '%.2f' % circumference }}" stroke-dashoffset="{{ '%.2f' % dashoffset }}" transform="rotate(-90 21 21)" />
+                            </svg>
+                            <div class="progress-label">
+                                <div class="progress-number">{{ balance if balance <= reward.points else reward.points }}</div>
+                                <div class="progress-sub">/{{ reward.points }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="reward-card-body">
+                            <div class="reward-card-top">
+                                <div class="reward-meta">
+                                    <span class="reward-icon" aria-hidden="true">🍫</span>
+                                    <h4>{{ reward.title }}</h4>
+                                </div>
+                                <span class="reward-points">{{ reward.points }} punten</span>
+                            </div>
+                        <p>{{ reward.description }}</p>
+                        {% if balance >= reward.points %}
+                        <div class="reward-status reward-ready">Beschikbaar om in te wisselen</div>
+                        <div class="reward-actions">
+                            <a href="#" class="btn btn-primary btn-small">Wissel in</a>
+                        </div>
+                        {% else %}
+                        <div class="reward-status">Nog {{ reward.points - balance }} punten nodig</div>
+                        <div class="reward-actions">
+                            <button class="btn btn-secondary btn-small" disabled>Niet genoeg punten</button>
+                        </div>
+                        {% endif %}
+                    </div>
                 </article>
                 {% endfor %}
             </div>

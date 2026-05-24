@@ -792,6 +792,128 @@ html[data-theme="dark"] .warning-card {
     flex: 1;
 }
 
+/* ChocoRewards styles */
+.rewards-page {
+    padding: 1rem 0 3rem 0;
+}
+.rewards-hero {
+    text-align: left;
+}
+.rewards-hero-inner { position: relative; padding: 1rem 0; }
+.rewards-intro { max-width: 800px; color: var(--text-secondary); font-size: 1.05rem; margin-bottom: 0.6rem; }
+.hero-decor {
+    position: absolute;
+    right: 0.5rem;
+    top: -6px;
+    font-size: 2.2rem;
+    opacity: 0.95;
+    transform: rotate(-12deg);
+}
+.rewards-balance {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 1rem 0 0.8rem 0;
+}
+
+.rewards-balance-card {
+    background: #ffffff;
+    padding: 0.6rem 0.9rem;
+    border-radius: 0.8rem;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 104px;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.06);
+    border: 1px solid rgba(107,68,35,0.06);
+}
+
+.rewards-balance-number {
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: var(--primary-color);
+    line-height: 1;
+}
+
+.rewards-balance-label { font-size: 0.9rem; color: var(--text-secondary); margin-top: 4px; }
+
+html[data-theme="dark"] .rewards-balance-card {
+    background: var(--card-bg);
+    border: 1px solid rgba(255,255,255,0.04);
+    box-shadow: 0 10px 24px rgba(0,0,0,0.4);
+}
+.rewards-grid {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 1.5rem;
+    align-items: start;
+}
+.rewards-catalog {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+}
+.reward-card {
+    display: grid;
+    grid-template-columns: 84px 1fr;
+    gap: 1rem;
+    align-items: center;
+    background: var(--card-bg);
+    border: 1px solid rgba(107,68,35,0.08);
+    padding: 1rem;
+    border-radius: 0.8rem;
+    box-shadow: var(--shadow-light);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.reward-meta { display:flex; align-items:center; gap:0.6rem; }
+.reward-icon { font-size:1.4rem; display:inline-flex; width:34px; height:34px; align-items:center; justify-content:center; border-radius:8px; background: linear-gradient(135deg,#FFF5E8 0%, #FFEFD9 100%); box-shadow: 0 6px 14px rgba(107,68,35,0.06); }
+.reward-card p { color: var(--text-secondary); margin: 0.45rem 0; }
+.reward-actions { margin-top: 0.6rem; display:flex; gap:0.5rem; }
+.btn-small { padding: 0.45rem 0.8rem; font-size: 0.85rem; }
+.btn-primary { padding: 0.45rem 0.9rem; }
+.btn-secondary[disabled] { opacity: 0.6; cursor: not-allowed; }
+
+/* subtle entrance */
+.reward-card { transform: translateY(0); transition: transform 0.22s ease, box-shadow 0.22s ease; }
+.reward-card:hover { transform: translateY(-6px) scale(1.01); }
+
+/* available badge */
+.reward-ready { position: relative; }
+.reward-ready::after { content: '✓'; position: absolute; right: -0.2rem; top: -0.2rem; background: var(--accent-green); color: white; width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center; font-size:0.8rem; border-radius:50%; box-shadow: 0 6px 14px rgba(94,143,46,0.12); }
+.reward-card:hover { transform: translateY(-4px); box-shadow: 0 14px 30px rgba(0,0,0,0.08); }
+.reward-card-left { display: flex; align-items: center; justify-content: center; }
+.reward-card-body { min-height: 84px; }
+.reward-card-top { display: flex; justify-content: space-between; align-items: baseline; gap: 0.6rem; }
+.reward-points { color: var(--text-secondary); font-weight: 700; }
+.reward-status { margin-top: 0.6rem; font-weight: 700; color: var(--text-secondary); }
+.reward-ready { color: var(--accent-green); }
+.reward-available { border: 1px solid rgba(94,143,46,0.12); }
+
+.progress-wrap { position: relative; width: 84px; height: 84px; display:flex; align-items:center; justify-content:center; }
+.progress-ring { display: block; }
+.progress-ring__bg { stroke-width: 4; }
+.progress-ring__progress { transition: stroke-dashoffset 0.6s cubic-bezier(.2,.9,.2,1); }
+.progress-label { position: absolute; text-align: center; font-weight: 800; color: var(--primary-color); display:flex; flex-direction:column; align-items:center; }
+.progress-number { font-size: 0.95rem; line-height: 1; }
+.progress-sub { font-size: 0.7rem; color: var(--text-secondary); margin-top: -2px; }
+
+.rewards-history { display:flex; flex-direction:column; gap:0.6rem; }
+.reward-history-item { display:flex; justify-content:space-between; align-items:center; padding:0.6rem; background: rgba(212,165,116,0.04); border-radius:0.6rem; }
+.reward-history-points.positive { color: var(--accent-green); font-weight:800; }
+.reward-history-points.negative { color: var(--danger-color); font-weight:800; }
+
+@media (max-width: 900px) {
+    .rewards-grid { grid-template-columns: 1fr; }
+    .rewards-catalog { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 560px) {
+    .rewards-catalog { grid-template-columns: 1fr; }
+    .reward-card { grid-template-columns: 72px 1fr; padding: 0.8rem; }
+    .progress-wrap { width:72px; height:72px; }
+}
+
 .warning-product {
     margin: 0;
     font-weight: 600;

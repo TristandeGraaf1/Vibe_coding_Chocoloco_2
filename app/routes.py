@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, request, jsonify, session, abort
 from flask_login import login_user, logout_user, current_user, login_required
 from app import db
-from app.models import User, Product, ExpiryWarningRead, ExpiryWarningDismissed, ForumTopic, ForumReply, TopicSubscription, ForumNotification, ComplaintStatusNotification, ComplaintTicketWatch, ReplyLike
+from app.models import User, Product, ExpiryWarningRead, ExpiryWarningDismissed, ForumTopic, ForumReply, TopicSubscription, ForumNotification, ComplaintStatusNotification, ComplaintTicketWatch, ReplyLike, RewardTransaction
 from app.forms import LoginForm, RegisterForm, ProductForm, ProductRegisterForm, TopicForm, ReplyForm, CheckoutForm, ComplaintForm, CallbackRequestForm
 from datetime import datetime, timedelta
 from flask import current_app, flash
@@ -1257,6 +1257,50 @@ def _odoo_html_to_text(value):
     return html.unescape(cleaned).strip()
 
 
+def _reward_balance(user_id):
+    transactions = RewardTransaction.query.filter_by(user_id=user_id).all()
+    return int(sum(transaction.points for transaction in transactions))
+
+
+def _reward_history(user_id, limit=12):
+    return RewardTransaction.query.filter_by(user_id=user_id).order_by(RewardTransaction.created_at.desc()).limit(limit).all()
+
+
+def _award_checkout_rewards(payment_data):
+    if not payment_data:
+        return None
+
+    payment_ref = (payment_data.get('payment_ref') or '').strip()
+    if not payment_ref:
+        return None
+
+    try:
+        total_value = float(payment_data.get('cart_total', 0) or 0)
+    except (TypeError, ValueError):
+        total_value = 0.0
+
+    points = int(total_value)
+    if total_value > 0 and points <= 0:
+        points = 1
+    if points <= 0:
+        return None
+
+    existing = RewardTransaction.query.filter_by(source_type='order', source_ref=payment_ref).first()
+    if existing:
+        return existing
+
+    transaction = RewardTransaction(
+        user_id=current_user.id,
+        points=points,
+        source_type='order',
+        source_ref=payment_ref,
+        description=f'Punten voor bestelling {payment_ref}',
+    )
+    db.session.add(transaction)
+    db.session.commit()
+    return transaction
+
+
 def _find_or_create_partner(models, odoo_db, uid, odoo_password, name, email):
     partner_id = None
     if email:
@@ -1545,7 +1589,9 @@ def dashboard():
     except Exception:
         recent_news = []
 
-    return render_template('dashboard.html', products=products, warnings=expiry_warnings, news=recent_news)
+    reward_balance = _reward_balance(current_user.id)
+
+    return render_template('dashboard.html', products=products, warnings=expiry_warnings, news=recent_news, reward_balance=reward_balance)
 
 @main_bp.route('/product')
 @login_required
@@ -1763,7 +1809,32 @@ def checkout_success():
     if not payment:
         return redirect(url_for('main.shop'))
 
+    try:
+        reward_transaction = _award_checkout_rewards(payment)
+        if reward_transaction:
+            payment['reward_points'] = reward_transaction.points
+    except Exception:
+        current_app.logger.exception('Could not award reward points for checkout payment %s', payment.get('payment_ref'))
+
+    payment['reward_balance'] = _reward_balance(current_user.id)
+
     return render_template('checkout_success.html', payment=payment)
+
+
+@main_bp.route('/chocorewards')
+@login_required
+def chocorewards():
+    balance = _reward_balance(current_user.id)
+    history = _reward_history(current_user.id)
+
+    reward_catalog = [
+        {'title': 'Mini chocoladeproeverij', 'points': 50, 'description': 'Ontvang een kleine proeverij met 3 verrassende smaken.'},
+        {'title': 'Korting op je volgende bestelling', 'points': 75, 'description': 'Wissel je punten in voor directe korting bij checkout.'},
+        {'title': 'Luxe cadeaubox', 'points': 150, 'description': 'Kies een mooie cadeauverpakking met premium selectie.'},
+        {'title': 'Chocoloco fabriekstour', 'points': 250, 'description': 'Ga achter de schermen mee voor een exclusieve rondleiding door de fabriek.'},
+    ]
+
+    return render_template('chocorewards.html', balance=balance, history=history, reward_catalog=reward_catalog)
 
 
 @main_bp.route('/chocobot')

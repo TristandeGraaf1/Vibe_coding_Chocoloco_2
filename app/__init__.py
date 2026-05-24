@@ -16,7 +16,7 @@ def create_app():
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
 
-    from app.models import User, Product
+    from app.models import User, Product, RewardTransaction
     from app import routes
 
     app.register_blueprint(routes.auth_bp)
@@ -29,7 +29,7 @@ def create_app():
                 'nav_notifications': [],
                 'nav_unread_count': 0,
             }
-        from app.models import Product, ExpiryWarningRead, ExpiryWarningDismissed, ForumNotification, ComplaintStatusNotification, ComplaintTicketWatch, TopicSubscription, ForumReply, ForumTopic
+        from app.models import Product, ExpiryWarningRead, ExpiryWarningDismissed, ForumNotification, ComplaintStatusNotification, ComplaintTicketWatch, TopicSubscription, ForumReply, ForumTopic, RewardTransaction
         from app.routes import _sync_complaint_status_notifications
 
         products = Product.query.filter_by(user_id=current_user.id).all()
@@ -204,6 +204,7 @@ def create_app():
     with app.app_context():
         db.create_all()
         _ensure_product_barcode_column()
+        _ensure_reward_transaction_table()
 
     return app
 
@@ -216,3 +217,11 @@ def _ensure_product_barcode_column():
 
     with db.engine.begin() as connection:
         connection.execute(text('ALTER TABLE product ADD COLUMN barcode VARCHAR(120)'))
+
+
+def _ensure_reward_transaction_table():
+    inspector = inspect(db.engine)
+    if 'reward_transaction' in inspector.get_table_names():
+        return
+
+    RewardTransaction.__table__.create(bind=db.engine, checkfirst=True)

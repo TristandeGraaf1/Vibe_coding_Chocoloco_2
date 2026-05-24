@@ -31,6 +31,20 @@ class Product(db.Model):
     image_url = db.Column(db.String(255))
     added_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+
+class RewardTransaction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    points = db.Column(db.Integer, nullable=False)
+    source_type = db.Column(db.String(40), nullable=False)
+    source_ref = db.Column(db.String(120), nullable=False)
+    description = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    __table_args__ = (
+        db.UniqueConstraint('source_type', 'source_ref', name='uq_reward_transaction_source'),
+    )
+
 class ExpiryWarningRead(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)

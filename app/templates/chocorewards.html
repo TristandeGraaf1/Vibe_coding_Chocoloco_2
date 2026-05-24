@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}ChocoRewards - Chocoloco{% endblock %}
+
+{% block content %}
+<div class="rewards-page">
+    <div class="rewards-hero section-container">
+        <div class="section-header">
+            <h2 class="section-title">⭐ ChocoRewards</h2>
+        </div>
+        <p class="rewards-intro">Spaar automatisch punten bij elke bestelling. Hoe meer je bestelt, hoe sneller je beloningen vrijspeelt.</p>
+        <div class="rewards-balance">
+            <span class="rewards-balance-number">{{ balance }}</span>
+            <span class="rewards-balance-label">punten beschikbaar</span>
+        </div>
+        <div class="rewards-rules">
+            <div class="reward-rule">1 punt per volle euro van je bestelling</div>
+            <div class="reward-rule">Punten worden automatisch toegevoegd na een geslaagde checkout</div>
+            <div class="reward-rule">Wissel in voor korting, cadeaus of een fabriekstour</div>
+        </div>
+    </div>
+
+    <div class="rewards-grid">
+        <section class="section-container rewards-section">
+            <div class="section-header">
+                <h3 class="section-title">Beloningen</h3>
+            </div>
+            <div class="rewards-catalog">
+                {% for reward in reward_catalog %}
+                <article class="reward-card {% if balance >= reward.points %}reward-available{% endif %}">
+                    <div class="reward-card-top">
+                        <h4>{{ reward.title }}</h4>
+                        <span class="reward-points">{{ reward.points }} punten</span>
+                    </div>
+                    <p>{{ reward.description }}</p>
+                    {% if balance >= reward.points %}
+                    <div class="reward-status reward-ready">Beschikbaar om in te wisselen</div>
+                    {% else %}
+                    <div class="reward-status">Nog {{ reward.points - balance }} punten nodig</div>
+                    {% endif %}
+                </article>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="section-container rewards-section">
+            <div class="section-header">
+                <h3 class="section-title">Puntenhistorie</h3>
+            </div>
+            <div class="rewards-history">
+                {% if history %}
+                    {% for item in history %}
+                    <div class="reward-history-item">
+                        <div>
+                            <strong>{{ item.description }}</strong>
+                            <p>{{ item.created_at.strftime('%d-%m-%Y %H:%M') }}</p>
+                        </div>
+                        <div class="reward-history-points {% if item.points >= 0 %}positive{% else %}negative{% endif %}">
+                            {% if item.points > 0 %}+{% endif %}{{ item.points }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p>Nog geen punten verzameld. Doe je eerste bestelling om te beginnen.</p>
+                {% endif %}
+            </div>
+        </section>
+    </div>
+</div>
+{% endblock %}

@@ -36,6 +36,15 @@
             </div>
         </div>
 
+        <!-- Dashboard Layout Section -->
+        <div class="settings-section">
+            <h2>Dashboard Indeling</h2>
+            <div class="setting-item">
+                <p class="setting-description">Pas de volgorde van je dashboard kaarten aan naar je voorkeur.</p>
+                <button id="open-layout-editor-btn" class="btn btn-primary">🎨 Indeling Aanpassen</button>
+            </div>
+        </div>
+
         <!-- Security Section -->
         <div class="settings-section">
             <h2>Beveiliging</h2>
@@ -111,6 +120,12 @@
         margin: 0;
     }
 
+    .setting-description {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+
     .setting-item select {
         width: 100%;
         padding: 0.7rem;
@@ -149,6 +164,17 @@
         color: white;
     }
 
+    .btn-primary {
+        background: var(--primary-color);
+        color: white;
+        border: 2px solid var(--primary-color);
+    }
+
+    .btn-primary:hover {
+        background: var(--primary-dark);
+        border-color: var(--primary-dark);
+    }
+
     .btn-danger {
         background: #d32f2f;
         color: white;
@@ -178,5 +204,15 @@
             location.reload();
         });
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const openLayoutBtn = document.getElementById('open-layout-editor-btn');
+        if (openLayoutBtn) {
+            openLayoutBtn.addEventListener('click', function() {
+                // Redirect to dashboard with edit mode
+                window.location.href = '{{ url_for("main.dashboard") }}?edit=true';
+            });
+        }
+    });
 </script>
 {% endblock %}

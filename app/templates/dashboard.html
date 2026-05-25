@@ -6,8 +6,10 @@
 <div class="dashboard">
     <!-- Hero Section -->
     <div class="dashboard-hero">
-        <h1>🍫 Welkom, {{ current_user.username }}!</h1>
-        <p>Beheer en ontdek je favoriete chocoladeproducten</p>
+        <div class="hero-content">
+            <h1>🍫 Welkom, {{ current_user.username }}!</h1>
+            <p>Beheer en ontdek je favoriete chocoladeproducten</p>
+        </div>
     </div>
 
     <!-- Quick Stats -->
@@ -57,39 +59,49 @@
     </div>
     {% endif %}
 
+    <!-- Edit Controls (hidden by default) -->
+    <div id="edit-controls" class="edit-controls" style="display: none;">
+        <p class="edit-hint">Sleep kaarten om je dashboard aan te passen</p>
+        <div class="edit-buttons">
+            <button id="save-layout-btn" class="btn-save-layout">💾 Opslaan</button>
+            <button id="reset-layout-btn" class="btn-reset-layout">🔄 Herstellen</button>
+            <button id="done-layout-btn" class="btn-done-layout">✓ Klaar</button>
+        </div>
+    </div>
+
     <!-- Navigation Cards Section -->
-    <div class="nav-cards-grid">
-        <a href="{{ url_for('main.product_hub') }}" class="nav-card" style="animation-delay: 0s;">
+    <div class="nav-cards-grid" id="nav-cards-grid">
+        <a href="{{ url_for('main.product_hub') }}" class="nav-card" data-card-id="product_hub" style="animation-delay: 0s;">
             <div class="nav-card-icon">📦</div>
             <h3>Producten</h3>
             <p>Registreer en bekijk je producten</p>
         </a>
-        <a href="#" class="nav-card" style="animation-delay: 0.1s;">
+        <a href="#" class="nav-card" data-card-id="discover" style="animation-delay: 0.1s;">
             <div class="nav-card-icon">🔍</div>
             <h3>Ontdekken</h3>
             <p>Verken nieuwe chocolades</p>
         </a>
-        <a href="{{ url_for('main.customer_service') }}" class="nav-card" style="animation-delay: 0.2s;">
+        <a href="{{ url_for('main.customer_service') }}" class="nav-card" data-card-id="customer_service" style="animation-delay: 0.2s;">
             <div class="nav-card-icon">💬</div>
             <h3>Klantenservice</h3>
             <p>Hulp en ondersteuning</p>
         </a>
-        <a href="{{ url_for('main.shop') }}" class="nav-card" style="animation-delay: 0.3s;">
+        <a href="{{ url_for('main.shop') }}" class="nav-card" data-card-id="shop" style="animation-delay: 0.3s;">
             <div class="nav-card-icon">🛒</div>
             <h3>Shop</h3>
             <p>Bestel nieuwe producten</p>
         </a>
-        <a href="{{ url_for('main.community') }}" class="nav-card" style="animation-delay: 0.4s;">
+        <a href="{{ url_for('main.community') }}" class="nav-card" data-card-id="community" style="animation-delay: 0.4s;">
             <div class="nav-card-icon">👥</div>
             <h3>Community</h3>
             <p>Verbind met andere fans</p>
         </a>
-        <a href="{{ url_for('main.chocorewards') }}" class="nav-card" style="animation-delay: 0.5s;">
+        <a href="{{ url_for('main.chocorewards') }}" class="nav-card" data-card-id="chocorewards" style="animation-delay: 0.5s;">
             <div class="nav-card-icon">⭐</div>
             <h3>Chocorewards</h3>
             <p>Verzamel punten en beloningen</p>
         </a>
-        <a href="{{ url_for('main.store_locator') }}" class="nav-card" style="animation-delay: 0.6s;">
+        <a href="{{ url_for('main.store_locator') }}" class="nav-card" data-card-id="store_locator" style="animation-delay: 0.6s;">
             <div class="nav-card-icon">🏪</div>
             <h3>Winkels</h3>
             <p>Vind de dichtstbijzijnde winkel</p>
@@ -130,4 +142,127 @@
         </div>
     </div>
 </div>
+
+<!-- SortableJS Library -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const editControls = document.getElementById('edit-controls');
+    const navCardsGrid = document.getElementById('nav-cards-grid');
+    const saveLayoutBtn = document.getElementById('save-layout-btn');
+    const resetLayoutBtn = document.getElementById('reset-layout-btn');
+    const doneLayoutBtn = document.getElementById('done-layout-btn');
+
+    let isEditMode = false;
+    let sortable = null;
+
+    // Check if edit mode should be auto-activated
+    const urlParams = new URLSearchParams(window.location.search);
+    const autoEdit = urlParams.get('edit') === 'true';
+
+    // Initialize Sortable
+    function initSortable() {
+        sortable = Sortable.create(navCardsGrid, {
+            animation: 200,
+            ghostClass: 'nav-card-ghost',
+            dragClass: 'nav-card-dragging',
+            disabled: true,
+            onEnd: function(evt) {
+                console.log('Cards reordered');
+            }
+        });
+    }
+
+    // Enter edit mode
+    function enterEditMode() {
+        isEditMode = true;
+        editControls.style.display = 'block';
+        navCardsGrid.classList.add('edit-mode-active');
+
+        if (sortable) {
+            sortable.option('disabled', false);
+        } else {
+            initSortable();
+            sortable.option('disabled', false);
+        }
+    }
+
+    // Exit edit mode
+    function exitEditMode() {
+        isEditMode = false;
+        editControls.style.display = 'none';
+        navCardsGrid.classList.remove('edit-mode-active');
+
+        if (sortable) {
+            sortable.option('disabled', true);
+        }
+
+        // Remove edit query param from URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    doneLayoutBtn.addEventListener('click', exitEditMode);
+
+    // Save layout
+    saveLayoutBtn.addEventListener('click', function() {
+        const cards = Array.from(navCardsGrid.querySelectorAll('.nav-card'));
+        const order = cards.map(card => card.dataset.cardId);
+
+        fetch('{{ url_for("main.save_dashboard_layout") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ order: order })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert('Layout opgeslagen!');
+                exitEditMode();
+            } else {
+                alert('Fout bij opslaan: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Fout bij opslaan van layout');
+        });
+    });
+
+    // Reset layout
+    resetLayoutBtn.addEventListener('click', function() {
+        if (confirm('Wil je terug naar de standaardindeling?')) {
+            fetch('{{ url_for("main.reset_dashboard_layout") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Indeling hersteld!');
+                    location.reload();
+                } else {
+                    alert('Fout bij herstellen: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Fout bij herstellen van layout');
+            });
+        }
+    });
+
+    // Initialize Sortable on page load
+    initSortable();
+
+    // Auto-activate edit mode if requested via URL
+    if (autoEdit) {
+        enterEditMode();
+    }
+});
+</script>
 {% endblock %}

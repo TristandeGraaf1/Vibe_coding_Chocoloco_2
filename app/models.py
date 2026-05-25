@@ -140,6 +140,15 @@ class ReplyLike(db.Model):
     __table_args__ = (db.UniqueConstraint('user_id', 'reply_id', name='uq_like_user_reply'),)
 
 
+class DashboardLayout(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
+    card_order = db.Column(db.Text, nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('dashboard_layout', uselist=False))
+
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))

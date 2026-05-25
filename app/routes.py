@@ -1584,6 +1584,8 @@ def logout():
 @main_bp.route('/')
 @login_required
 def dashboard():
+    from app.models import DashboardLayout
+
     products = Product.query.filter_by(user_id=current_user.id).order_by(Product.added_at.desc()).all()
 
     expiry_warnings = []
@@ -1596,7 +1598,6 @@ def dashboard():
                     'days': days_until_expiry
                 })
 
-    # fetch latest news/articles from Odoo (best-effort)
     try:
         recent_news = _fetch_odoo_news(limit=3)
     except Exception:
@@ -1604,7 +1605,57 @@ def dashboard():
 
     reward_balance = _reward_balance(current_user.id)
 
-    return render_template('dashboard.html', products=products, warnings=expiry_warnings, news=recent_news, reward_balance=reward_balance)
+    # Get user's dashboard layout or use default
+    user_layout = DashboardLayout.query.filter_by(user_id=current_user.id).first()
+    if user_layout:
+        card_order = json.loads(user_layout.card_order)
+    else:
+        card_order = ['product_hub', 'discover', 'customer_service', 'shop', 'community', 'chocorewards', 'store_locator']
+
+    return render_template('dashboard.html', products=products, warnings=expiry_warnings, news=recent_news, reward_balance=reward_balance, card_order=card_order)
+
+@main_bp.route('/api/dashboard/layout/save', methods=['POST'])
+@login_required
+def save_dashboard_layout():
+    from app.models import DashboardLayout
+
+    try:
+        data = request.get_json()
+        order = data.get('order', [])
+
+        valid_card_ids = {'product_hub', 'discover', 'customer_service', 'shop', 'community', 'chocorewards', 'store_locator'}
+
+        if not isinstance(order, list) or len(order) != 7 or set(order) != valid_card_ids:
+            return jsonify({'status': 'error', 'message': 'Invalid card order'}), 400
+
+        layout = DashboardLayout.query.filter_by(user_id=current_user.id).first()
+        if not layout:
+            layout = DashboardLayout(user_id=current_user.id)
+
+        layout.card_order = json.dumps(order)
+        db.session.add(layout)
+        db.session.commit()
+
+        return jsonify({'status': 'success', 'message': 'Layout saved successfully'})
+    except Exception as e:
+        current_app.logger.exception('Error saving dashboard layout: %s', e)
+        return jsonify({'status': 'error', 'message': 'Failed to save layout'}), 500
+
+@main_bp.route('/api/dashboard/layout/reset', methods=['POST'])
+@login_required
+def reset_dashboard_layout():
+    from app.models import DashboardLayout
+
+    try:
+        layout = DashboardLayout.query.filter_by(user_id=current_user.id).first()
+        if layout:
+            db.session.delete(layout)
+            db.session.commit()
+
+        return jsonify({'status': 'success', 'message': 'Layout reset to default'})
+    except Exception as e:
+        current_app.logger.exception('Error resetting dashboard layout: %s', e)
+        return jsonify({'status': 'error', 'message': 'Failed to reset layout'}), 500
 
 @main_bp.route('/store-locator')
 @login_required

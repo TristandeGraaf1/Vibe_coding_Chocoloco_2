@@ -6,7 +6,6 @@
 <div class="complaint-status-page">
   <div class="complaint-status-hero">
     <div>
-      <p class="complaint-status-eyebrow">Odoo Helpdesk</p>
       <h1>Status van je klacht</h1>
       <p>Hier zie je de actuele status van je ingediende klacht, rechtstreeks opgehaald uit Odoo Helpdesk.</p>
     </div>
@@ -77,7 +76,7 @@
 
       <section class="complaint-status-card complaint-status-actions">
         <h2>Volgende stap</h2>
-        <p>Je kunt deze pagina later opnieuw openen om de laatste status uit Odoo te bekijken.</p>
+        <p>Je kunt deze pagina later opnieuw openen om de laatste status te bekijken.</p>
         <div class="complaint-status-buttons">
           <a href="{{ url_for('main.complaints') }}" class="btn btn-primary">Nieuwe klacht indienen</a>
           <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">Terug naar dashboard</a>
@@ -98,11 +97,11 @@
   justify-content: space-between;
   gap: 1rem;
   align-items: flex-start;
-  padding: 1.5rem;
-  border-radius: 24px;
-  background: linear-gradient(135deg, rgba(240, 247, 255, 0.96), rgba(225, 236, 255, 0.9));
-  border: 1px solid rgba(39, 74, 125, 0.12);
-  box-shadow: 0 18px 44px rgba(39, 74, 125, 0.12);
+  padding: 2rem;
+  border-radius: 1.35rem;
+  background: linear-gradient(135deg, #3b2011 0%, #6b4423 55%, #9a6b44 100%);
+  color: #fffaf3;
+  box-shadow: 0 18px 40px rgba(59, 32, 17, 0.2);
   margin-bottom: 1.2rem;
 }
 
@@ -115,13 +114,25 @@
   color: var(--text-secondary);
 }
 
+.complaint-status-hero .complaint-status-eyebrow {
+  color: rgba(255, 248, 240, 0.7);
+}
+
 .complaint-status-hero h1,
 .complaint-status-card h2,
 .complaint-status-note h3 {
   margin: 0;
 }
 
-.complaint-status-hero p,
+.complaint-status-hero h1 {
+  color: #fffaf3;
+}
+
+.complaint-status-hero p {
+  margin: 0.5rem 0 0;
+  color: #fffaf3;
+}
+
 .complaint-status-card p {
   margin: 0.5rem 0 0;
   color: var(--text-secondary);
@@ -131,8 +142,8 @@
   min-width: 230px;
   padding: 0.95rem 1rem;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.74);
-  border: 1px solid rgba(39, 74, 125, 0.12);
+  background: rgba(255, 248, 240, 0.15);
+  border: 1px solid rgba(255, 248, 240, 0.25);
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -142,7 +153,11 @@
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--text-secondary);
+  color: rgba(255, 248, 240, 0.6);
+}
+
+.complaint-status-badge strong {
+  color: #fffaf3;
 }
 
 .complaint-status-layout {

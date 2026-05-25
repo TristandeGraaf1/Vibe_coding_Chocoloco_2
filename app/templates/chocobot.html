@@ -2,15 +2,15 @@
 
 {% block content %}
 <div class="container chocobot-page">
-  <div class="chocobot-card">
-    <div class="chocobot-header">
-      <div>
-        <p class="chocobot-eyebrow">AI-assistent</p>
-        <h2>Chocobot</h2>
-      </div>
-      <span class="chocobot-status">Online</span>
+  <div class="chocobot-hero">
+    <div>
+      <p class="chocobot-hero-eyebrow">Klantenservice</p>
+      <h1>Chocobot</h1>
+      <p>Stel je vragen aan onze AI-assistent. Ze helpt je snel verder.</p>
     </div>
+  </div>
 
+  <div class="chocobot-card">
     <div class="chocobot-chat" id="chat" aria-live="polite" aria-label="Chatberichtenscherm">
     </div>
 
@@ -18,6 +18,10 @@
       <input id="msg" type="text" placeholder="Typ je vraag..." autocomplete="off" />
       <button id="send" class="btn chocobot-send">Stuur</button>
     </div>
+  </div>
+
+  <div class="chocobot-back">
+    <a href="{{ url_for('main.customer_service') }}" class="btn btn-primary">← Terug naar Klantenservice</a>
   </div>
 </div>
 
@@ -155,6 +159,37 @@ async function sendMessage(){
 <style>
 .chocobot-page {
   max-width: 900px;
+}
+
+.chocobot-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 2rem;
+  border-radius: 1.35rem;
+  background: linear-gradient(135deg, #3b2011 0%, #6b4423 55%, #9a6b44 100%);
+  color: #fffaf3;
+  box-shadow: 0 18px 40px rgba(59, 32, 17, 0.2);
+  margin-bottom: 1.2rem;
+}
+
+.chocobot-hero-eyebrow {
+  margin: 0 0 0.25rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.75rem;
+  color: rgba(255, 248, 240, 0.7);
+}
+
+.chocobot-hero h1 {
+  margin: 0;
+  color: #fffaf3;
+}
+
+.chocobot-hero p {
+  margin: 0.5rem 0 0;
+  color: #fffaf3;
 }
 
 .chocobot-card {
@@ -334,6 +369,37 @@ async function sendMessage(){
 .chocobot-send:disabled {
   opacity: 0.7;
   cursor: wait;
+}
+
+.chocobot-back {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 0 1rem;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.9rem 2rem;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+  text-align: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-decoration: none;
+  font-size: 1rem;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #6b4423 0%, #9a6b44 100%);
+  color: #fffaf3;
+  border: none;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #8b5a38 0%, #b8845a 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(107, 68, 35, 0.3);
 }
 
 @keyframes chocobot-bounce {

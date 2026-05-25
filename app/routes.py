@@ -1532,6 +1532,9 @@ def _fetch_livechat_messages(models, odoo_db, uid, odoo_password, livechat_model
         author = message.get('author_id') or []
         author_id = author[0] if isinstance(author, list) and author else None
         author_name = author[1] if isinstance(author, list) and len(author) > 1 and author[1] else 'Odoo'
+        # Normalize backend/system author labels to friendly display names
+        if isinstance(author_name, str) and author_name.strip().lower() == 'api':
+            author_name = 'Klantenservice'
         body = _odoo_html_to_text(message.get('body'))
         if not body:
             continue

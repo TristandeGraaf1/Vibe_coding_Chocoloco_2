@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy & Voorwaarden - Chocoloco{% endblock %}
+
+{% block content %}
+<div class="privacy-container">
+    <a href="{{ url_for('main.settings') }}" class="back-link">← Terug naar instellingen</a>
+
+    <div class="privacy-content">
+        <h1>🔐 Privacy & Algemene Voorwaarden</h1>
+        <p class="last-updated">Laatste update: 25 mei 2026</p>
+
+        <section class="privacy-section">
+            <h2>1. Inleiding</h2>
+            <p>Chocoloco respecteert uw privacy en is verplicht om te voldoen aan de Algemene Verordening Gegevensbescherming (AVG) en de General Data Protection Regulation (GDPR). Dit document beschrijft hoe wij uw gegevens verwerken en beveiligen.</p>
+        </section>
+
+        <section class="privacy-section">
+            <h2>2. Verantwoordelijke voor Gegevenverwerking</h2>
+            <p>Chocoloco B.V. is verantwoordelijk voor de verwerking van uw persoonsgegevens. Neem contact met ons op via:</p>
+            <ul>
+                <li>Email: privacy@chocoloco.nl</li>
+                <li>Adres: Chocolatestraat 1, Amsterdam</li>
+                <li>Telefoonnummer: +31 (0)20 123 4567</li>
+            </ul>
+        </section>
+
+        <section class="privacy-section">
+            <h2>3. Welke Gegevens Verzamelen We</h2>
+            <p>Wij verzamelen de volgende soorten persoonsgegevens:</p>
+            <ul>
+                <li><strong>Accountgegevens:</strong> gebruikersnaam, email, wachtwoord (gehasht)</li>
+                <li><strong>Productgegevens:</strong> informatie over uw chocoladeproducten</li>
+                <li><strong>Interactiegegevens:</strong> favorieten, beoordelingen, community-bijdragen</li>
+                <li><strong>Technische gegevens:</strong> IP-adres, browsertype, pagina's bezocht</li>
+                <li><strong>Betalingsgegevens:</strong> transactieinformatie (niet gevoelige kaartgegevens)</li>
+            </ul>
+        </section>
+
+        <section class="privacy-section">
+            <h2>4. Basis voor Gegevenverwerking</h2>
+            <p>Wij verwerken uw gegevens op basis van:</p>
+            <ul>
+                <li><strong>Uitvoering van contract:</strong> om u onze diensten te bieden</li>
+                <li><strong>Gerechtvaardigd belang:</strong> om onze diensten te verbeteren en bedrijfsvoering</li>
+                <li><strong>Wettelijke verplichting:</strong> belasting- en boekhoudingverplichtingen</li>
+                <li><strong>Uw toestemming:</strong> voor marketing- en nieuwsbriefberichten (u kunt deze te allen tijde intrekken)</li>
+            </ul>
+        </section>
+
+        <section class="privacy-section">
+            <h2>5. Hoe Lang We Gegevens Bewaren</h2>
+            <ul>
+                <li><strong>Accountgegevens:</strong> zolang uw account actief is, of 2 jaar na verwijdering</li>
+                <li><strong>Transactiegegevens:</strong> 7 jaar voor belastingdoeleinden</li>
+                <li><strong>Marketing-instellingen:</strong> totdat u zich afmeldt</li>
+                <li><strong>Server-logs:</strong> maximaal 90 dagen</li>
+            </ul>
+        </section>
+
+        <section class="privacy-section">
+            <h2>6. Uw Rechten Onder GDPR/AVG</h2>
+            <p>U hebt het recht om:</p>
+            <ul>
+                <li><strong>Inzage:</strong> vragen om inzage in uw persoonsgegevens</li>
+                <li><strong>Rectificatie:</strong> onjuiste gegevens te corrigeren</li>
+                <li><strong>Verwijdering:</strong> uw gegevens te laten verwijderen (recht op vergetelheid)</li>
+                <li><strong>Beperking:</strong> verwerking van uw gegevens te beperken</li>
+                <li><strong>Overdraagbaarheid:</strong> uw gegevens in een leesbaar format te ontvangen</li>
+                <li><strong>Bezwaar:</strong> tegen bepaalde verwerkingen bezwaar in te dienen</li>
+            </ul>
+            <p>Neem contact met ons op via privacy@chocoloco.nl om uw rechten uit te oefenen.</p>
+        </section>
+
+        <section class="privacy-section">
+            <h2>7. Gegevensveiligheid</h2>
+            <p>Wij implementeren de volgende beveiligingsmaatregelen:</p>
+            <ul>
+                <li>SSL/TLS-versleuteling voor alle datatransmissie</li>
+                <li>Wachtwoorden worden versleuteld met veilige hashing-algoritmen</li>
+                <li>Beperkte toegang tot persoonsgegevens alleen voor geautoriseerd personeel</li>
+                <li>Regelmatige veiligheidsupdates en patches</li>
+                <li>Jaarlijkse veiligheidaudits</li>
+            </ul>
+        </section>
+
+        <section class="privacy-section">
+            <h2>8. Derde Partijen</h2>
+            <p>Wij delen uw gegevens alleen met:</p>
+            <ul>
+                <li><strong>Odoo ERP:</strong> voor orderbeheer en facturatie</li>
+                <li><strong>Hostingproviders:</strong> voor serverhosting (onder AVG/GDPR contract)</li>
+                <li><strong>Wettelijke autoriteiten:</strong> als wettelijk vereist</li>
+            </ul>
+            <p>Alle partners ondertekenen een Data Processing Agreement (DPA).</p>
+        </section>
+
+        <section class="privacy-section">
+            <h2>9. Klachten</h2>
+            <p>Heeft u vragen of klachten over ons privacybeleid? Neem contact op met:</p>
+            <p>
+                <strong>Chocoloco Privacy Officer</strong><br>
+                Email: privacy@chocoloco.nl<br>
+                Telefoonnummer: +31 (0)20 123 4567
+            </p>
+            <p>U kunt ook een klacht indienen bij de Autoriteit Persoonsgegevens (AP) op www.autoriteitpersoonsgegevens.nl</p>
+        </section>
+
+        <section class="privacy-section">
+            <h2>10. Wijzigingen in dit Beleid</h2>
+            <p>Wij behouden ons het recht voor dit privacybeleid te wijzigen. Grote wijzigingen worden per email meegedeeld. Ga regelmatig door dit document om op de hoogte te blijven.</p>
+        </section>
+
+        <section class="privacy-section cta-section">
+            <h3>Meer Vragen?</h3>
+            <p>Neem gerust contact met ons op via:</p>
+            <ul style="list-style: none; padding: 0;">
+                <li>📧 Email: privacy@chocoloco.nl</li>
+                <li>🏪 Winkellocator: <a href="{{ url_for('main.store_locator') }}">Bezoek een Chocoloco winkel</a></li>
+                <li>💬 Klantenservice: <a href="{{ url_for('main.customer_service') }}">Contact opnemen</a></li>
+            </ul>
+        </section>
+    </div>
+</div>
+
+<style>
+    .privacy-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+    }
+
+    .back-link {
+        display: inline-block;
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: 600;
+        margin-bottom: 2rem;
+        transition: color 0.2s;
+    }
+
+    .back-link:hover {
+        color: var(--primary-dark);
+        text-decoration: underline;
+    }
+
+    .privacy-content h1 {
+        font-size: 2.2rem;
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .last-updated {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        font-style: italic;
+        margin-bottom: 2rem;
+    }
+
+    .privacy-section {
+        background: var(--bg-secondary);
+        border-left: 4px solid var(--primary-color);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-radius: 0.4rem;
+    }
+
+    .privacy-section h2 {
+        font-size: 1.3rem;
+        color: var(--primary-color);
+        margin-top: 0;
+        margin-bottom: 1rem;
+    }
+
+    .privacy-section h3 {
+        font-size: 1.1rem;
+        color: var(--primary-color);
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .privacy-section p {
+        color: var(--text-primary);
+        line-height: 1.6;
+        margin-bottom: 0.75rem;
+    }
+
+    .privacy-section ul {
+        color: var(--text-primary);
+        line-height: 1.8;
+        margin-left: 1.5rem;
+    }
+
+    .privacy-section li {
+        margin-bottom: 0.5rem;
+    }
+
+    .privacy-section a {
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .privacy-section a:hover {
+        text-decoration: underline;
+    }
+
+    .cta-section {
+        background: linear-gradient(135deg, var(--primary-color)15%, var(--accent-color)15%);
+        border-left-color: var(--accent-color);
+        margin-top: 2rem;
+    }
+
+    @media (max-width: 768px) {
+        .privacy-container {
+            padding: 1rem;
+        }
+
+        .privacy-content h1 {
+            font-size: 1.8rem;
+        }
+
+        .privacy-section {
+            padding: 1rem;
+        }
+
+        .privacy-section h2 {
+            font-size: 1.1rem;
+        }
+    }
+</style>
+{% endblock %}

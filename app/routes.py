@@ -2214,6 +2214,11 @@ def set_theme(theme):
 def settings():
     return render_template('settings.html')
 
+@main_bp.route('/privacy')
+@login_required
+def privacy():
+    return render_template('privacy.html')
+
 @main_bp.route('/customer-service')
 @login_required
 def customer_service():

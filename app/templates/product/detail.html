@@ -10,9 +10,9 @@
         <div class="detail-header">
             <h1>{{ product.name }}</h1>
             {% if product in current_user.favorites %}
-                <button class="favorite-btn active" onclick="toggleFavorite({{ product.id }})">⭐ Favoriet</button>
+                <button class="favorite-btn active" onclick="toggleFavorite({{ product.id }}, this)">⭐ Favoriet</button>
             {% else %}
-                <button class="favorite-btn" onclick="toggleFavorite({{ product.id }})">☆ Toevoegen aan favorieten</button>
+                <button class="favorite-btn" onclick="toggleFavorite({{ product.id }}, this)">☆ Toevoegen aan favorieten</button>
             {% endif %}
         </div>
 
@@ -52,12 +52,11 @@
 </div>
 
 <script>
-    function toggleFavorite(productId) {
+    function toggleFavorite(productId, btn) {
         fetch(`/product/${productId}/favorite`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'}
         }).then(r => r.json()).then(data => {
-            const btn = event.target;
             btn.textContent = data.is_favorite ? '⭐ Favoriet' : '☆ Toevoegen aan favorieten';
             btn.classList.toggle('active');
         });

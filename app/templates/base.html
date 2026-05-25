@@ -10,11 +10,16 @@
     {% if current_user.is_authenticated %}
     <nav class="navbar">
         <div class="nav-container">
-            <a href="{{ url_for('main.dashboard') }}" class="nav-brand">🍫 Chocoloco</a>
-            <div class="nav-menu">
-                <a href="{{ url_for('main.dashboard') }}" class="nav-link">Dashboard</a>
-                <a href="{{ url_for('main.product_hub') }}" class="nav-link">Producten</a>
-                <a href="{{ url_for('main.shop') }}" class="nav-link">Shop</a>
+            <a href="{{ url_for('main.dashboard') }}" class="nav-brand">🍫 {{ _('Chocoloco') }}</a>
+            <div class="hamburger" id="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <div class="nav-menu" id="nav-menu">
+                <a href="{{ url_for('main.dashboard') }}" class="nav-link">{{ _('Dashboard') }}</a>
+                <a href="{{ url_for('main.product_hub') }}" class="nav-link">{{ _('Producten') }}</a>
+                <a href="{{ url_for('main.shop') }}" class="nav-link">{{ _('Shop') }}</a>
                 <div class="nav-notification-wrapper" id="nav-notification-wrapper">
                         <button type="button" class="nav-notification-toggle" id="nav-notification-toggle" aria-haspopup="true" aria-expanded="false" title="Melding">
                         <span class="nav-notification-icon">🔔</span>
@@ -23,7 +28,7 @@
                         {% endif %}
                     </button>
                     <div class="nav-notification-panel" id="nav-notification-panel" hidden>
-                        <p class="nav-notification-title">Meldingen</p>
+                        <p class="nav-notification-title">{{ _('Meldingen') }}</p>
                         <div class="nav-notification-content" id="nav-notification-content">
                         {% if nav_notifications %}
                         <div class="nav-notification-list" id="nav-notification-list">
@@ -119,6 +124,34 @@
     </main>
 
     <script>
+        // Hamburger menu toggle
+        const hamburger = document.getElementById('hamburger');
+        const navMenu = document.getElementById('nav-menu');
+
+        if (hamburger && navMenu) {
+            hamburger.addEventListener('click', function(e) {
+                e.stopPropagation();
+                hamburger.classList.toggle('active');
+                navMenu.classList.toggle('mobile-active');
+            });
+
+            // Close menu when clicking on a link
+            navMenu.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', function() {
+                    hamburger.classList.remove('active');
+                    navMenu.classList.remove('mobile-active');
+                });
+            });
+
+            // Close menu when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!navMenu.contains(e.target) && !hamburger.contains(e.target)) {
+                    hamburger.classList.remove('active');
+                    navMenu.classList.remove('mobile-active');
+                }
+            });
+        }
+
         function toggleTheme() {
             const html = document.documentElement;
             const currentTheme = html.getAttribute('data-theme');

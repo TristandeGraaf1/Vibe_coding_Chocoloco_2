@@ -1,37 +1,85 @@
 {% extends "base.html" %}
 
-{% block title %}Instellingen - Chocoloco{% endblock %}
+{% block title %}{{ _('Instellingen') }} - Chocoloco{% endblock %}
 
 {% block content %}
 <div class="settings-container">
-    <h1>⚙️ Instellingen</h1>
+    <h1>{{ _('Instellingen') }}</h1>
 
     <div class="settings-grid">
         <!-- Account Section -->
         <div class="settings-section">
-            <h2>Accountgegevens</h2>
+            <h2>{{ _('Accountgegevens') }}</h2>
             <div class="setting-item">
-                <label>Gebruikersnaam</label>
+                <label>{{ _('Gebruikersnaam') }}</label>
                 <p class="setting-value">{{ current_user.username }}</p>
             </div>
             <div class="setting-item">
-                <label>E-mailadres</label>
+                <label>{{ _('E-mailadres') }}</label>
                 <p class="setting-value">{{ current_user.email }}</p>
             </div>
             <div class="setting-item">
-                <label>Lid sinds</label>
+                <label>{{ _('Lid sinds') }}</label>
                 <p class="setting-value">{{ current_user.created_at.strftime('%d-%m-%Y') }}</p>
+            </div>
+        </div>
+
+        <!-- Accessibility Section -->
+        <div class="settings-section">
+            <h2>{{ _('Toegankelijkheid') }}</h2>
+
+            <div class="setting-item">
+                <label for="screen-reader-toggle">
+                    <input type="checkbox" id="screen-reader-toggle" class="checkbox-toggle">
+                    {{ _('Schermlezer inschakelen') }}
+                </label>
+                <p class="setting-description">Zorgt voor betere ondersteuning met schermlezer applicaties</p>
+            </div>
+
+            <div class="setting-item">
+                <label for="font-size-select">{{ _('Lettergrootte') }}</label>
+                <div class="font-size-controls">
+                    <button class="font-size-btn" data-size="small">A</button>
+                    <button class="font-size-btn" data-size="normal">A</button>
+                    <button class="font-size-btn" data-size="large">A</button>
+                    <button class="font-size-btn" data-size="xlarge">A</button>
+                </div>
+                <select id="font-size-select" onchange="changeFontSize(this.value)">
+                    <option value="normal" selected>{{ _('Normaal') }}</option>
+                    <option value="small">{{ _('Klein') }}</option>
+                    <option value="large">{{ _('Groot') }}</option>
+                    <option value="xlarge">{{ _('Extra groot') }}</option>
+                </select>
+            </div>
+
+            <div class="setting-item">
+                <label for="contrast-select">{{ _('Contrast') }}</label>
+                <select id="contrast-select" onchange="changeContrast(this.value)">
+                    <option value="normal" selected>{{ _('Normaal') }}</option>
+                    <option value="high">{{ _('Hoog contrast') }}</option>
+                    <option value="sepia">{{ _('Sepia') }}</option>
+                </select>
+            </div>
+
+            <div class="setting-item">
+                <label for="focus-mode-toggle">
+                    <input type="checkbox" id="focus-mode-toggle" class="checkbox-toggle">
+                    {{ _('Focus modus (vermindert afleiding)') }}
+                </label>
             </div>
         </div>
 
         <!-- Preferences Section -->
         <div class="settings-section">
-            <h2>Voorkeuren</h2>
+            <h2>{{ _('Voorkeuren') }}</h2>
+
             <div class="setting-item">
-                <label for="theme-select">Thema</label>
-                <select id="theme-select" onchange="changeTheme(this.value)">
-                    <option value="light" {% if current_user.theme == 'light' %}selected{% endif %}>Licht</option>
-                    <option value="dark" {% if current_user.theme == 'dark' %}selected{% endif %}>Donker</option>
+                <label for="language-select">{{ _('Taal') }}</label>
+                <select id="language-select" onchange="changeLanguage(this.value)">
+                    <option value="nl" {% if current_user.language == 'nl' %}selected{% endif %}>{{ _('Nederlands') }}</option>
+                    <option value="de" {% if current_user.language == 'de' %}selected{% endif %}>{{ _('Deutsch') }}</option>
+                    <option value="en" {% if current_user.language == 'en' %}selected{% endif %}>{{ _('English') }}</option>
+                    <option value="fr" {% if current_user.language == 'fr' %}selected{% endif %}>{{ _('Francais') }}</option>
                 </select>
             </div>
         </div>
@@ -41,7 +89,7 @@
             <h2>Dashboard Indeling</h2>
             <div class="setting-item">
                 <p class="setting-description">Pas de volgorde van je dashboard kaarten aan naar je voorkeur.</p>
-                <button id="open-layout-editor-btn" class="btn btn-primary">🎨 Indeling Aanpassen</button>
+                <button id="open-layout-editor-btn" class="btn btn-primary">Indeling Aanpassen</button>
             </div>
         </div>
 
@@ -52,7 +100,7 @@
                 <a href="#" class="btn btn-secondary">Wachtwoord wijzigen</a>
             </div>
             <div class="setting-item">
-                <a href="{{ url_for('auth.logout') }}" class="btn btn-danger">Uitloggen</a>
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-danger">{{ _('Uitloggen') }}</a>
             </div>
         </div>
 
@@ -61,14 +109,14 @@
             <h2>Privacy & Compliance</h2>
             <div class="setting-item">
                 <p class="setting-description">Lees onze voorwaarden die voldoen aan de AVG en GDPR regelgeving.</p>
-                <a href="{{ url_for('main.privacy') }}" class="btn btn-primary">📋 Algemene Voorwaarden</a>
+                <a href="{{ url_for('main.privacy') }}" class="btn btn-primary">Algemene Voorwaarden</a>
             </div>
         </div>
     </div>
 
     <!-- Back Button -->
     <div class="back-container">
-        <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">← Terug naar dashboard</a>
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">Terug naar dashboard</a>
     </div>
 </div>
 
@@ -202,9 +250,173 @@
             grid-template-columns: 1fr;
         }
     }
+
+    .checkbox-toggle {
+        width: 18px;
+        height: 18px;
+        margin-right: 0.8rem;
+        cursor: pointer;
+        vertical-align: middle;
+    }
+
+    .checkbox-toggle + label {
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        margin-bottom: 0;
+    }
+
+    .font-size-controls {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .font-size-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 0.4rem;
+        border: 2px solid var(--border-color);
+        background: var(--card-bg);
+        color: var(--text-color);
+        cursor: pointer;
+        font-weight: 700;
+        transition: all 0.2s ease;
+    }
+
+    .font-size-btn[data-size="small"] {
+        font-size: 0.85rem;
+    }
+
+    .font-size-btn[data-size="normal"] {
+        font-size: 1rem;
+    }
+
+    .font-size-btn[data-size="large"] {
+        font-size: 1.2rem;
+    }
+
+    .font-size-btn[data-size="xlarge"] {
+        font-size: 1.4rem;
+    }
+
+    .font-size-btn:hover {
+        border-color: var(--primary-color);
+        background: var(--accent-color);
+    }
+
+    .font-size-btn.active {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
 </style>
 
 <script>
+    // Accessibility Settings
+    const STORAGE_KEY = 'accessibility_settings';
+
+    function initAccessibilitySettings() {
+        const settings = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
+            screenReader: false,
+            fontSize: 'normal',
+            contrast: 'normal',
+            focusMode: false
+        };
+
+        // Apply settings
+        if (settings.screenReader) {
+            document.documentElement.setAttribute('data-screen-reader', 'true');
+            document.getElementById('screen-reader-toggle').checked = true;
+        }
+
+        if (settings.fontSize !== 'normal') {
+            changeFontSize(settings.fontSize, false);
+            document.getElementById('font-size-select').value = settings.fontSize;
+        }
+
+        if (settings.contrast !== 'normal') {
+            changeContrast(settings.contrast, false);
+            document.getElementById('contrast-select').value = settings.contrast;
+        }
+
+        if (settings.focusMode) {
+            document.documentElement.setAttribute('data-focus-mode', 'true');
+            document.getElementById('focus-mode-toggle').checked = true;
+        }
+
+        updateFontSizeButtons(settings.fontSize);
+    }
+
+    function saveSettings() {
+        const settings = {
+            screenReader: document.getElementById('screen-reader-toggle').checked,
+            fontSize: document.getElementById('font-size-select').value,
+            contrast: document.getElementById('contrast-select').value,
+            focusMode: document.getElementById('focus-mode-toggle').checked
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    }
+
+    function toggleScreenReader() {
+        const toggle = document.getElementById('screen-reader-toggle');
+        if (toggle.checked) {
+            document.documentElement.setAttribute('data-screen-reader', 'true');
+            announce('Schermlezer is ingeschakeld');
+        } else {
+            document.documentElement.removeAttribute('data-screen-reader');
+        }
+        saveSettings();
+    }
+
+    function changeFontSize(size, save = true) {
+        document.documentElement.setAttribute('data-font-size', size);
+        if (save) {
+            document.getElementById('font-size-select').value = size;
+        }
+        updateFontSizeButtons(size);
+        if (save) saveSettings();
+    }
+
+    function updateFontSizeButtons(activeSize) {
+        document.querySelectorAll('.font-size-btn').forEach(btn => {
+            if (btn.dataset.size === activeSize) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+
+    function changeContrast(mode, save = true) {
+        document.documentElement.setAttribute('data-contrast', mode);
+        if (save) {
+            document.getElementById('contrast-select').value = mode;
+            saveSettings();
+        }
+    }
+
+    function toggleFocusMode() {
+        const toggle = document.getElementById('focus-mode-toggle');
+        if (toggle.checked) {
+            document.documentElement.setAttribute('data-focus-mode', 'true');
+            announce('Focus modus is ingeschakeld');
+        } else {
+            document.documentElement.removeAttribute('data-focus-mode');
+        }
+        saveSettings();
+    }
+
+    function announce(message) {
+        const announcement = document.createElement('div');
+        announcement.setAttribute('role', 'status');
+        announcement.setAttribute('aria-live', 'polite');
+        announcement.className = 'sr-only';
+        announcement.textContent = message;
+        document.body.appendChild(announcement);
+        setTimeout(() => announcement.remove(), 1000);
+    }
+
     function changeTheme(theme) {
         fetch('{{ url_for("main.set_theme", theme="") }}' + theme, {
             method: 'POST',
@@ -214,11 +426,42 @@
         });
     }
 
+    function changeLanguage(language) {
+        fetch('{{ url_for("main.set_language", lang="") }}' + language, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        }).then(() => {
+            location.reload();
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
+        // Initialize accessibility settings
+        initAccessibilitySettings();
+
+        // Screen reader toggle
+        const screenReaderToggle = document.getElementById('screen-reader-toggle');
+        if (screenReaderToggle) {
+            screenReaderToggle.addEventListener('change', toggleScreenReader);
+        }
+
+        // Font size buttons
+        document.querySelectorAll('.font-size-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                changeFontSize(this.dataset.size);
+            });
+        });
+
+        // Focus mode toggle
+        const focusModeToggle = document.getElementById('focus-mode-toggle');
+        if (focusModeToggle) {
+            focusModeToggle.addEventListener('change', toggleFocusMode);
+        }
+
+        // Layout editor button
         const openLayoutBtn = document.getElementById('open-layout-editor-btn');
         if (openLayoutBtn) {
             openLayoutBtn.addEventListener('click', function() {
-                // Redirect to dashboard with edit mode
                 window.location.href = '{{ url_for("main.dashboard") }}?edit=true';
             });
         }

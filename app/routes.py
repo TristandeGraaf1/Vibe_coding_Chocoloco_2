@@ -2209,6 +2209,15 @@ def set_theme(theme):
         return jsonify({'status': 'success'})
     return jsonify({'error': 'Invalid theme'}), 400
 
+@main_bp.route('/set_language/<lang>', methods=['POST'])
+@login_required
+def set_language(lang):
+    if lang not in ['nl', 'de', 'en', 'fr']:
+        return jsonify({'error': 'Invalid language'}), 400
+    current_user.language = lang
+    db.session.commit()
+    return jsonify({'status': 'success'})
+
 @main_bp.route('/settings')
 @login_required
 def settings():

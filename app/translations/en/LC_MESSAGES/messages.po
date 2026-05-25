@@ -1,0 +1,180 @@
+# Chocoloco Translations
+# Copyright (C) 2024
+msgid ""
+msgstr ""
+"Project-Id-Version: Chocoloco 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: en\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Chocoloco"
+msgstr "Chocoloco"
+
+msgid "Dashboard"
+msgstr "Dashboard"
+
+msgid "Producten"
+msgstr "Products"
+
+msgid "Shop"
+msgstr "Shop"
+
+msgid "Meldingen"
+msgstr "Notifications"
+
+msgid "Instellingen"
+msgstr "Settings"
+
+msgid "Uitloggen"
+msgstr "Logout"
+
+msgid "Accountgegevens"
+msgstr "Account Information"
+
+msgid "Gebruikersnaam"
+msgstr "Username"
+
+msgid "E-mailadres"
+msgstr "Email Address"
+
+msgid "Lid sinds"
+msgstr "Member Since"
+
+msgid "Voorkeuren"
+msgstr "Preferences"
+
+msgid "Taal"
+msgstr "Language"
+
+msgid "Nederlands"
+msgstr "Dutch"
+
+msgid "Deutsch"
+msgstr "German"
+
+msgid "English"
+msgstr "English"
+
+msgid "Francais"
+msgstr "French"
+
+msgid "Thema"
+msgstr "Theme"
+
+msgid "Licht"
+msgstr "Light"
+
+msgid "Donker"
+msgstr "Dark"
+
+msgid "Toegankelijkheid"
+msgstr "Accessibility"
+
+msgid "Schermlezer inschakelen"
+msgstr "Enable Screen Reader"
+
+msgid "Lettergrootte"
+msgstr "Font Size"
+
+msgid "Normaal"
+msgstr "Normal"
+
+msgid "Klein"
+msgstr "Small"
+
+msgid "Groot"
+msgstr "Large"
+
+msgid "Extra groot"
+msgstr "Extra Large"
+
+msgid "Contrast"
+msgstr "Contrast"
+
+msgid "Hoog contrast"
+msgstr "High Contrast"
+
+msgid "Sepia"
+msgstr "Sepia"
+
+msgid "Focus modus (vermindert afleiding)"
+msgstr "Focus Mode (reduces distraction)"
+
+msgid "Welkom"
+msgstr "Welcome"
+
+msgid "Beheer en ontdek je favoriete chocoladeproducten"
+msgstr "Manage and discover your favorite chocolate products"
+
+msgid "Favorieten"
+msgstr "Favorites"
+
+msgid "Je Producten"
+msgstr "Your Products"
+
+msgid "Alles weergeven"
+msgstr "Show All"
+
+msgid "Sleep kaarten om je dashboard aan te passen"
+msgstr "Drag cards to customize your dashboard"
+
+msgid "Opslaan"
+msgstr "Save"
+
+msgid "Herstellen"
+msgstr "Reset"
+
+msgid "Klaar"
+msgstr "Done"
+
+msgid "Registreer en bekijk je producten"
+msgstr "Register and view your products"
+
+msgid "Ontdekken"
+msgstr "Discover"
+
+msgid "Verken nieuwe chocolades"
+msgstr "Explore new chocolates"
+
+msgid "Klantenservice"
+msgstr "Customer Service"
+
+msgid "Hulp en ondersteuning"
+msgstr "Help and Support"
+
+msgid "Bestel nieuwe producten"
+msgstr "Order new products"
+
+msgid "Community"
+msgstr "Community"
+
+msgid "Verbind met andere fans"
+msgstr "Connect with other fans"
+
+msgid "Chocorewards"
+msgstr "Chocorewards"
+
+msgid "Verzamel punten en beloningen"
+msgstr "Collect points and rewards"
+
+msgid "Winkels"
+msgstr "Stores"
+
+msgid "Vind de dichtstbijzijnde winkel"
+msgstr "Find the nearest store"
+
+msgid "Ontdek Chocoloco"
+msgstr "Discover Chocoloco"
+
+msgid "Kijk hoe je onze chocoladeproducten het beste kunt gebruiken"
+msgstr "See how to best use our chocolate products"
+
+msgid "Laatste Nieuws"
+msgstr "Latest News"
+
+msgid "Er is momenteel geen nieuws beschikbaar."
+msgstr "No news available at the moment."
+
+msgid "Toegevoegd"
+msgstr "Added"
+

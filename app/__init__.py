@@ -2,6 +2,7 @@ from flask import Flask, current_app
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_login import current_user
+from flask_babel import Babel, gettext as _
 from datetime import datetime
 from sqlalchemy import inspect, text
 
@@ -11,10 +12,27 @@ login_manager = LoginManager()
 def create_app():
     app = Flask(__name__)
     app.config.from_object('config.Config')
+    app.config['BABEL_DEFAULT_LOCALE'] = 'nl'
+    app.config['BABEL_DEFAULT_TIMEZONE'] = 'UTC'
 
     db.init_app(app)
     login_manager.init_app(app)
     login_manager.login_view = 'auth.login'
+
+    from flask_babel import lazy_gettext, gettext as babel_gettext, ngettext as babel_ngettext
+
+    def get_locale():
+        if current_user.is_authenticated:
+            return current_user.language or 'nl'
+        from flask import request
+        return request.accept_languages.best_match(['nl', 'de', 'en', 'fr']) or 'nl'
+
+    babel = Babel(app, locale_selector=get_locale)
+
+    app.jinja_env.globals.update({
+        '_': babel_gettext,
+        'ngettext': babel_ngettext,
+    })
 
     from app.models import User, Product, RewardTransaction
     from app import routes

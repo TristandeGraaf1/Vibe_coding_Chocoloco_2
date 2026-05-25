@@ -1,0 +1,180 @@
+# Chocoloco Translations
+# Copyright (C) 2024
+msgid ""
+msgstr ""
+"Project-Id-Version: Chocoloco 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: nl\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Chocoloco"
+msgstr "Chocoloco"
+
+msgid "Dashboard"
+msgstr "Dashboard"
+
+msgid "Producten"
+msgstr "Producten"
+
+msgid "Shop"
+msgstr "Shop"
+
+msgid "Meldingen"
+msgstr "Meldingen"
+
+msgid "Instellingen"
+msgstr "Instellingen"
+
+msgid "Uitloggen"
+msgstr "Uitloggen"
+
+msgid "Accountgegevens"
+msgstr "Accountgegevens"
+
+msgid "Gebruikersnaam"
+msgstr "Gebruikersnaam"
+
+msgid "E-mailadres"
+msgstr "E-mailadres"
+
+msgid "Lid sinds"
+msgstr "Lid sinds"
+
+msgid "Voorkeuren"
+msgstr "Voorkeuren"
+
+msgid "Taal"
+msgstr "Taal"
+
+msgid "Nederlands"
+msgstr "Nederlands"
+
+msgid "Deutsch"
+msgstr "Deutsch"
+
+msgid "English"
+msgstr "English"
+
+msgid "Francais"
+msgstr "Francais"
+
+msgid "Thema"
+msgstr "Thema"
+
+msgid "Licht"
+msgstr "Licht"
+
+msgid "Donker"
+msgstr "Donker"
+
+msgid "Toegankelijkheid"
+msgstr "Toegankelijkheid"
+
+msgid "Schermlezer inschakelen"
+msgstr "Schermlezer inschakelen"
+
+msgid "Lettergrootte"
+msgstr "Lettergrootte"
+
+msgid "Normaal"
+msgstr "Normaal"
+
+msgid "Klein"
+msgstr "Klein"
+
+msgid "Groot"
+msgstr "Groot"
+
+msgid "Extra groot"
+msgstr "Extra groot"
+
+msgid "Contrast"
+msgstr "Contrast"
+
+msgid "Hoog contrast"
+msgstr "Hoog contrast"
+
+msgid "Sepia"
+msgstr "Sepia"
+
+msgid "Focus modus (vermindert afleiding)"
+msgstr "Focus modus (vermindert afleiding)"
+
+msgid "Welkom"
+msgstr "Welkom"
+
+msgid "Beheer en ontdek je favoriete chocoladeproducten"
+msgstr "Beheer en ontdek je favoriete chocoladeproducten"
+
+msgid "Favorieten"
+msgstr "Favorieten"
+
+msgid "Je Producten"
+msgstr "Je Producten"
+
+msgid "Alles weergeven"
+msgstr "Alles weergeven"
+
+msgid "Sleep kaarten om je dashboard aan te passen"
+msgstr "Sleep kaarten om je dashboard aan te passen"
+
+msgid "Opslaan"
+msgstr "Opslaan"
+
+msgid "Herstellen"
+msgstr "Herstellen"
+
+msgid "Klaar"
+msgstr "Klaar"
+
+msgid "Registreer en bekijk je producten"
+msgstr "Registreer en bekijk je producten"
+
+msgid "Ontdekken"
+msgstr "Ontdekken"
+
+msgid "Verken nieuwe chocolades"
+msgstr "Verken nieuwe chocolades"
+
+msgid "Klantenservice"
+msgstr "Klantenservice"
+
+msgid "Hulp en ondersteuning"
+msgstr "Hulp en ondersteuning"
+
+msgid "Bestel nieuwe producten"
+msgstr "Bestel nieuwe producten"
+
+msgid "Community"
+msgstr "Community"
+
+msgid "Verbind met andere fans"
+msgstr "Verbind met andere fans"
+
+msgid "Chocorewards"
+msgstr "Chocorewards"
+
+msgid "Verzamel punten en beloningen"
+msgstr "Verzamel punten en beloningen"
+
+msgid "Winkels"
+msgstr "Winkels"
+
+msgid "Vind de dichtstbijzijnde winkel"
+msgstr "Vind de dichtstbijzijnde winkel"
+
+msgid "Ontdek Chocoloco"
+msgstr "Ontdek Chocoloco"
+
+msgid "Kijk hoe je onze chocoladeproducten het beste kunt gebruiken"
+msgstr "Kijk hoe je onze chocoladeproducten het beste kunt gebruiken"
+
+msgid "Laatste Nieuws"
+msgstr "Laatste Nieuws"
+
+msgid "Er is momenteel geen nieuws beschikbaar."
+msgstr "Er is momenteel geen nieuws beschikbaar."
+
+msgid "Toegevoegd"
+msgstr "Toegevoegd"
+

@@ -7,8 +7,8 @@
     <!-- Hero Section -->
     <div class="dashboard-hero">
         <div class="hero-content">
-            <h1>🍫 Welkom, {{ current_user.username }}!</h1>
-            <p>Beheer en ontdek je favoriete chocoladeproducten</p>
+            <h1>🍫 {{ _('Welkom') }}, {{ current_user.username }}!</h1>
+            <p>{{ _('Beheer en ontdek je favoriete chocoladeproducten') }}</p>
         </div>
     </div>
 
@@ -16,11 +16,11 @@
     <div class="quick-stats">
         <div class="quick-stat" style="animation-delay: 0s;">
             <span class="stat-number">{{ products|length }}</span>
-            <span class="stat-label">Producten</span>
+            <span class="stat-label">{{ _('Producten') }}</span>
         </div>
         <div class="quick-stat" style="animation-delay: 0.1s;">
             <span class="stat-number">{{ current_user.favorites|length }}</span>
-            <span class="stat-label">Favorieten</span>
+            <span class="stat-label">{{ _('Favorieten') }}</span>
         </div>
     </div>
 
@@ -28,9 +28,9 @@
     {% if products %}
     <div class="section-container">
         <div class="section-header">
-            <h2 class="section-title">📦 Je Producten</h2>
+            <h2 class="section-title">📦 {{ _('Je Producten') }}</h2>
             {% if products|length > 4 %}
-            <a href="{{ url_for('main.all_products') }}" class="show-all-link">Alles weergeven →</a>
+            <a href="{{ url_for('main.all_products') }}" class="show-all-link">{{ _('Alles weergeven') }} →</a>
             {% endif %}
         </div>
         <div class="products-grid">
@@ -48,7 +48,7 @@
                 {% if product.description %}
                 <p class="product-description">{{ product.description[:60] }}{% if product.description|length > 60 %}...{% endif %}</p>
                 {% endif %}
-                <p class="product-date">Toegevoegd: {{ product.added_at.strftime('%d-%m-%Y') }}</p>
+                <p class="product-date">{{ _('Toegevoegd') }}: {{ product.added_at.strftime('%d-%m-%Y') }}</p>
             </a>
         {% endfor %}
         </div>
@@ -57,11 +57,11 @@
 
     <!-- Edit Controls (hidden by default) -->
     <div id="edit-controls" class="edit-controls" style="display: none;">
-        <p class="edit-hint">Sleep kaarten om je dashboard aan te passen</p>
+        <p class="edit-hint">{{ _('Sleep kaarten om je dashboard aan te passen') }}</p>
         <div class="edit-buttons">
-            <button id="save-layout-btn" class="btn-save-layout">💾 Opslaan</button>
-            <button id="reset-layout-btn" class="btn-reset-layout">🔄 Herstellen</button>
-            <button id="done-layout-btn" class="btn-done-layout">✓ Klaar</button>
+            <button id="save-layout-btn" class="btn-save-layout">💾 {{ _('Opslaan') }}</button>
+            <button id="reset-layout-btn" class="btn-reset-layout">🔄 {{ _('Herstellen') }}</button>
+            <button id="done-layout-btn" class="btn-done-layout">✓ {{ _('Klaar') }}</button>
         </div>
     </div>
 
@@ -69,53 +69,53 @@
     <div class="nav-cards-grid" id="nav-cards-grid">
         <a href="{{ url_for('main.product_hub') }}" class="nav-card" data-card-id="product_hub" style="animation-delay: 0s;">
             <div class="nav-card-icon">📦</div>
-            <h3>Producten</h3>
-            <p>Registreer en bekijk je producten</p>
+            <h3>{{ _('Producten') }}</h3>
+            <p>{{ _('Registreer en bekijk je producten') }}</p>
         </a>
         <a href="#" class="nav-card" data-card-id="discover" style="animation-delay: 0.1s;">
             <div class="nav-card-icon">🔍</div>
-            <h3>Ontdekken</h3>
-            <p>Verken nieuwe chocolades</p>
+            <h3>{{ _('Ontdekken') }}</h3>
+            <p>{{ _('Verken nieuwe chocolades') }}</p>
         </a>
         <a href="{{ url_for('main.customer_service') }}" class="nav-card" data-card-id="customer_service" style="animation-delay: 0.2s;">
             <div class="nav-card-icon">💬</div>
-            <h3>Klantenservice</h3>
-            <p>Hulp en ondersteuning</p>
+            <h3>{{ _('Klantenservice') }}</h3>
+            <p>{{ _('Hulp en ondersteuning') }}</p>
         </a>
         <a href="{{ url_for('main.shop') }}" class="nav-card" data-card-id="shop" style="animation-delay: 0.3s;">
             <div class="nav-card-icon">🛒</div>
-            <h3>Shop</h3>
-            <p>Bestel nieuwe producten</p>
+            <h3>{{ _('Shop') }}</h3>
+            <p>{{ _('Bestel nieuwe producten') }}</p>
         </a>
         <a href="{{ url_for('main.community') }}" class="nav-card" data-card-id="community" style="animation-delay: 0.4s;">
             <div class="nav-card-icon">👥</div>
-            <h3>Community</h3>
-            <p>Verbind met andere fans</p>
+            <h3>{{ _('Community') }}</h3>
+            <p>{{ _('Verbind met andere fans') }}</p>
         </a>
         <a href="{{ url_for('main.chocorewards') }}" class="nav-card" data-card-id="chocorewards" style="animation-delay: 0.5s;">
             <div class="nav-card-icon">⭐</div>
-            <h3>Chocorewards</h3>
-            <p>Verzamel punten en beloningen</p>
+            <h3>{{ _('Chocorewards') }}</h3>
+            <p>{{ _('Verzamel punten en beloningen') }}</p>
         </a>
         <a href="{{ url_for('main.store_locator') }}" class="nav-card" data-card-id="store_locator" style="animation-delay: 0.6s;">
             <div class="nav-card-icon">🏪</div>
-            <h3>Winkels</h3>
-            <p>Vind de dichtstbijzijnde winkel</p>
+            <h3>{{ _('Winkels') }}</h3>
+            <p>{{ _('Vind de dichtstbijzijnde winkel') }}</p>
         </a>
     </div>
 
     <!-- Video & News Widgets -->
     <div class="widgets-section">
         <div class="video-widget">
-            <h3>🎥 Ontdek Chocoloco</h3>
+            <h3>🎥 {{ _('Ontdek Chocoloco') }}</h3>
             <div class="video-container">
                 <iframe width="100%" height="300" src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="Chocoloco Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             </div>
-            <p class="widget-caption">Kijk hoe je onze chocoladeproducten het beste kunt gebruiken</p>
+            <p class="widget-caption">{{ _('Kijk hoe je onze chocoladeproducten het beste kunt gebruiken') }}</p>
         </div>
 
         <div class="news-widget">
-            <h3>📰 Laatste Nieuws</h3>
+            <h3>📰 {{ _('Laatste Nieuws') }}</h3>
             <div class="news-list">
                 {% if news %}
                     {% for a in news %}
@@ -130,7 +130,7 @@
                 {% else %}
                     <div class="news-item">
                         <div class="news-content">
-                            <p>Er is momenteel geen nieuws beschikbaar.</p>
+                            <p>{{ _('Er is momenteel geen nieuws beschikbaar.') }}</p>
                         </div>
                     </div>
                 {% endif %}

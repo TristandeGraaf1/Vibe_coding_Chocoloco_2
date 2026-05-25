@@ -9,6 +9,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     theme = db.Column(db.String(10), default='light')
+    language = db.Column(db.String(5), default='nl')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     products = db.relationship('Product', backref='owner', lazy=True, cascade='all, delete-orphan')

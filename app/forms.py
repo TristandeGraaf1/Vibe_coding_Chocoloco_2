@@ -102,3 +102,12 @@ class NewsForm(FlaskForm):
     body = TextAreaField('Inhoud (HTML toegestaan)', validators=[DataRequired(), Length(min=5)])
     publish = BooleanField('Direct publiceren')
     submit = SubmitField('Maak artikel aan')
+
+
+class ChangePasswordForm(FlaskForm):
+    current_password = PasswordField('Huidig wachtwoord', validators=[DataRequired()])
+    new_password = PasswordField('Nieuw wachtwoord', validators=[DataRequired(), Length(min=6)])
+    confirm_password = PasswordField('Bevestig nieuw wachtwoord',
+        validators=[DataRequired(), EqualTo('new_password', message='Wachtwoorden moeten gelijk zijn')])
+    submit = SubmitField('Wachtwoord wijzigen')
+

@@ -2223,6 +2223,21 @@ def set_language(lang):
 def settings():
     return render_template('settings.html')
 
+@main_bp.route('/change-password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    from app.forms import ChangePasswordForm
+    form = ChangePasswordForm()
+    if form.validate_on_submit():
+        if not current_user.check_password(form.current_password.data):
+            flash('Huidi wachtwoord is incorrect.', 'danger')
+        else:
+            current_user.set_password(form.new_password.data)
+            db.session.commit()
+            flash('Je wachtwoord is succesvol gewijzigd!', 'success')
+            return redirect(url_for('main.settings'))
+    return render_template('change_password.html', form=form)
+
 @main_bp.route('/privacy')
 @login_required
 def privacy():

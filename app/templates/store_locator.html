@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Winkelzoeker - Chocoloco{% endblock %}
+
+{% block content %}
+<div class="store-locator-container">
+    <div class="store-locator-header">
+        <h1>🏪 Winkelzoeker</h1>
+        <p>Vind de dichtstbijzijnde Chocoloco winkel</p>
+    </div>
+
+    <div class="store-locator-controls">
+        <button id="geolocation-btn" class="btn-primary">📍 Mijn locatie gebruiken</button>
+        <span id="location-status" class="location-status"></span>
+    </div>
+
+    <div class="store-locator-content">
+        <div id="store-map" class="store-locator-map"></div>
+
+        <div class="store-list-container">
+            <h2>Alle Winkels</h2>
+            <div id="store-list" class="store-list"></div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const mapElement = document.getElementById('store-map');
+    const storeListElement = document.getElementById('store-list');
+    const geoButton = document.getElementById('geolocation-btn');
+    const locationStatus = document.getElementById('location-status');
+
+    let userLocation = null;
+    let map = null;
+    let markers = [];
+
+    const stores = {{ stores | tojson }};
+
+    function initMap(centerLat = 52.1326, centerLon = 5.2913) {
+        if (map) {
+            map.remove();
+            markers = [];
+        }
+
+        map = L.map('store-map').setView([centerLat, centerLon], 7);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        displayStores();
+    }
+
+    function displayStores() {
+        storeListElement.innerHTML = '';
+
+        const storesWithDistance = stores.map(store => {
+            let distance = null;
+            if (userLocation) {
+                distance = calculateDistance(userLocation.lat, userLocation.lon, store.lat, store.lon);
+            }
+            return { ...store, distance };
+        });
+
+        const sortedStores = userLocation ?
+            storesWithDistance.sort((a, b) => a.distance - b.distance) :
+            storesWithDistance;
+
+        sortedStores.forEach(store => {
+            const marker = L.marker([store.lat, store.lon]).addTo(map);
+            marker.bindPopup(`<strong>${store.name}</strong><br>${store.address}<br>${store.city}<br><br>📧 ${store.email}<br>🕒 ${store.hours}`);
+            markers.push(marker);
+
+            const storeItem = document.createElement('div');
+            storeItem.className = 'store-item';
+
+            let distanceHtml = '';
+            if (store.distance !== null) {
+                const distanceKm = (store.distance / 1000).toFixed(1);
+                distanceHtml = `<span class="store-distance">${distanceKm} km</span>`;
+            }
+
+            const mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(store.address)},${encodeURIComponent(store.city)}`;
+
+            storeItem.innerHTML = `
+                <div class="store-item-header">
+                    <div class="store-item-name">${store.name}</div>
+                    ${distanceHtml}
+                </div>
+                <div class="store-item-address">${store.address}</div>
+                <div class="store-item-city">${store.city}</div>
+                <div class="store-item-hours">🕒 ${store.hours}</div>
+                <div class="store-item-contact">
+                    <a href="mailto:${store.email}" class="store-item-email">📧 ${store.email}</a>
+                    <a href="${mapsUrl}" target="_blank" class="store-item-directions">🗺️ Route</a>
+                </div>
+            `;
+
+            storeItem.addEventListener('click', () => {
+                marker.openPopup();
+                map.setView([store.lat, store.lon], 14);
+            });
+
+            storeListElement.appendChild(storeItem);
+        });
+    }
+
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371000;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+
+    geoButton.addEventListener('click', () => {
+        locationStatus.textContent = 'Locatie bepalen...';
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    userLocation = {
+                        lat: position.coords.latitude,
+                        lon: position.coords.longitude
+                    };
+                    locationStatus.textContent = '✓ Locatie bepaald';
+
+                    initMap(userLocation.lat, userLocation.lon);
+                    displayStores();
+
+                    const userMarker = L.marker([userLocation.lat, userLocation.lon], {
+                        icon: L.icon({
+                            iconUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iIzQyODVGNCIgc3Ryb2tlPSIjZmZmIiBzdHJva2Utd2lkdGg9IjIiLz48L3N2Zz4=',
+                            iconSize: [24, 24],
+                            iconAnchor: [12, 12]
+                        })
+                    }).addTo(map);
+                    userMarker.bindPopup('Jouw locatie');
+                },
+                (error) => {
+                    if (error.code === error.PERMISSION_DENIED) {
+                        locationStatus.textContent = '✗ Locatietoegang geweigerd';
+                    } else {
+                        locationStatus.textContent = '✗ Locatie kon niet bepaald worden';
+                    }
+                }
+            );
+        } else {
+            locationStatus.textContent = '✗ Geolocation niet ondersteund';
+        }
+    });
+
+    initMap();
+});
+</script>
+{% endblock %}

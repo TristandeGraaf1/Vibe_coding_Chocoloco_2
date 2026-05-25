@@ -18,6 +18,19 @@ import mimetypes
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 main_bp = Blueprint('main', __name__)
 
+STORES = [
+    {'name': 'Amsterdam', 'address': 'Kerkstraat 12', 'city': '1017 GB Amsterdam', 'lat': 52.3676, 'lon': 4.9041, 'email': 'amsterdam@chocoloco.nl', 'hours': 'Ma-Zo: 09:00-18:00, Zon: 11:00-17:00'},
+    {'name': 'Utrecht', 'address': 'Stationsplein 5', 'city': '3511 ED Utrecht', 'lat': 52.0894, 'lon': 5.1205, 'email': 'utrecht@chocoloco.nl', 'hours': 'Ma-Zo: 09:00-18:00, Zon: 11:00-17:00'},
+    {'name': 'Laren', 'address': 'Dorpsstraat 88', 'city': '1251 BC Laren', 'lat': 52.2521, 'lon': 5.2289, 'email': 'laren@chocoloco.nl', 'hours': 'Ma-Zo: 09:00-18:00, Zon: 11:00-17:00'},
+    {'name': 'Maastricht', 'address': 'Wilhelminasingel 23', 'city': '6221 BE Maastricht', 'lat': 50.8504, 'lon': 5.6909, 'email': 'maastricht@chocoloco.nl', 'hours': 'Ma-Zo: 09:00-18:00, Zon: 11:00-17:00'},
+    {'name': 'Harlingen', 'address': 'Havenweg 14', 'city': '8861 XA Harlingen', 'lat': 53.1723, 'lon': 5.4152, 'email': 'harlingen@chocoloco.nl', 'hours': 'Ma-Zo: 09:00-18:00, Zon: 11:00-17:00'},
+    {'name': 'Eindhoven', 'address': 'Beukenlaan 45', 'city': '5616 VD Eindhoven', 'lat': 51.4317, 'lon': 5.4747, 'email': 'eindhoven@chocoloco.nl', 'hours': 'Ma-Zo: 09:00-18:00, Zon: 11:00-17:00'},
+    {'name': 'Middelburg', 'address': 'Molenstraat 9', 'city': '4331 AX Middelburg', 'lat': 51.4982, 'lon': 3.6114, 'email': 'middelburg@chocoloco.nl', 'hours': 'Ma-Zo: 09:00-18:00, Zon: 11:00-17:00'},
+    {'name': 'Haren', 'address': 'Schoolweg 31', 'city': '9751 BA Haren', 'lat': 53.1972, 'lon': 6.5711, 'email': 'haren@chocoloco.nl', 'hours': 'Ma-Zo: 09:00-18:00, Zon: 11:00-17:00'},
+    {'name': 'Rotterdam', 'address': 'Parklaan 77', 'city': '3016 BC Rotterdam', 'lat': 51.9225, 'lon': 4.4792, 'email': 'rotterdam@chocoloco.nl', 'hours': 'Ma-Zo: 09:00-18:00, Zon: 11:00-17:00'},
+    {'name': 'Zutphen', 'address': 'Lindenhof 4', 'city': '7201 JB Zutphen', 'lat': 52.1096, 'lon': 6.2001, 'email': 'zutphen@chocoloco.nl', 'hours': 'Ma-Zo: 09:00-18:00, Zon: 11:00-17:00'},
+]
+
 
 def send_order_to_odoo(payment_data):
     odoo_url = current_app.config.get('ODOO_URL', '').strip()
@@ -1592,6 +1605,16 @@ def dashboard():
     reward_balance = _reward_balance(current_user.id)
 
     return render_template('dashboard.html', products=products, warnings=expiry_warnings, news=recent_news, reward_balance=reward_balance)
+
+@main_bp.route('/store-locator')
+@login_required
+def store_locator():
+    return render_template('store_locator.html', stores=STORES)
+
+@main_bp.route('/store-locator/stores')
+@login_required
+def store_locator_api():
+    return jsonify(STORES)
 
 @main_bp.route('/product')
 @login_required

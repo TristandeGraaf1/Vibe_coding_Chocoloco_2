@@ -199,6 +199,9 @@
   border: 1px solid rgba(107, 68, 35, 0.16);
   padding: 0.9rem 1rem;
   background: rgba(255, 255, 255, 0.95);
+  font-family: inherit;
+  font-size: 1rem;
+  line-height: 1.5;
 }
 
 .complaint-form .form-help {
@@ -211,6 +214,33 @@
 .complaint-textarea {
   resize: vertical;
   min-height: 180px;
+}
+
+.complaint-form input[type="file"] {
+  appearance: none;
+  padding: 0.9rem 1rem;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.complaint-form input[type="file"]::file-selector-button {
+  padding: 0.6rem 1.2rem;
+  background: linear-gradient(135deg, #d4a574 0%, #c99563 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 0.75rem;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.complaint-form input[type="file"]::file-selector-button:hover {
+  background: linear-gradient(135deg, #c99563 0%, #ba8453 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(107, 68, 35, 0.2);
 }
 
 .form-error {

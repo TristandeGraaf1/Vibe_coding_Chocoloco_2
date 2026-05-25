@@ -4,13 +4,19 @@
 
 {% block content %}
 <div class="store-locator-container">
-    <div class="store-locator-header">
-        <h1>🏪 Winkelzoeker</h1>
-        <p>Vind de dichtstbijzijnde Chocoloco winkel</p>
+    <div class="store-locator-header store-locator-hero">
+        <div class="hero-text">
+            <h1>🏪 Winkelzoeker</h1>
+            <p>Vind de dichtstbijzijnde Chocoloco winkel</p>
+            <div class="hero-badge">Ontvang gratis proefjes in geselecteerde winkels</div>
+        </div>
     </div>
 
     <div class="store-locator-controls">
-        <button id="geolocation-btn" class="btn-primary">📍 Mijn locatie gebruiken</button>
+        <div class="control-group">
+            <input id="store-search" class="store-search" type="search" placeholder="Zoek op naam of plaats...">
+            <button id="geolocation-btn" class="btn-primary">📍 Mijn locatie gebruiken</button>
+        </div>
         <span id="location-status" class="location-status"></span>
     </div>
 
@@ -66,9 +72,16 @@ document.addEventListener('DOMContentLoaded', function() {
             return { ...store, distance };
         });
 
+        // Apply search filter if present
+        const searchValue = (document.getElementById('store-search') && document.getElementById('store-search').value) ? document.getElementById('store-search').value.trim().toLowerCase() : '';
+        let filtered = storesWithDistance;
+        if (searchValue) {
+            filtered = storesWithDistance.filter(s => (s.name && s.name.toLowerCase().includes(searchValue)) || (s.city && s.city.toLowerCase().includes(searchValue)) || (s.address && s.address.toLowerCase().includes(searchValue)));
+        }
+
         const sortedStores = userLocation ?
-            storesWithDistance.sort((a, b) => a.distance - b.distance) :
-            storesWithDistance;
+            filtered.sort((a, b) => a.distance - b.distance) :
+            filtered;
 
         sortedStores.forEach(store => {
             const marker = L.marker([store.lat, store.lon]).addTo(map);
@@ -106,6 +119,14 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             storeListElement.appendChild(storeItem);
+        });
+    }
+
+    // Filter as the user types
+    const searchInput = document.getElementById('store-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            displayStores();
         });
     }
 

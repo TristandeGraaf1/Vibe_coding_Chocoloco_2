@@ -4,105 +4,147 @@
 
 {% block content %}
 <div class="rewards-page">
-    <div class="rewards-hero section-container">
-        <div class="section-header">
-            <h2 class="section-title">⭐ ChocoRewards</h2>
+    <!-- Hero Section -->
+    <div class="rewards-hero">
+        <div class="rewards-hero-background">
+            <div class="hero-star">⭐</div>
+            <div class="hero-choco">🍫</div>
         </div>
-        <div class="rewards-hero-inner">
-            <p class="rewards-intro">Spaar automatisch punten bij elke bestelling. Hoe meer je bestelt, hoe sneller je beloningen vrijspeelt.</p>
-            <div class="hero-decor">🍫</div>
-        </div>
-        <div class="rewards-balance">
-            <div class="rewards-balance-card">
-                <div class="rewards-balance-number">{{ balance }}</div>
-                <div class="rewards-balance-label">punten beschikbaar</div>
-            </div>
-        </div>
-        <div class="rewards-rules">
-            <div class="reward-rule">1 punt per volle euro van je bestelling</div>
-            <div class="reward-rule">Punten worden automatisch toegevoegd na een geslaagde checkout</div>
-            <div class="reward-rule">Wissel in voor korting, cadeaus of een fabriekstour</div>
+        <div class="rewards-hero-content">
+            <div class="rewards-hero-badge">Premium Rewards Program</div>
+            <h1 class="rewards-hero-title">ChocoRewards</h1>
+            <p class="rewards-hero-subtitle">Spaar automatisch punten bij elke bestelling en ontvang exclusieve beloningen</p>
         </div>
     </div>
 
+    <!-- Balance Card -->
+    <div class="rewards-balance-section">
+        <div class="rewards-balance-card">
+            <div class="balance-icon">🏆</div>
+            <div class="balance-content">
+                <div class="balance-label">Jouw Punten Balans</div>
+                <div class="balance-number">{{ balance }}</div>
+                <div class="balance-subtitle">punten beschikbaar</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rules/Info Section -->
+    <div class="rewards-info-section">
+        <div class="rewards-rules">
+            <div class="reward-rule-item">
+                <div class="rule-icon">1️⃣</div>
+                <div class="rule-content">
+                    <h4>Verdien Punten</h4>
+                    <p>1 punt per volle euro van je bestelling</p>
+                </div>
+            </div>
+            <div class="reward-rule-item">
+                <div class="rule-icon">⚡</div>
+                <div class="rule-content">
+                    <h4>Automatisch</h4>
+                    <p>Punten worden automatisch toegevoegd na checkout</p>
+                </div>
+            </div>
+            <div class="reward-rule-item">
+                <div class="rule-icon">🎁</div>
+                <div class="rule-content">
+                    <h4>Wissel In</h4>
+                    <p>Voor korting, cadeaus of een fabriekstour</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rewards Grid -->
     <div class="rewards-grid">
-        <section class="section-container rewards-section">
+        <!-- Beloningen Section -->
+        <section class="rewards-section">
             <div class="section-header">
-                <h3 class="section-title">Beloningen</h3>
+                <h2 class="section-title">🎁 Beschikbare Beloningen</h2>
+                <p class="section-subtitle">Kies je favoriete beloning</p>
             </div>
             <div class="rewards-catalog">
                 {% for reward in reward_catalog %}
                 <article class="reward-card {% if balance >= reward.points %}reward-available{% endif %}">
-                    {% set pct = 0 %}
-                    {% if reward.points > 0 %}
-                        {% set pct = (balance * 100.0 / reward.points) %}
-                    {% endif %}
-                    {% if pct > 100 %}
-                        {% set pct = 100 %}
-                    {% elif pct < 0 %}
+                    <div class="reward-card-top">
+                        <div class="reward-icon-large">{{ reward.icon if reward.icon else '🍫' }}</div>
+                        <div class="reward-header">
+                            <h3>{{ reward.title }}</h3>
+                            <div class="reward-points-badge">{{ reward.points }} <span>punten</span></div>
+                        </div>
+                    </div>
+
+                    <p class="reward-description">{{ reward.description }}</p>
+
+                    <!-- Progress Circle -->
+                    <div class="reward-progress">
                         {% set pct = 0 %}
-                    {% endif %}
-                    <div class="reward-card-left">
-                        <div class="progress-wrap" aria-hidden="true">
-                            <svg class="progress-ring" width="84" height="84" viewBox="0 0 42 42">
-                                {% set radius = 18 %}
-                                {% set circumference = 2 * 3.14159 * radius %}
-                                {% set dashoffset = (circumference * (1 - (pct / 100.0))) %}
-                                <circle class="progress-ring__bg" cx="21" cy="21" r="{{ radius }}" fill="transparent" stroke="rgba(0,0,0,0.06)" stroke-width="4" />
-                                <circle class="progress-ring__progress" cx="21" cy="21" r="{{ radius }}" fill="transparent" stroke="var(--accent-green)" stroke-width="4" stroke-linecap="round"
-                                    stroke-dasharray="{{ '%.2f' % circumference }} {{ '%.2f' % circumference }}" stroke-dashoffset="{{ '%.2f' % dashoffset }}" transform="rotate(-90 21 21)" />
-                            </svg>
-                            <div class="progress-label">
-                                <div class="progress-number">{{ balance if balance <= reward.points else reward.points }}</div>
-                                <div class="progress-sub">/{{ reward.points }}</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="reward-card-body">
-                            <div class="reward-card-top">
-                                <div class="reward-meta">
-                                    <span class="reward-icon" aria-hidden="true">🍫</span>
-                                    <h4>{{ reward.title }}</h4>
-                                </div>
-                                <span class="reward-points">{{ reward.points }} punten</span>
-                            </div>
-                        <p>{{ reward.description }}</p>
-                        {% if balance >= reward.points %}
-                        <div class="reward-status reward-ready">Beschikbaar om in te wisselen</div>
-                        <div class="reward-actions">
-                            <a href="#" class="btn btn-primary btn-small">Wissel in</a>
-                        </div>
-                        {% else %}
-                        <div class="reward-status">Nog {{ reward.points - balance }} punten nodig</div>
-                        <div class="reward-actions">
-                            <button class="btn btn-secondary btn-small" disabled>Niet genoeg punten</button>
-                        </div>
+                        {% if reward.points > 0 %}
+                            {% set pct = (balance * 100.0 / reward.points) %}
                         {% endif %}
+                        {% if pct > 100 %}
+                            {% set pct = 100 %}
+                        {% elif pct < 0 %}
+                            {% set pct = 0 %}
+                        {% endif %}
+                        <svg class="progress-ring" width="100" height="100" viewBox="0 0 42 42">
+                            {% set radius = 18 %}
+                            {% set circumference = 2 * 3.14159 * radius %}
+                            {% set dashoffset = (circumference * (1 - (pct / 100.0))) %}
+                            <circle class="progress-ring__bg" cx="21" cy="21" r="{{ radius }}" fill="transparent" stroke="rgba(0,0,0,0.06)" stroke-width="4" />
+                            <circle class="progress-ring__progress" cx="21" cy="21" r="{{ radius }}" fill="transparent" stroke="var(--accent-color)" stroke-width="4" stroke-linecap="round"
+                                stroke-dasharray="{{ '%.2f' % circumference }} {{ '%.2f' % circumference }}" stroke-dashoffset="{{ '%.2f' % dashoffset }}" transform="rotate(-90 21 21)" />
+                        </svg>
+                        <div class="progress-text">
+                            <div class="progress-current">{{ balance if balance <= reward.points else reward.points }}</div>
+                            <div class="progress-total">/{{ reward.points }}</div>
+                        </div>
                     </div>
+
+                    {% if balance >= reward.points %}
+                    <div class="reward-status reward-ready">✓ Beschikbaar!</div>
+                    <div class="reward-actions">
+                        <a href="#" class="btn-reward btn-reward-active">Wissel in</a>
+                    </div>
+                    {% else %}
+                    <div class="reward-status reward-locked">Nog {{ reward.points - balance }} punten</div>
+                    <div class="reward-actions">
+                        <button class="btn-reward btn-reward-disabled" disabled>Niet beschikbaar</button>
+                    </div>
+                    {% endif %}
                 </article>
                 {% endfor %}
             </div>
         </section>
 
-        <section class="section-container rewards-section">
+        <!-- History Section -->
+        <section class="rewards-section">
             <div class="section-header">
-                <h3 class="section-title">Puntenhistorie</h3>
+                <h2 class="section-title">📊 Puntenhistorie</h2>
+                <p class="section-subtitle">Je recente transacties</p>
             </div>
             <div class="rewards-history">
                 {% if history %}
                     {% for item in history %}
-                    <div class="reward-history-item">
-                        <div>
-                            <strong>{{ item.description }}</strong>
-                            <p>{{ item.created_at.strftime('%d-%m-%Y %H:%M') }}</p>
+                    <div class="reward-history-item {% if item.points >= 0 %}positive{% else %}negative{% endif %}">
+                        <div class="history-item-left">
+                            <div class="history-icon">{% if item.points > 0 %}📈{% else %}📉{% endif %}</div>
+                            <div class="history-content">
+                                <strong>{{ item.description }}</strong>
+                                <p>{{ item.created_at.strftime('%d-%m-%Y %H:%M') }}</p>
+                            </div>
                         </div>
-                        <div class="reward-history-points {% if item.points >= 0 %}positive{% else %}negative{% endif %}">
+                        <div class="history-points">
                             {% if item.points > 0 %}+{% endif %}{{ item.points }}
                         </div>
                     </div>
                     {% endfor %}
                 {% else %}
-                    <p>Nog geen punten verzameld. Doe je eerste bestelling om te beginnen.</p>
+                    <div class="history-empty">
+                        <div class="empty-icon">🎯</div>
+                        <p>Nog geen punten verzameld. Doe je eerste bestelling om te beginnen!</p>
+                    </div>
                 {% endif %}
             </div>
         </section>

@@ -674,6 +674,29 @@ body {
     animation: fadeInUp 0.8s ease-out;
 }
 
+/* Dashboard quick stat link styling (remove default underline) */
+.quick-stat-link {
+    text-decoration: none;
+    color: inherit;
+    display: inline-block;
+}
+
+.quick-stat-link .quick-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.quick-stat-link:hover .quick-stat {
+    transform: translateY(-3px);
+}
+
+.quick-stat .stat-number, .quick-stat .stat-label {
+    text-decoration: none;
+}
+
 .dashboard-hero p {
     font-size: 1.15rem;
     opacity: 0.95;
@@ -752,6 +775,70 @@ body {
 
 .section-container {
     margin-bottom: 3rem;
+}
+
+/* Article / News detail styles */
+.article-container {
+    margin: 2.5rem 0;
+}
+
+.article-hero {
+    background: linear-gradient(135deg, rgba(107,68,35,0.95), rgba(139,90,60,0.9));
+    color: white;
+    padding: 3.5rem 0;
+    border-radius: 0.8rem;
+    margin-bottom: 1.5rem;
+}
+
+.article-hero .article-title {
+    margin: 0 0 0.5rem 0;
+    font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+    font-weight: 800;
+    color: #FFF8F4;
+}
+
+.article-hero .article-meta {
+    color: rgba(255,255,255,0.85);
+    font-size: 0.95rem;
+}
+
+.article-content-wrapper {
+    max-width: 860px;
+    margin: 0 auto 2rem auto;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.6rem;
+    padding: 2rem;
+    box-shadow: var(--shadow-light);
+}
+
+.article-content {
+    color: var(--text-color);
+    font-size: 1.05rem;
+    line-height: 1.75;
+}
+
+.article-content p {
+    margin-bottom: 1rem;
+}
+
+.article-content img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 1rem auto;
+    border-radius: 0.5rem;
+}
+
+.article-content h2, .article-content h3 {
+    color: var(--primary-color);
+    margin-top: 1.2rem;
+}
+
+.article-footer {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: flex-start;
 }
 
 .section-header {

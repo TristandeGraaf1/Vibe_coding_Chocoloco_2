@@ -2199,6 +2199,13 @@ def toggle_favorite(product_id):
     db.session.commit()
     return jsonify({'status': 'success', 'is_favorite': product in current_user.favorites})
 
+
+@main_bp.route('/favorites')
+@login_required
+def favorites():
+    favs = current_user.favorites
+    return render_template('favorites.html', favorites=favs)
+
 @main_bp.route('/theme/<theme>', methods=['POST'])
 @login_required
 def set_theme(theme):

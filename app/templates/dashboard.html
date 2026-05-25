@@ -14,14 +14,18 @@
 
     <!-- Quick Stats -->
     <div class="quick-stats">
-        <div class="quick-stat" style="animation-delay: 0s;">
-            <span class="stat-number">{{ products|length }}</span>
-            <span class="stat-label">{{ _('Producten') }}</span>
-        </div>
-        <div class="quick-stat" style="animation-delay: 0.1s;">
-            <span class="stat-number">{{ current_user.favorites|length }}</span>
-            <span class="stat-label">{{ _('Favorieten') }}</span>
-        </div>
+        <a href="{{ url_for('main.product_hub') }}" class="quick-stat-link" style="animation-delay: 0s;">
+            <div class="quick-stat">
+                <span class="stat-number">{{ products|length }}</span>
+                <span class="stat-label">{{ _('Producten') }}</span>
+            </div>
+        </a>
+        <a href="{{ url_for('main.favorites') }}" class="quick-stat-link" style="animation-delay: 0.1s;">
+            <div class="quick-stat">
+                <span class="stat-number">{{ current_user.favorites|length }}</span>
+                <span class="stat-label">{{ _('Favorieten') }}</span>
+            </div>
+        </a>
     </div>
 
     <!-- Recent Products Section -->
@@ -109,7 +113,7 @@
         <div class="video-widget">
             <h3>🎥 {{ _('Ontdek Chocoloco') }}</h3>
             <div class="video-container">
-                <iframe width="100%" height="300" src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="Chocoloco Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                <iframe width="100%" height="300" src="https://www.youtube.com/embed/70FFS9P-wVw" title="Chocoloco Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
             </div>
             <p class="widget-caption">{{ _('Kijk hoe je onze chocoladeproducten het beste kunt gebruiken') }}</p>
         </div>

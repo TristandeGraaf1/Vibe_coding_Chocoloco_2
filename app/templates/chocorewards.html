@@ -105,7 +105,7 @@
                     {% if balance >= reward.points %}
                     <div class="reward-status reward-ready">✓ Beschikbaar!</div>
                     <div class="reward-actions">
-                        <a href="#" class="btn-reward btn-reward-active">Wissel in</a>
+                        <a href="#" class="btn-reward btn-reward-active" data-index="{{ loop.index0 }}" data-points="{{ reward.points }}">Wissel in</a>
                     </div>
                     {% else %}
                     <div class="reward-status reward-locked">Nog {{ reward.points - balance }} punten</div>
@@ -150,4 +150,42 @@
         </section>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function(){
+        document.querySelectorAll('.btn-reward-active').forEach(function(btn){
+            btn.addEventListener('click', function(e){
+                e.preventDefault();
+                const idx = btn.getAttribute('data-index');
+                btn.textContent = 'Wisselen...';
+                fetch('{{ url_for("main.chocorewards_redeem") }}', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({index: idx})
+                }).then(function(res){
+                    return res.json().then(function(data){
+                        if(!res.ok){
+                            alert(data.error || 'Kon beloning niet inwisselen');
+                            btn.textContent = 'Wissel in';
+                            return;
+                        }
+                        // redirect to shop with discount code
+                        if(data.redirect){
+                            window.location = data.redirect;
+                            return;
+                        }
+                        alert('Ingewisseld! Code: ' + data.code);
+                    });
+                }).catch(function(err){
+                    console.error(err);
+                    alert('Netwerkfout bij inwisselen');
+                    btn.textContent = 'Wissel in';
+                });
+            });
+        });
+    });
+</script>
 {% endblock %}

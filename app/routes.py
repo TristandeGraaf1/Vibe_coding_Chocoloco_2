@@ -1755,6 +1755,15 @@ def shop():
         {'label': 'Luxe verpakking', 'value': 'Perfect als cadeau'},
     ]
 
+    # If a discount code is present in the query params, activate it from session redeemed codes
+    discount_code = request.args.get('discount_code')
+    if discount_code:
+        redeemed = session.get('redeemed_codes', []) or []
+        match = next((r for r in redeemed if r.get('code') == discount_code), None)
+        if match:
+            session['active_discount'] = match
+            flash(f"Kortingscode {discount_code} toegevoegd: €{match.get('amount',0):.2f} korting", 'success')
+
     return render_template(
         'shop.html',
         shop_products=shop_products,
@@ -1854,6 +1863,19 @@ def checkout():
         payment_ref = f"DEMO-{datetime.now().strftime('%Y%m%d%H%M%S')}" if is_demo_payment else f"CC-{datetime.now().strftime('%Y%m%d%H%M%S')}"
         payment_labels = dict(form.payment_method.choices)
 
+        # Apply any active discount from rewards
+        active_discount = session.get('active_discount') or {}
+        applied_discount = None
+        try:
+            if active_discount and float(active_discount.get('amount', 0)):
+                applied_amount = round(float(active_discount.get('amount', 0) or 0), 2)
+                cart_total = max(0.0, round(float(cart_total or 0) - applied_amount, 2))
+                applied_discount = active_discount
+                # clear active discount after applying
+                session.pop('active_discount', None)
+        except Exception:
+            applied_discount = None
+
         session['last_payment'] = {
             'name': form.full_name.data,
             'email': form.email.data,
@@ -1863,6 +1885,7 @@ def checkout():
             'payment_ref': payment_ref,
             'cart_items': cart_items,
             'cart_total': cart_total,
+            'applied_discount': applied_discount,
         }
 
         try:
@@ -1912,6 +1935,61 @@ def chocorewards():
     ]
 
     return render_template('chocorewards.html', balance=balance, history=history, reward_catalog=reward_catalog)
+
+
+@main_bp.route('/chocorewards/redeem', methods=['POST'])
+@login_required
+def chocorewards_redeem():
+    payload = request.get_json(silent=True) or {}
+    try:
+        idx = int(payload.get('index', -1))
+    except Exception:
+        idx = -1
+
+    reward_catalog = [
+        {'title': 'Mini chocoladeproeverij', 'points': 50, 'description': 'Ontvang een kleine proeverij met 3 verrassende smaken.'},
+        {'title': 'Korting op je volgende bestelling', 'points': 75, 'description': 'Wissel je punten in voor directe korting bij checkout.'},
+        {'title': 'Luxe cadeaubox', 'points': 150, 'description': 'Kies een mooie cadeauverpakking met premium selectie.'},
+        {'title': 'Chocoloco fabriekstour', 'points': 250, 'description': 'Ga achter de schermen mee voor een exclusieve rondleiding door de fabriek.'},
+    ]
+
+    if idx < 0 or idx >= len(reward_catalog):
+        return jsonify({'error': 'Ongeldige beloning'}), 400
+
+    reward = reward_catalog[idx]
+    balance = _reward_balance(current_user.id)
+    if balance < reward['points']:
+        return jsonify({'error': 'Onvoldoende punten'}), 400
+
+    # Create negative reward transaction to deduct points
+    try:
+        rt = RewardTransaction(
+            user_id=current_user.id,
+            points=-int(reward['points']),
+            source_type='reward',
+            source_ref=f'reward:{idx}',
+            description=f'Ingewisseld: {reward["title"]}',
+        )
+        db.session.add(rt)
+        db.session.commit()
+    except Exception:
+        current_app.logger.exception('Failed to create reward transaction')
+        return jsonify({'error': 'Kon puntentransactie niet aanmaken'}), 500
+
+    # Generate a simple redemption code for shop use
+    import random, string
+    code = 'CHOCO' + ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+    # For now map the 'Korting op je volgende bestelling' to a fixed €5 korting
+    discount_amount = 0.0
+    if reward['points'] == 75:
+        discount_amount = 5.0
+
+    redeemed = session.get('redeemed_codes', [])
+    redeemed.append({'code': code, 'amount': discount_amount, 'title': reward['title']})
+    session['redeemed_codes'] = redeemed
+    session['active_discount'] = redeemed[-1]
+
+    return jsonify({'status': 'ok', 'code': code, 'amount': discount_amount, 'redirect': url_for('main.shop', discount_code=code)})
 
 
 @main_bp.route('/chocobot')

@@ -4,6 +4,11 @@
 
 {% block content %}
 <div class="shop-page">
+    {% if session.active_discount %}
+    <div class="shop-discount-banner">
+        Kortingscode <strong>{{ session.active_discount.code }}</strong> toegevoegd: €{{ '%.2f'|format(session.active_discount.amount) }} korting — wordt toegepast bij afrekenen.
+    </div>
+    {% endif %}
     <section class="shop-hero">
         <div class="shop-hero-copy">
             <p class="shop-eyebrow">Chocoloco Boutique</p>
@@ -124,6 +129,13 @@
         const searchInput = document.getElementById('shopSearch');
         const categoryChips = Array.from(document.querySelectorAll('.shop-chip'));
         const shopCards = Array.from(document.querySelectorAll('.shop-card'));
+
+        // Debug helpers: surface counts to console for troubleshooting
+        try {
+            console.log('shop:init', { searchInputPresent: !!searchInput, shopCards: shopCards.length, categoryChips: categoryChips.length });
+        } catch (e) {
+            // ignore
+        }
         const resultCount = document.getElementById('shopResultCount');
         const cartItems = document.getElementById('shopCartItems');
         const cartCount = document.getElementById('shopCartCount');
@@ -207,7 +219,11 @@
             resultCount.textContent = visibleCount + ' product' + (visibleCount === 1 ? '' : 'en');
         }
 
-        searchInput.addEventListener('input', applyFilters);
+        if (searchInput) {
+            searchInput.addEventListener('input', applyFilters);
+        } else {
+            console.warn('shop: search input not found, search disabled');
+        }
 
         categoryChips.forEach(function (chip) {
             chip.addEventListener('click', function () {

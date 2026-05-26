@@ -6,7 +6,7 @@
 <div class="products-list-page">
     <!-- Header -->
     <div class="page-header">
-        <a href="{{ url_for('main.dashboard') }}" class="back-link">← Terug naar Dashboard</a>
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary">← Terug naar Dashboard</a>
         <h1>🍫 Al je Producten</h1>
         <p class="product-count">Je hebt {{ products|length }} product{{ "en" if products|length != 1 else "" }}</p>
     </div>

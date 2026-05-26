@@ -706,6 +706,16 @@ body {
     animation: fadeInUp 0.8s ease-out 0.1s backwards;
 }
 
+.shop-discount-banner {
+    background: linear-gradient(90deg, rgba(94,143,46,0.12), rgba(212,165,116,0.06));
+    border: 1px solid rgba(94,143,46,0.18);
+    padding: 0.8rem 1rem;
+    border-radius: 0.6rem;
+    margin: 1rem 0;
+    color: var(--accent-green);
+    font-weight: 700;
+}
+
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));

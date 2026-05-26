@@ -90,6 +90,9 @@
         let activeStream = null;
         let activeReader = null;
         let quaggaHandlerRegistered = false;
+        let barcodeLookupTimer = null;
+        let suppressNextProductCodeLookup = false;
+        const supportedBarcodeFormats = ['code_128'];
 
         function getField(name) {
             if (!form) {
@@ -118,6 +121,22 @@
             if (resultsEl) {
                 resultsEl.textContent = message;
             }
+        }
+
+        function scheduleBarcodeLookup() {
+            const barcode = getValue('product_code');
+            if (!barcode || barcode.length < 6) {
+                return;
+            }
+
+            if (barcodeLookupTimer) {
+                clearTimeout(barcodeLookupTimer);
+            }
+
+            barcodeLookupTimer = window.setTimeout(function() {
+                barcodeLookupTimer = null;
+                lookupBarcode(barcode);
+            }, 250);
         }
 
         function resetScannerView() {
@@ -194,6 +213,7 @@
             }
 
             stopScanner();
+            suppressNextProductCodeLookup = true;
             setValue('product_code', barcode);
             showResult('Gescand (' + sourceLabel + '): ' + barcode);
             lookupBarcode(barcode);
@@ -204,8 +224,7 @@
                 return false;
             }
 
-            const formats = ['ean_13', 'ean_8', 'code_128', 'code_39', 'code_93', 'codabar', 'itf', 'upc_a', 'upc_e', 'qr_code', 'pdf417'];
-            const detector = new BarcodeDetector({ formats: formats });
+            const detector = new BarcodeDetector({ formats: supportedBarcodeFormats });
             const video = document.createElement('video');
             video.setAttribute('playsinline', 'true');
             video.autoplay = true;
@@ -329,13 +348,7 @@
                     },
                     decoder: {
                         readers: [
-                            'ean_reader',
-                            'ean_8_reader',
-                            'upc_reader',
-                            'upc_e_reader',
-                            'code_128_reader',
-                            'code_39_reader',
-                            'code_93_reader'
+                            'code_128_reader'
                         ]
                     },
                     locate: true
@@ -410,7 +423,29 @@
                     if (field === getField('product_code') || field === getField('name')) {
                         showResult('Velden ingevuld. Klik op Product registreren om op te slaan.');
                     }
+
+                    if (field === getField('product_code')) {
+                        if (suppressNextProductCodeLookup) {
+                            suppressNextProductCodeLookup = false;
+                            return;
+                        }
+
+                        scheduleBarcodeLookup();
+                    }
                 });
+
+                if (field === getField('product_code')) {
+                    field.addEventListener('keydown', function(event) {
+                        if (event.key === 'Enter') {
+                            event.preventDefault();
+                            if (barcodeLookupTimer) {
+                                clearTimeout(barcodeLookupTimer);
+                                barcodeLookupTimer = null;
+                            }
+                            lookupBarcode(getValue('product_code'));
+                        }
+                    });
+                }
             }
         });
 

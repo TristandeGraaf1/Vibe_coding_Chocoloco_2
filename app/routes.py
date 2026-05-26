@@ -264,24 +264,33 @@ def _lookup_odoo_product_by_barcode(barcode):
         return None
 
     odoo_db, uid, models, odoo_password = _odoo_credentials()
-    product_fields = models.execute_kw(
-        odoo_db,
-        uid,
-        odoo_password,
-        'product.product',
-        'fields_get',
-        [],
-        {'attributes': ['type']},
-    ) or {}
-    template_fields = models.execute_kw(
-        odoo_db,
-        uid,
-        odoo_password,
-        'product.template',
-        'fields_get',
-        [],
-        {'attributes': ['type']},
-    ) or {}
+    try:
+        product_fields = models.execute_kw(
+            odoo_db,
+            uid,
+            odoo_password,
+            'product.product',
+            'fields_get',
+            [],
+            {'attributes': ['type']},
+        ) or {}
+    except Exception:
+        current_app.logger.exception('Failed to fetch product.product fields, continuing with limited search')
+        product_fields = {}
+
+    try:
+        template_fields = models.execute_kw(
+            odoo_db,
+            uid,
+            odoo_password,
+            'product.template',
+            'fields_get',
+            [],
+            {'attributes': ['type']},
+        ) or {}
+    except Exception:
+        current_app.logger.exception('Failed to fetch product.template fields, continuing with limited search')
+        template_fields = {}
 
     def _build_domain(field_names, operator):
         usable_fields = [field_name for field_name in field_names if field_name]
@@ -312,15 +321,19 @@ def _lookup_odoo_product_by_barcode(barcode):
             if not domain:
                 continue
 
-            matches = models.execute_kw(
-                odoo_db,
-                uid,
-                odoo_password,
-                model_name,
-                'search_read',
-                [domain],
-                {'fields': read_fields, 'limit': 1},
-            )
+            try:
+                matches = models.execute_kw(
+                    odoo_db,
+                    uid,
+                    odoo_password,
+                    model_name,
+                    'search_read',
+                    [domain],
+                    {'fields': read_fields, 'limit': 1},
+                )
+            except Exception:
+                current_app.logger.exception('search_read failed on %s with domain %s; trying next option', model_name, domain)
+                matches = []
             if matches:
                 match = matches[0]
                 if model_name == 'product.template':
@@ -334,15 +347,20 @@ def _lookup_odoo_product_by_barcode(barcode):
                         {'limit': 1},
                     )
                     if variant_id:
-                        variant = models.execute_kw(
-                            odoo_db,
-                            uid,
-                            odoo_password,
-                            'product.product',
-                            'search_read',
-                            [[('id', '=', variant_id[0])]],
-                            {'fields': ['id', 'name', 'display_name', 'barcode', 'default_code'], 'limit': 1},
-                        )
+                        try:
+                            variant = models.execute_kw(
+                                odoo_db,
+                                uid,
+                                odoo_password,
+                                'product.product',
+                                'search_read',
+                                [[('id', '=', variant_id[0])]],
+                                {'fields': ['id', 'name', 'display_name', 'barcode', 'default_code'], 'limit': 1},
+                            )
+                        except Exception:
+                            current_app.logger.exception('variant search_read failed for template %s', match.get('id'))
+                            variant = []
+
                         if variant:
                             variant_record = variant[0]
                             variant_record['odoo_model'] = 'product.product'
@@ -498,15 +516,20 @@ def _create_odoo_product_with_barcode(product_name, barcode):
         'sale_ok': True,
     }
 
-    product_type_fields = models.execute_kw(
-        odoo_db,
-        uid,
-        odoo_password,
-        'product.template',
-        'fields_get',
-        [],
-        {'attributes': ['type']},
-    )
+    try:
+        product_type_fields = models.execute_kw(
+            odoo_db,
+            uid,
+            odoo_password,
+            'product.template',
+            'fields_get',
+            [],
+            {'attributes': ['type']},
+        ) or {}
+    except Exception:
+        current_app.logger.exception('Failed to fetch product.template fields when creating template; using defaults')
+        product_type_fields = {}
+
     if 'detailed_type' in product_type_fields:
         template_vals['detailed_type'] = 'product'
     elif 'type' in product_type_fields:

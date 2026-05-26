@@ -1772,6 +1772,18 @@ def shop():
     )
 
 
+@main_bp.route('/discover')
+@login_required
+def discover():
+    # Get user's registered products for the product cards section
+    products = Product.query.filter_by(user_id=current_user.id).order_by(Product.added_at.desc()).all()
+    
+    return render_template(
+        'discover.html',
+        products=products,
+    )
+
+
 @main_bp.route('/cart/save', methods=['POST'])
 @login_required
 def save_cart():

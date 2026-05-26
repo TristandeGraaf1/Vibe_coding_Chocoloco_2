@@ -1,0 +1,1231 @@
+{% extends "base.html" %}
+
+{% block title %}Ontdekken - Chocoloco{% endblock %}
+
+{% block content %}
+<div class="discover-page">
+    <!-- Hero Section -->
+    <section class="discover-hero">
+        <div class="discover-hero-content">
+            <h1>🔍 {{ _('Ontdek Chocoloco') }}</h1>
+            <p>Verken onze uitgebreide bibliotheek met productkaarten, recepten, tutorials en video's over de kunst van chocolademaking.</p>
+            
+            <!-- Search Bar -->
+            <div class="discover-search-wrapper">
+                <input 
+                    id="discoverSearch" 
+                    type="search" 
+                    class="discover-search-input" 
+                    placeholder="Zoeken op smaak, allergen, herkomst, kwaliteit of duurzaamheid..."
+                    aria-label="Zoeken in Chocoloco bibliotheek">
+                <button class="discover-search-btn" id="discoverSearchBtn">🔎</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Search Results Status -->
+    <div id="discoverA11yStatus" class="visually-hidden" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- Navigation Tabs -->
+    <section class="discover-tabs-wrapper" aria-label="Inhoud categorieën">
+        <div class="discover-tabs">
+            <button class="discover-tab-btn active" data-section="producten">📦 Productkaarten</button>
+            <button class="discover-tab-btn" data-section="tutorials">📚 Tutorials</button>
+            <button class="discover-tab-btn" data-section="videos">🎥 Video's</button>
+            <button class="discover-tab-btn" data-section="recepten">👨‍🍳 Recepten</button>
+            <button class="discover-tab-btn" data-section="faq">❓ Veelgestelde Vragen</button>
+        </div>
+    </section>
+
+    <!-- ============================================
+         PRODUCT CARDS SECTION
+         ============================================ -->
+    <section id="producten" class="discover-section active" aria-label="Digitale productkaarten">
+        <div class="section-container">
+            <div class="section-header">
+                <h2 class="section-title">📦 Digitale Productkaarten</h2>
+                <p class="section-description">Ontdek gedetailleerde informatie over elk geregistreerd product, inclusief smaakprofielen, allergenen en duurzaamheid.</p>
+            </div>
+
+            {% if products %}
+                <div class="products-library-grid">
+                    {% for product in products %}
+                    <article class="product-library-card discover-searchable" 
+                             data-searchable="{{ product.name|lower }} {{ product.flavor|lower }} {{ product.description|lower }}">
+                        <div class="product-card-header">
+                            <h3>{{ product.name }}</h3>
+                            {% if product.expiry_date %}
+                            <span class="product-expiry-badge">⏰ {{ product.expiry_date.strftime('%d-%m-%Y') }}</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="product-card-emoji">🍫</div>
+
+                        <!-- Flavor Profile -->
+                        {% if product.flavor %}
+                        <div class="product-info-group">
+                            <strong class="info-label">🍫 Smaakprofiel:</strong>
+                            <p class="info-value">{{ product.flavor }}</p>
+                        </div>
+                        {% endif %}
+
+                        <!-- Description / Tasting Notes -->
+                        {% if product.description %}
+                        <div class="product-info-group">
+                            <strong class="info-label">📝 Omschrijving:</strong>
+                            <p class="info-value">{{ product.description }}</p>
+                        </div>
+                        {% endif %}
+
+                        <!-- Allergen Information (sample) -->
+                        <div class="product-info-group">
+                            <strong class="info-label">⚠️ Allergenen:</strong>
+                            <div class="allergen-badges">
+                                <span class="allergen-badge">Noten</span>
+                                <span class="allergen-badge">Melk</span>
+                            </div>
+                        </div>
+
+                        <!-- Origin / Quality Information -->
+                        <div class="product-info-group">
+                            <strong class="info-label">🌍 Herkomst & Kwaliteit:</strong>
+                            <ul class="quality-list">
+                                <li>🌱 Duurzame cacao uit Ecuador</li>
+                                <li>✓ Fair Trade gecertificeerd</li>
+                                <li>⭐ Premium kwaliteit</li>
+                            </ul>
+                        </div>
+
+                        <!-- Sustainability Info -->
+                        <div class="product-info-group sustainability-info">
+                            <strong class="info-label">♻️ Duurzaamheid:</strong>
+                            <ul class="sustainability-list">
+                                <li>🌱 100% recycleerbare verpakking</li>
+                                <li>♻️ Koolstofneutraal geproduceerd</li>
+                                <li>🤝 Direct handel met cacao-boeren</li>
+                            </ul>
+                        </div>
+
+                        <a href="{{ url_for('main.product_detail', product_id=product.id) }}" class="btn btn-small btn-primary">
+                            Meer informatie →
+                        </a>
+                    </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <p>📭 Je hebt nog geen producten geregistreerd. <a href="{{ url_for('main.product_hub') }}">Voeg je eerste product toe →</a></p>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- ============================================
+         TUTORIALS SECTION
+         ============================================ -->
+    <section id="tutorials" class="discover-section" aria-label="Interactieve tutorials">
+        <div class="section-container">
+            <div class="section-header">
+                <h2 class="section-title">📚 Interactieve Tutorials</h2>
+                <p class="section-description">Leer alles over chocolade: van beginner tot expert.</p>
+            </div>
+
+            <div class="tutorials-grid">
+                <!-- Tutorial 1: Tasting Guide -->
+                <article class="tutorial-card discover-searchable" data-searchable="proeven smaak guide beginner">
+                    <div class="tutorial-icon">👅</div>
+                    <h3>Hoe Chocolade Correct Te Proeven</h3>
+                    <p class="tutorial-level">Beginner</p>
+                    <p class="tutorial-description">Leer de vijf stappen van chocoladeproeven om alle smaken volledig te ervaren.</p>
+                    <div class="tutorial-steps">
+                        <div class="step">
+                            <span class="step-number">1</span>
+                            <p><strong>Observeer:</strong> Let op kleur, glans en textuur</p>
+                        </div>
+                        <div class="step">
+                            <span class="step-number">2</span>
+                            <p><strong>Ruik:</strong> Neem diep in om noten te detecteren</p>
+                        </div>
+                        <div class="step">
+                            <span class="step-number">3</span>
+                            <p><strong>Breek:</strong> Luister naar het geluid van de breuk</p>
+                        </div>
+                        <div class="step">
+                            <span class="step-number">4</span>
+                            <p><strong>Laat smelten:</strong> Laat de chocolade langzaam smelten op je tong</p>
+                        </div>
+                        <div class="step">
+                            <span class="step-number">5</span>
+                            <p><strong>Nasmaak:</strong> Voel de afsmaak gedurende 30 seconden</p>
+                        </div>
+                    </div>
+                    <button class="btn btn-small tutorial-expand-btn">Meer details →</button>
+                </article>
+
+                <!-- Tutorial 2: Storage Guide -->
+                <article class="tutorial-card discover-searchable" data-searchable="opslag bewaring temperatuur humiditeit chocolade">
+                    <div class="tutorial-icon">🏠</div>
+                    <h3>Bewaar Chocolade Correct</h3>
+                    <p class="tutorial-level">Beginner</p>
+                    <p class="tutorial-description">Optimale opslag zorgt ervoor dat je chocolade langer vers blijft en beter smaakt.</p>
+                    <div class="tutorial-content">
+                        <ul class="tutorial-tips">
+                            <li><strong>Temperatuur:</strong> 12-18°C (koel en donker)</li>
+                            <li><strong>Luchtvochtigheid:</strong> 50-70% ideaal</li>
+                            <li><strong>Vermijd:</strong> Direct zonlicht en warmte</li>
+                            <li><strong>Verpakking:</strong> Originele verpakking behouden</li>
+                            <li><strong>Gescheiden:</strong> Van geurige producten</li>
+                        </ul>
+                    </div>
+                    <button class="btn btn-small tutorial-expand-btn">Meer details →</button>
+                </article>
+
+                <!-- Tutorial 3: Pairing Guide -->
+                <article class="tutorial-card discover-searchable" data-searchable="combineren pairen drank eten chocolade">
+                    <div class="tutorial-icon">🍷</div>
+                    <h3>Chocolade & Drank Combinaties</h3>
+                    <p class="tutorial-level">Intermediate</p>
+                    <p class="tutorial-description">Ontdek perfecte smaakverhoudingen voor chocolade met koffie, wijn en meer.</p>
+                    <div class="tutorial-content">
+                        <div class="pairing-item">
+                            <strong>☕ Koffie:</strong>
+                            <p>Donkere chocolade (70%+) versterkt en verdiept koffiesmaken</p>
+                        </div>
+                        <div class="pairing-item">
+                            <strong>🍷 Rode Wijn:</strong>
+                            <p>Medium chocolade (60-70%) harmonieert goed met fruitige noten</p>
+                        </div>
+                        <div class="pairing-item">
+                            <strong>🥛 Melk:</strong>
+                            <p>Melkchocolade (30-50%) schept een crème textuur</p>
+                        </div>
+                        <div class="pairing-item">
+                            <strong>🍵 Thee:</strong>
+                            <p>Witte/melk chocolade past goed bij groene en witte thee</p>
+                        </div>
+                    </div>
+                    <button class="btn btn-small tutorial-expand-btn">Meer details →</button>
+                </article>
+
+                <!-- Tutorial 4: Quality Indicators -->
+                <article class="tutorial-card discover-searchable" data-searchable="kwaliteit indicatoren bloem suiker verpakking">
+                    <div class="tutorial-icon">✨</div>
+                    <h3>Kwaliteit Herkennen</h3>
+                    <p class="tutorial-level">Intermediate</p>
+                    <p class="tutorial-description">Leer hoe je de kwaliteit van chocolade kan beoordelen aan uiterlijke kenmerken.</p>
+                    <div class="tutorial-content">
+                        <ul class="quality-indicators">
+                            <li><strong>Glans:</strong> Glanzende chocolade wijst op goed afschraapwerk</li>
+                            <li><strong>Geen Vlekken:</strong> Witte vlekken kunnen op suikeruitslag wijzen</li>
+                            <li><strong>Consistentie:</strong> Gladde textuur zonder korreligheid</li>
+                            <li><strong>Breuk:</strong> Schone breuk zonder misvormingen</li>
+                            <li><strong>Verpakking:</strong> Onbeschadigde verpakking met duidelijke info</li>
+                        </ul>
+                    </div>
+                    <button class="btn btn-small tutorial-expand-btn">Meer details →</button>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         VIDEOS SECTION
+         ============================================ -->
+    <section id="videos" class="discover-section" aria-label="Educatieve video's">
+        <div class="section-container">
+            <div class="section-header">
+                <h2 class="section-title">🎥 Van Boon Tot Reep: Video Bibliotheek</h2>
+                <p class="section-description">Kijk hoe chocolade wordt gemaakt, van het eerste moment tot het eindproduct.</p>
+            </div>
+
+            <div class="videos-grid">
+                <!-- Video 1: Bean to Bar -->
+                <article class="video-card discover-searchable" data-searchable="boon tot reep productie proces maken chocolade">
+                    <div class="video-thumbnail">
+                        <iframe width="100%" height="200" src="https://www.youtube.com/embed/i6TCg1p0cDU" title="Bean to Bar Chocolate" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
+                    <div class="video-info">
+                        <h3>Van Boon tot Reep: Het Volledige Proces</h3>
+                        <p class="video-duration">⏱️ 12:45 minuten</p>
+                        <p class="video-description">Ontdek hoe cacao-bonen worden verwerkt tot heerlijke chocoladerepen. Van fermentatie tot verpakking.</p>
+                        <div class="video-topics">
+                            <span class="topic-tag">Productie</span>
+                            <span class="topic-tag">Fermentatie</span>
+                            <span class="topic-tag">Branden</span>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Video 2: Fermentation -->
+                <article class="video-card discover-searchable" data-searchable="fermentatie cacao bonen proces smaak">
+                    <div class="video-thumbnail">
+                        <iframe width="100%" height="200" src="https://www.youtube.com/embed/YxoI0Wl-pDI" title="Chocolate Fermentation" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
+                    <div class="video-info">
+                        <h3>De Kunst van Cacao-Fermentatie</h3>
+                        <p class="video-duration">⏱️ 8:30 minuten</p>
+                        <p class="video-description">Fermentatie is de sleutel tot smaak. Leer hoe dit cruciale proces werkt en waarom het belangrijk is.</p>
+                        <div class="video-topics">
+                            <span class="topic-tag">Fermentatie</span>
+                            <span class="topic-tag">Smaak</span>
+                            <span class="topic-tag">Chemie</span>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Video 3: Roasting -->
+                <article class="video-card discover-searchable" data-searchable="branden roosteren cacao bonen temperatuur">
+                    <div class="video-thumbnail">
+                        <iframe width="100%" height="200" src="https://www.youtube.com/embed/7oc8k-HpRGw" title="Chocolate Roasting" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
+                    <div class="video-info">
+                        <h3>Roosteren: Het Geheim van de Smaak</h3>
+                        <p class="video-duration">⏱️ 9:15 minuten</p>
+                        <p class="video-description">Hoe temperatuur en timing de smaak van je chocolade beïnvloeden. Een meesterclass in precisie.</p>
+                        <div class="video-topics">
+                            <span class="topic-tag">Branden</span>
+                            <span class="topic-tag">Temperatuur</span>
+                            <span class="topic-tag">Smaak</span>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Video 4: Tempering -->
+                <article class="video-card discover-searchable" data-searchable="tempering kristal structuur glans chocolade">
+                    <div class="video-thumbnail">
+                        <iframe width="100%" height="200" src="https://www.youtube.com/embed/40pj3uF7A0U" title="Chocolate Tempering" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
+                    <div class="video-info">
+                        <h3>Tempering: Perfecte Kristallen</h3>
+                        <p class="video-duration">⏱️ 7:45 minuten</p>
+                        <p class="video-description">Waarom tempered chocolade blinkt en breekt. Het essentiële proces voor perfecte textuur en glans.</p>
+                        <div class="video-topics">
+                            <span class="topic-tag">Tempering</span>
+                            <span class="topic-tag">Kristallen</span>
+                            <span class="topic-tag">Textuur</span>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Video 5: Sustainability -->
+                <article class="video-card discover-searchable" data-searchable="duurzaamheid fair trade milieu cacao">
+                    <div class="video-thumbnail">
+                        <iframe width="100%" height="200" src="https://www.youtube.com/embed/DXlE_3-JhI4" title="Sustainable Chocolate" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
+                    <div class="video-info">
+                        <h3>Duurzame Chocolade: Het Verschil Maken</h3>
+                        <p class="video-duration">⏱️ 11:20 minuten</p>
+                        <p class="video-description">Ontdek hoe ethische cacaoteelt de smaak verbetert en het milieu beschermt.</p>
+                        <div class="video-topics">
+                            <span class="topic-tag">Duurzaamheid</span>
+                            <span class="topic-tag">Fair Trade</span>
+                            <span class="topic-tag">Milieu</span>
+                        </div>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         RECIPES SECTION
+         ============================================ -->
+    <section id="recepten" class="discover-section" aria-label="Stap-voor-stap recepten">
+        <div class="section-container">
+            <div class="section-header">
+                <h2 class="section-title">👨‍🍳 Recepten & Creatieve Ideeën</h2>
+                <p class="section-description">Leer stap-voor-stap recepten die chocolade op een nieuw niveau tillen.</p>
+            </div>
+
+            <div class="recipes-grid">
+                <!-- Recipe 1: Chocolate Mousse -->
+                <article class="recipe-card discover-searchable" data-searchable="mousse schuim zachte dessert chocolade">
+                    <div class="recipe-header">
+                        <h3>Klassieke Chocolade Mousse</h3>
+                        <p class="recipe-difficulty">Gemakkelijk</p>
+                    </div>
+                    <div class="recipe-meta">
+                        <span>⏱️ 15 min voorbereiding</span>
+                        <span>🍽️ 4 porties</span>
+                    </div>
+                    <div class="recipe-section">
+                        <h4>Ingrediënten:</h4>
+                        <ul class="recipe-ingredients">
+                            <li>200g donkere chocolade (70%)</li>
+                            <li>4 eieren (gescheiden)</li>
+                            <li>50ml zware room</li>
+                            <li>1 tl vanille-extract</li>
+                            <li>Snuf zout</li>
+                        </ul>
+                    </div>
+                    <div class="recipe-section">
+                        <h4>Instructies:</h4>
+                        <ol class="recipe-steps">
+                            <li>Bak de chocolade au bain-marie tot glad</li>
+                            <li>Voeg eigeel toe en roer goed</li>
+                            <li>Klop eiwitten stijf met zout</li>
+                            <li>Vouw voorzichtig samen</li>
+                            <li>Klop room semi-stijf en fold in</li>
+                            <li>Portioneer in glazen</li>
+                            <li>Zet 2-4 uur koel</li>
+                        </ol>
+                    </div>
+                    <button class="btn btn-small recipe-expand-btn">Volledige recept →</button>
+                </article>
+
+                <!-- Recipe 2: Hot Chocolate -->
+                <article class="recipe-card discover-searchable" data-searchable="hete chocolade drinken warm winters">
+                    <div class="recipe-header">
+                        <h3>Artisanale Hete Chocolade</h3>
+                        <p class="recipe-difficulty">Gemakkelijk</p>
+                    </div>
+                    <div class="recipe-meta">
+                        <span>⏱️ 5 min voorbereiding</span>
+                        <span>🍽️ 2 kopjes</span>
+                    </div>
+                    <div class="recipe-section">
+                        <h4>Ingrediënten:</h4>
+                        <ul class="recipe-ingredients">
+                            <li>100g melkchocolade</li>
+                            <li>250ml volle melk</li>
+                            <li>50ml room</li>
+                            <li>1 nip zout</li>
+                            <li>Toppings: marshmallows, cacao poeder</li>
+                        </ul>
+                    </div>
+                    <div class="recipe-section">
+                        <h4>Instructies:</h4>
+                        <ol class="recipe-steps">
+                            <li>Verhit melk en room tot bijna kokend</li>
+                            <li>Voeg gesneden chocolade toe</li>
+                            <li>Roer tot volledig gesmolten en glad</li>
+                            <li>Voeg zout toe voor diepte</li>
+                            <li>Schenk in kopjes</li>
+                            <li>Garneer naar wens</li>
+                        </ol>
+                    </div>
+                    <button class="btn btn-small recipe-expand-btn">Volledige recept →</button>
+                </article>
+
+                <!-- Recipe 3: Chocolate Truffles -->
+                <article class="recipe-card discover-searchable" data-searchable="truffels bonbons handgemaakt pralines">
+                    <div class="recipe-header">
+                        <h3>Handgemaakte Chocolade Truffels</h3>
+                        <p class="recipe-difficulty">Intermediate</p>
+                    </div>
+                    <div class="recipe-meta">
+                        <span>⏱️ 30 min voorbereiding</span>
+                        <span>🍽️ 16 truffels</span>
+                    </div>
+                    <div class="recipe-section">
+                        <h4>Ingrediënten:</h4>
+                        <ul class="recipe-ingredients">
+                            <li>200g donkere chocolade</li>
+                            <li>100ml room</li>
+                            <li>2 el boter</li>
+                            <li>1 tl vanille</li>
+                            <li>Cacao poeder / chocolade voor coating</li>
+                        </ul>
+                    </div>
+                    <div class="recipe-section">
+                        <h4>Instructies:</h4>
+                        <ol class="recipe-steps">
+                            <li>Verhit room tot net niet koken</li>
+                            <li>Giet over gesneden chocolade</li>
+                            <li>Laat 2 minuten staan dan roer glad</li>
+                            <li>Voeg boter en vanille toe</li>
+                            <li>Zet in koelkast 2-3 uur</li>
+                            <li>Vorm kleine ballen met een lepeltje</li>
+                            <li>Rold in cacao of doop in chocolade</li>
+                        </ol>
+                    </div>
+                    <button class="btn btn-small recipe-expand-btn">Volledige recept →</button>
+                </article>
+
+                <!-- Recipe 4: Chocolate Bark -->
+                <article class="recipe-card discover-searchable" data-searchable="schil blad noten fruit decoratie">
+                    <div class="recipe-header">
+                        <h3>Luxe Chocolade Schil</h3>
+                        <p class="recipe-difficulty">Gemakkelijk</p>
+                    </div>
+                    <div class="recipe-meta">
+                        <span>⏱️ 10 min voorbereiding</span>
+                        <span>🍽️ 12-16 stuks</span>
+                    </div>
+                    <div class="recipe-section">
+                        <h4>Ingrediënten:</h4>
+                        <ul class="recipe-ingredients">
+                            <li>300g melk- of donkere chocolade</li>
+                            <li>Toppings: gedroogde fruit, noten, zout</li>
+                        </ul>
+                    </div>
+                    <div class="recipe-section">
+                        <h4>Instructies:</h4>
+                        <ol class="recipe-steps">
+                            <li>Smelt chocolade au bain-marie</li>
+                            <li>Giet op bakpapier in dunne laag</li>
+                            <li>Versier onmiddellijk met toppings</li>
+                            <li>Zet in koelkast tot hard</li>
+                            <li>Break in onregelmatige stukken</li>
+                        </ol>
+                    </div>
+                    <button class="btn btn-small recipe-expand-btn">Volledige recept →</button>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         FAQ SECTION
+         ============================================ -->
+    <section id="faq" class="discover-section" aria-label="Veelgestelde vragen">
+        <div class="section-container">
+            <div class="section-header">
+                <h2 class="section-title">❓ Veelgestelde Vragen</h2>
+                <p class="section-description">Snelle antwoorden op jouw vragen over smaak, allergenen, herkomst, kwaliteit en duurzaamheid.</p>
+            </div>
+
+            <div class="faq-container">
+                <!-- FAQ Item 1 -->
+                <div class="faq-item discover-searchable" data-searchable="donkere chocolade gezond antioxidant voeding">
+                    <button class="faq-question" aria-expanded="false">
+                        <span>Is donkere chocolade gezond?</span>
+                        <span class="faq-toggle">+</span>
+                    </button>
+                    <div class="faq-answer" hidden>
+                        <p>Ja! Donkere chocolade (70%+) bevat flavonoïden, machtige antioxidanten die hart- en hersengezondheidondersteunen. Een dagelijkse portie (20-30g) kan enorm voordelig zijn.</p>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 2 -->
+                <div class="faq-item discover-searchable" data-searchable="allergenen noten melk gluten vegan">
+                    <button class="faq-question" aria-expanded="false">
+                        <span>Waar kan ik allergeninformatie vinden?</span>
+                        <span class="faq-toggle">+</span>
+                    </button>
+                    <div class="faq-answer" hidden>
+                        <p>Alle allergeninformatie staat op het productlabel en in onze digitale productkaarten. We geven aan: Noten, Melk, Soja, Gluten en andere mogelijke allergenen. Contacteer onze klantenservice voor specifieke dieetwensen.</p>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 3 -->
+                <div class="faq-item discover-searchable" data-searchable="herkomst duurzaamheid fair trade milieu">
+                    <button class="faq-question" aria-expanded="false">
+                        <span>Hoe ethisch wordt jouw chocolade geproduceerd?</span>
+                        <span class="faq-toggle">+</span>
+                    </button>
+                    <div class="faq-answer" hidden>
+                        <p>Alle Chocoloco-producten zijn Fair Trade gecertificeerd. We werken rechtstreeks met cacaoboerencoöperatieven, betalen faire prijzen en investeren in gemeenschapsontwikkeling. Ons doel: transparantie en impact.</p>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 4 -->
+                <div class="faq-item discover-searchable" data-searchable="bewaar opslag temperatuur verval houdbaarheid">
+                    <button class="faq-question" aria-expanded="false">
+                        <span>Hoe lang blijft chocolade vers?</span>
+                        <span class="faq-toggle">+</span>
+                    </button>
+                    <div class="faq-answer" hidden>
+                        <p>Correct opgeslagen (12-18°C, droog) blijft chocolade 1-2 jaar lekker. Melkchocolade korter dan donkere. Controleer altijd de "best before" datum op de verpakking. Smaak verslechtert geleidelijk, maar het blijft veilig.</p>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 5 -->
+                <div class="faq-item discover-searchable" data-searchable="smaak sterkte percentage cacao donker">
+                    <button class="faq-question" aria-expanded="false">
+                        <span>Wat betekent het cacao-percentage?</span>
+                        <span class="faq-toggle">+</span>
+                    </button>
+                    <div class="faq-answer" hidden>
+                        <p>Het percentage geeft het aandeel pure cacao aan. 70% betekent 70% cacao, 30% suiker/ingrediënten. Hoger = meer cacao-smaak, donkerder kleur en minder zoet. Begin met 50-60% en werk naar 85%+ voor volle smaak.</p>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 6 -->
+                <div class="faq-item discover-searchable" data-searchable="vegan melkvrij plantaardig alternatief">
+                    <button class="faq-question" aria-expanded="false">
+                        <span>Hebben jullie vegan chocolade?</span>
+                        <span class="faq-toggle">+</span>
+                    </button>
+                    <div class="faq-answer" hidden>
+                        <p>Ja! Ons assortiment bevat vegan opties gemaakt met plantaardige butters in plaats van melk. Ze hebben dezelfde rijke smaak en textuur. Zoek naar het 🌱 pictogram in onze shop.</p>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 7 -->
+                <div class="faq-item discover-searchable" data-searchable="combineren pairing wijn koffie thee">
+                    <button class="faq-question" aria-expanded="false">
+                        <span>Welke chocolade past bij welke drank?</span>
+                        <span class="faq-toggle">+</span>
+                    </button>
+                    <div class="faq-answer" hidden>
+                        <p><strong>Donkere chocolade:</strong> Koffie, rode wijn, sterke thee | <strong>Melkchocolade:</strong> Volle melk, warme chocolade, karamelikeur | <strong>Witte chocolade:</strong> Witte wijn, kamille-thee, dessertlikeur</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Empty Search State -->
+    <div id="discover-no-results" class="empty-state" style="display: none;">
+        <h3>🔍 Geen resultaten gevonden</h3>
+        <p>We konden niet vinden wat je zocht. Probeer een ander zoekterm of verken alle secties.</p>
+    </div>
+</div>
+
+<style>
+.discover-page {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+}
+
+.discover-hero {
+    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+    border-radius: 12px;
+    padding: 3rem 2rem;
+    margin-bottom: 2rem;
+    color: white;
+    text-align: center;
+}
+
+.discover-hero h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.discover-hero p {
+    font-size: 1.1rem;
+    opacity: 0.95;
+    margin-bottom: 1.5rem;
+}
+
+.discover-search-wrapper {
+    display: flex;
+    gap: 0.5rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.discover-search-input,
+.discover-search-btn {
+    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.discover-search-input {
+    flex: 1;
+    background: white;
+    color: var(--text-color);
+}
+
+.discover-search-btn {
+    background: var(--primary-dark);
+    color: white;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.discover-search-btn:hover {
+    background: var(--primary-color);
+}
+
+.discover-tabs-wrapper {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin: 2rem 0;
+    flex-wrap: wrap;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 1rem;
+}
+
+.discover-tab-btn {
+    padding: 0.75rem 1.5rem;
+    background: transparent;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    transition: all 0.3s;
+}
+
+.discover-tab-btn:hover {
+    color: var(--primary-color);
+}
+
+.discover-tab-btn.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.discover-section {
+    display: none;
+    animation: fadeIn 0.4s ease-in;
+}
+
+.discover-section.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.section-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.section-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.section-title {
+    font-size: 2rem;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.section-description {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+/* ============ Product Cards ============ */
+.products-library-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.product-library-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-light);
+    transition: all 0.3s;
+}
+
+.product-library-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow);
+    border-color: var(--accent-color);
+}
+
+.product-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.product-card-header h3 {
+    margin: 0;
+    color: var(--primary-color);
+}
+
+.product-expiry-badge {
+    background: var(--warning-color);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+.product-card-emoji {
+    font-size: 2.5rem;
+    text-align: center;
+    margin: 0.5rem 0;
+}
+
+.product-info-group {
+    margin: 1rem 0;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.product-info-group:last-of-type {
+    border-bottom: none;
+}
+
+.info-label {
+    display: block;
+    color: var(--primary-color);
+    margin-bottom: 0.25rem;
+}
+
+.allergen-badges,
+.quality-list,
+.sustainability-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.allergen-badge {
+    background: var(--warning-color);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+}
+
+.quality-list,
+.sustainability-list {
+    flex-direction: column;
+}
+
+.quality-list li,
+.sustainability-list li {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+}
+
+/* ============ Tutorial Cards ============ */
+.tutorials-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.tutorial-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-light);
+    transition: all 0.3s;
+}
+
+.tutorial-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow);
+}
+
+.tutorial-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.tutorial-card h3 {
+    color: var(--primary-color);
+    margin: 0.5rem 0;
+}
+
+.tutorial-level {
+    display: inline-block;
+    background: var(--accent-color);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+}
+
+.tutorial-steps,
+.tutorial-content,
+.quality-indicators,
+.pairing-item {
+    margin: 1rem 0;
+}
+
+.step {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.step-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.tutorial-tips {
+    list-style: none;
+    padding: 0;
+}
+
+.tutorial-tips li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* ============ Video Cards ============ */
+.videos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.video-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow-light);
+    transition: all 0.3s;
+}
+
+.video-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow);
+    border-color: var(--accent-color);
+}
+
+.video-thumbnail {
+    width: 100%;
+    height: 200px;
+    overflow: hidden;
+}
+
+.video-info {
+    padding: 1.5rem;
+}
+
+.video-info h3 {
+    color: var(--primary-color);
+    margin: 0 0 0.5rem 0;
+}
+
+.video-duration {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.video-topics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.topic-tag {
+    background: var(--accent-green);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+}
+
+/* ============ Recipe Cards ============ */
+.recipes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1.5rem;
+}
+
+.recipe-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow-light);
+    transition: all 0.3s;
+}
+
+.recipe-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow);
+}
+
+.recipe-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1rem;
+}
+
+.recipe-header h3 {
+    color: var(--primary-color);
+    margin: 0;
+}
+
+.recipe-difficulty {
+    background: var(--success-color);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+.recipe-meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+.recipe-section {
+    margin: 1rem 0;
+}
+
+.recipe-section h4 {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.recipe-ingredients,
+.recipe-steps {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.recipe-ingredients li,
+.recipe-steps li {
+    padding: 0.4rem 0 0.4rem 1.5rem;
+    position: relative;
+}
+
+.recipe-ingredients li:before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: var(--accent-green);
+    font-weight: bold;
+}
+
+.recipe-steps li:before {
+    content: counter(step-counter);
+    counter-increment: step-counter;
+    position: absolute;
+    left: 0;
+    background: var(--primary-color);
+    color: white;
+    width: 1.2rem;
+    height: 1.2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.recipe-steps {
+    counter-reset: step-counter;
+}
+
+/* ============ FAQ Accordion ============ */
+.faq-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.faq-item {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+    transition: all 0.3s;
+}
+
+.faq-item:hover {
+    border-color: var(--accent-color);
+    box-shadow: var(--shadow-light);
+}
+
+.faq-question {
+    width: 100%;
+    padding: 1rem;
+    background: var(--card-bg);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-color);
+    transition: all 0.3s;
+}
+
+.faq-question:hover {
+    background: var(--input-bg);
+    color: var(--primary-color);
+}
+
+.faq-question[aria-expanded="true"] {
+    color: var(--primary-color);
+}
+
+.faq-toggle {
+    font-size: 1.5rem;
+    transition: transform 0.3s;
+}
+
+.faq-question[aria-expanded="true"] .faq-toggle {
+    transform: rotate(45deg);
+}
+
+.faq-answer {
+    padding: 1rem;
+    background: var(--bg-color);
+    border-top: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* ============ Empty State ============ */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    background: var(--card-bg);
+    border-radius: 12px;
+    border: 1px dashed var(--border-color);
+}
+
+.empty-state h3 {
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+/* ============ Responsive ============ */
+@media (max-width: 768px) {
+    .discover-hero {
+        padding: 2rem 1rem;
+    }
+
+    .discover-hero h1 {
+        font-size: 1.75rem;
+    }
+
+    .discover-search-wrapper {
+        flex-direction: column;
+    }
+
+    .discover-tabs-wrapper {
+        gap: 0.5rem;
+    }
+
+    .discover-tab-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .products-library-grid,
+    .tutorials-grid,
+    .videos-grid,
+    .recipes-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tabButtons = document.querySelectorAll('.discover-tab-btn');
+    const sections = document.querySelectorAll('.discover-section');
+    const searchInput = document.getElementById('discoverSearch');
+    const searchBtn = document.getElementById('discoverSearchBtn');
+    const a11yStatus = document.getElementById('discoverA11yStatus');
+    const noResults = document.getElementById('discover-no-results');
+
+    // Tab Switching
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const target = this.dataset.section;
+            
+            // Remove active from all
+            tabButtons.forEach(b => b.classList.remove('active'));
+            sections.forEach(s => s.classList.remove('active'));
+            
+            // Add active to clicked
+            this.classList.add('active');
+            document.getElementById(target).classList.add('active');
+
+            // Clear search when switching tabs
+            searchInput.value = '';
+            filterContent('');
+        });
+    });
+
+    // FAQ Accordion
+    document.querySelectorAll('.faq-question').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const isExpanded = this.getAttribute('aria-expanded') === 'true';
+            this.setAttribute('aria-expanded', !isExpanded);
+            this.nextElementSibling.hidden = isExpanded;
+        });
+    });
+
+    // Search Functionality
+    function filterContent(query) {
+        const searchables = document.querySelectorAll('.discover-searchable');
+        let visibleCount = 0;
+
+        searchables.forEach(item => {
+            const searchText = item.dataset.searchable || '';
+            const isVisible = query === '' || searchText.includes(query.toLowerCase());
+            
+            item.style.display = isVisible ? '' : 'none';
+            if (isVisible) visibleCount++;
+        });
+
+        // Show/hide no results message
+        if (query !== '' && visibleCount === 0) {
+            noResults.style.display = 'block';
+            a11yStatus.textContent = 'Geen resultaten gevonden';
+        } else {
+            noResults.style.display = 'none';
+            if (query !== '') {
+                a11yStatus.textContent = `${visibleCount} resultaten gevonden`;
+            }
+        }
+    }
+
+    searchInput.addEventListener('input', function() {
+        filterContent(this.value);
+    });
+
+    searchBtn.addEventListener('click', function() {
+        searchInput.focus();
+    });
+
+    // Expand buttons for tutorials and recipes
+    document.querySelectorAll('.tutorial-expand-btn, .recipe-expand-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            // In a full implementation, this would expand to show more details
+            alert('Volledige details tonen (kan uitgebreid worden met modal of pagina-uitbreiding)');
+        });
+    });
+});
+</script>
+{% endblock %}

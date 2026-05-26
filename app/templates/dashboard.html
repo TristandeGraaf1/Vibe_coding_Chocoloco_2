@@ -76,7 +76,7 @@
             <h3>{{ _('Producten') }}</h3>
             <p>{{ _('Registreer en bekijk je producten') }}</p>
         </a>
-        <a href="#" class="nav-card" data-card-id="discover" style="animation-delay: 0.1s;">
+        <a href="{{ url_for('main.discover') }}" class="nav-card" data-card-id="discover" style="animation-delay: 0.1s;">
             <div class="nav-card-icon">🔍</div>
             <h3>{{ _('Ontdekken') }}</h3>
             <p>{{ _('Verken nieuwe chocolades') }}</p>

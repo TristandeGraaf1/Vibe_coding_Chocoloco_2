@@ -4,6 +4,7 @@
 
 {% block content %}
 <div class="shop-page">
+    <div id="shopA11yStatus" class="visually-hidden" aria-live="polite" aria-atomic="true"></div>
     {% if session.active_discount %}
     <div class="shop-discount-banner">
         Kortingscode <strong>{{ session.active_discount.code }}</strong> toegevoegd: €{{ '%.2f'|format(session.active_discount.amount) }} korting — wordt toegepast bij afrekenen.
@@ -57,7 +58,7 @@
     <section class="shop-toolbar" aria-label="Shop filters">
         <div class="shop-search-wrap">
             <label class="shop-search-label" for="shopSearch">Zoek chocolade</label>
-            <input id="shopSearch" class="shop-search-input" type="search" placeholder="Zoek op smaak, categorie of herkomst">
+            <input id="shopSearch" class="shop-search-input" type="search" placeholder="Zoek op smaak, categorie of herkomst" aria-label="Zoek chocolade">
         </div>
         <div class="shop-category-chips" id="shopCategoryChips">
             {% for category in shop_categories %}
@@ -94,7 +95,7 @@
                     <div class="shop-card-controls">
                         <label for="qty-{{ loop.index }}" class="visually-hidden">Aantal</label>
                         <input id="qty-{{ loop.index }}" class="shop-qty-input" type="number" min="1" value="1" data-product-name="{{ product.name }}">
-                        <button type="button" class="shop-add-btn" data-product-name="{{ product.name }}" data-product-price="{{ product.price }}">Voeg toe aan mandje</button>
+                        <button type="button" class="btn btn-small shop-add-btn" data-product-name="{{ product.name }}" data-product-price="{{ product.price }}">Voeg toe aan mandje</button>
                     </div>
                 </article>
                 {% endfor %}
@@ -137,6 +138,7 @@
             // ignore
         }
         const resultCount = document.getElementById('shopResultCount');
+        const a11yStatus = document.getElementById('shopA11yStatus');
         const cartItems = document.getElementById('shopCartItems');
         const cartCount = document.getElementById('shopCartCount');
         const cartTotal = document.getElementById('shopCartTotal');
@@ -179,27 +181,29 @@
             if (!items.length) {
                 cartItems.innerHTML = '<p class="shop-cart-empty">Je mandje is nog leeg. Voeg een paar chocolades toe om het totaal te zien.</p>';
                 syncStorage();
+                if (a11yStatus) a11yStatus.textContent = 'Winkelmandje is leeg';
                 return;
             }
 
             cartItems.innerHTML = items.map(function (item) {
                 const subtotal = Number(item.price || 0) * Number(item.qty || 0);
-                return '<div class="shop-cart-item">'
-                    + '<div><strong>' + item.name + '</strong><p>' + money.format(Number(item.price || 0)) + ' × ' + Number(item.qty || 0) + ' = ' + money.format(subtotal) + '</p></div>'
-                    + '<div class="shop-cart-controls">'
-                    + '<button type="button" class="shop-cart-decrease" data-product-name="' + item.name + '">-</button>'
-                    + '<span class="shop-cart-qty">' + Number(item.qty || 0) + '</span>'
-                    + '<button type="button" class="shop-cart-increase" data-product-name="' + item.name + '">+</button>'
-                    + '</div>'
-                    + '<button type="button" class="shop-cart-remove" data-product-name="' + item.name + '">Verwijder</button>'
-                    + '</div>';
+                    return '<div class="shop-cart-item">'
+                        + '<div><strong>' + item.name + '</strong><p>' + money.format(Number(item.price || 0)) + ' × ' + Number(item.qty || 0) + ' = ' + money.format(subtotal) + '</p></div>'
+                        + '<div class="shop-cart-controls">'
+                        + '<button type="button" class="btn btn-small shop-cart-decrease" data-product-name="' + item.name + '">-</button>'
+                        + '<span class="shop-cart-qty">' + Number(item.qty || 0) + '</span>'
+                        + '<button type="button" class="btn btn-small shop-cart-increase" data-product-name="' + item.name + '">+</button>'
+                        + '</div>'
+                        + '<button type="button" class="btn btn-small shop-cart-remove" data-product-name="' + item.name + '">Verwijder</button>'
+                        + '</div>';
             }).join('');
 
             syncStorage();
+            if (a11yStatus) a11yStatus.textContent = totalQty + ' items in winkelmand, totaal ' + money.format(total);
         }
 
         function matchesFilters(card) {
-            const query = (searchInput.value || '').trim().toLowerCase();
+            const query = (searchInput && searchInput.value ? searchInput.value : '').trim().toLowerCase();
             const category = card.dataset.category;
             const text = [card.dataset.name, card.dataset.description, card.dataset.origin, category].join(' ');
             const matchesQuery = !query || text.includes(query);
@@ -209,18 +213,26 @@
 
         function applyFilters() {
             let visibleCount = 0;
-            shopCards.forEach(function (card) {
+            const query = (searchInput && searchInput.value) ? (searchInput.value || '').trim().toLowerCase() : '';
+            console.debug('shop:applyFilters', { query: query, activeCategory: activeCategory, totalCards: shopCards.length });
+            shopCards.forEach(function (card, idx) {
                 const isVisible = matchesFilters(card);
-                card.hidden = !isVisible;
+                // Use style.display for compatibility with CSS that might override [hidden]
+                card.style.display = isVisible ? '' : 'none';
                 if (isVisible) {
                     visibleCount += 1;
+                } else {
+                    // for debugging, log first few hidden cards
+                    if (idx < 5) console.debug('shop:hide', { idx: idx, name: card.dataset.name, category: card.dataset.category });
                 }
             });
-            resultCount.textContent = visibleCount + ' product' + (visibleCount === 1 ? '' : 'en');
+            if (resultCount) resultCount.textContent = visibleCount + ' product' + (visibleCount === 1 ? '' : 'en');
+            if (a11yStatus) a11yStatus.textContent = visibleCount + ' producten zichtbaar';
         }
 
         if (searchInput) {
             searchInput.addEventListener('input', applyFilters);
+            searchInput.addEventListener('keyup', applyFilters);
         } else {
             console.warn('shop: search input not found, search disabled');
         }
@@ -253,6 +265,7 @@
                     activeCart.set(productName, { name: productName, price: productPrice, qty: qty });
                 }
                 updateCart();
+                if (a11yStatus) a11yStatus.textContent = qty + ' keer ' + productName + ' toegevoegd aan winkelmandje';
                 return;
             }
         });
@@ -305,8 +318,17 @@
             localStorage.removeItem(storageKey);
         }
 
-        updateCart();
-        applyFilters();
+        try {
+            updateCart();
+        } catch (err) {
+            console.error('shop:updateCart failed', err);
+        }
+
+        try {
+            applyFilters();
+        } catch (err) {
+            console.error('shop:applyFilters failed', err);
+        }
     })();
 </script>
 {% endblock %}

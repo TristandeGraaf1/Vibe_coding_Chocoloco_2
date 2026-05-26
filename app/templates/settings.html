@@ -30,7 +30,7 @@
 
             <div class="setting-item">
                 <label for="screen-reader-toggle">
-                    <input type="checkbox" id="screen-reader-toggle" class="checkbox-toggle">
+                    <input type="checkbox" id="screen-reader-toggle" class="checkbox-toggle" role="switch" aria-checked="false">
                     {{ _('Schermlezer inschakelen') }}
                 </label>
                 <p class="setting-description">Zorgt voor betere ondersteuning met schermlezer applicaties</p>
@@ -81,6 +81,30 @@
                     <option value="en" {% if current_user.language == 'en' %}selected{% endif %}>{{ _('English') }}</option>
                     <option value="fr" {% if current_user.language == 'fr' %}selected{% endif %}>{{ _('Francais') }}</option>
                 </select>
+            </div>
+        </div>
+
+        <!-- Notifications Section -->
+        <div class="settings-section">
+            <h2>{{ _('Meldingen') }}</h2>
+
+            <div class="setting-item">
+                <label>{{ _('Welke meldingen wil je in de meldingsbel ontvangen?') }}</label>
+                <div class="setting-description">Kies per categorie of je een melding wilt ontvangen.</div>
+                <div style="margin-top:0.6rem;">
+                    <label><input type="checkbox" id="notif-orders"> {{ _('Bestellingen') }}</label><br>
+                    <label><input type="checkbox" id="notif-offers"> {{ _('Aanbiedingen & Kortingen') }}</label><br>
+                    <label><input type="checkbox" id="notif-chat"> {{ _('Livechat berichten') }}</label><br>
+                    <label><input type="checkbox" id="notif-news"> {{ _('Nieuws & Updates') }}</label>
+                </div>
+            </div>
+
+            <div class="setting-item">
+                <label for="dnd-toggle">
+                    <input type="checkbox" id="dnd-toggle" class="checkbox-toggle" role="switch" aria-checked="false">
+                    {{ _('Niet storen (meldingen dempen)') }}
+                </label>
+                <p class="setting-description">Wanneer ingeschakeld worden geluiden en visuele banners gedempt.</p>
             </div>
         </div>
 
@@ -363,13 +387,21 @@
             screenReader: false,
             fontSize: 'normal',
             contrast: 'normal',
-            focusMode: false
+            focusMode: false,
+            notificationSettings: {
+                orders: true,
+                offers: true,
+                chat: true,
+                news: true,
+                dnd: false
+            }
         };
 
         // Apply settings
         if (settings.screenReader) {
             document.documentElement.setAttribute('data-screen-reader', 'true');
-            document.getElementById('screen-reader-toggle').checked = true;
+            const srToggle = document.getElementById('screen-reader-toggle');
+            if (srToggle) { srToggle.checked = true; srToggle.setAttribute('aria-checked', 'true'); }
         }
 
         if (settings.fontSize !== 'normal') {
@@ -387,6 +419,21 @@
             document.getElementById('focus-mode-toggle').checked = true;
         }
 
+        // Apply notification settings if present
+        try {
+            const notif = settings.notificationSettings || {};
+            const nOrders = document.getElementById('notif-orders');
+            const nOffers = document.getElementById('notif-offers');
+            const nChat = document.getElementById('notif-chat');
+            const nNews = document.getElementById('notif-news');
+            const dndToggle = document.getElementById('dnd-toggle');
+            if (nOrders) nOrders.checked = notif.orders !== false;
+            if (nOffers) nOffers.checked = notif.offers !== false;
+            if (nChat) nChat.checked = notif.chat !== false;
+            if (nNews) nNews.checked = notif.news !== false;
+            if (dndToggle) { dndToggle.checked = !!notif.dnd; dndToggle.setAttribute('aria-checked', dndToggle.checked ? 'true' : 'false'); }
+        } catch (e) {}
+
         updateFontSizeButtons(settings.fontSize);
     }
 
@@ -395,7 +442,14 @@
             screenReader: document.getElementById('screen-reader-toggle').checked,
             fontSize: document.getElementById('font-size-select').value,
             contrast: document.getElementById('contrast-select').value,
-            focusMode: document.getElementById('focus-mode-toggle').checked
+            focusMode: document.getElementById('focus-mode-toggle').checked,
+            notificationSettings: {
+                orders: document.getElementById('notif-orders') ? document.getElementById('notif-orders').checked : true,
+                offers: document.getElementById('notif-offers') ? document.getElementById('notif-offers').checked : true,
+                chat: document.getElementById('notif-chat') ? document.getElementById('notif-chat').checked : true,
+                news: document.getElementById('notif-news') ? document.getElementById('notif-news').checked : true,
+                dnd: document.getElementById('dnd-toggle') ? document.getElementById('dnd-toggle').checked : false
+            }
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
     }
@@ -404,9 +458,13 @@
         const toggle = document.getElementById('screen-reader-toggle');
         if (toggle.checked) {
             document.documentElement.setAttribute('data-screen-reader', 'true');
+            toggle.setAttribute('aria-checked', 'true');
             announce('Schermlezer is ingeschakeld');
+            try { const globalA11y = document.getElementById('shopA11yStatus'); if (globalA11y) globalA11y.textContent = 'Schermlezer ingeschakeld'; } catch (e) {}
         } else {
             document.documentElement.removeAttribute('data-screen-reader');
+            toggle.setAttribute('aria-checked', 'false');
+            try { const globalA11y = document.getElementById('shopA11yStatus'); if (globalA11y) globalA11y.textContent = 'Schermlezer uitgeschakeld'; } catch (e) {}
         }
         saveSettings();
     }
@@ -456,7 +514,15 @@
         announcement.className = 'sr-only';
         announcement.textContent = message;
         document.body.appendChild(announcement);
-        setTimeout(() => announcement.remove(), 1000);
+        // Also update global a11y status live region if present
+        try {
+            const globalA11y = document.getElementById('shopA11yStatus');
+            if (globalA11y) globalA11y.textContent = message;
+        } catch (e) {
+            // ignore
+        }
+        // Keep announcement in DOM a bit longer for some screen readers
+        setTimeout(() => announcement.remove(), 2000);
     }
 
     function changeTheme(theme) {
@@ -505,6 +571,23 @@
         if (openLayoutBtn) {
             openLayoutBtn.addEventListener('click', function() {
                 window.location.href = '{{ url_for("main.dashboard") }}?edit=true';
+            });
+        }
+
+        // Notification preferences listeners
+        const notifIds = ['notif-orders','notif-offers','notif-chat','notif-news'];
+        notifIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('change', function() { saveSettings(); });
+        });
+
+        const dndToggle = document.getElementById('dnd-toggle');
+        if (dndToggle) {
+            dndToggle.addEventListener('change', function() {
+                dndToggle.setAttribute('aria-checked', dndToggle.checked ? 'true' : 'false');
+                saveSettings();
+                announce(dndToggle.checked ? 'Niet storen is ingeschakeld' : 'Niet storen is uitgeschakeld');
+                try { const globalA11y = document.getElementById('shopA11yStatus'); if (globalA11y) globalA11y.textContent = dndToggle.checked ? 'Niet storen ingeschakeld' : 'Niet storen uitgeschakeld'; } catch (e) {}
             });
         }
     });

@@ -1876,6 +1876,16 @@ def checkout():
         except Exception:
             applied_discount = None
 
+        # If a discount was applied, add a negative discount line to the cart items
+        final_cart_items = list(cart_items) if isinstance(cart_items, list) else []
+        if applied_discount and applied_discount.get('amount'):
+            try:
+                disc_amount = round(float(applied_discount.get('amount') or 0), 2)
+            except Exception:
+                disc_amount = 0.0
+            if disc_amount:
+                final_cart_items.append({'name': f"Kortingscode {applied_discount.get('code')}", 'price': -abs(disc_amount), 'qty': 1})
+
         session['last_payment'] = {
             'name': form.full_name.data,
             'email': form.email.data,
@@ -1883,7 +1893,7 @@ def checkout():
             'payment_method_label': 'Demo betaling - automatisch geslaagd' if is_demo_payment else payment_labels.get(form.payment_method.data, form.payment_method.data),
             'payment_status': 'geslaagd',
             'payment_ref': payment_ref,
-            'cart_items': cart_items,
+            'cart_items': final_cart_items,
             'cart_total': cart_total,
             'applied_discount': applied_discount,
         }

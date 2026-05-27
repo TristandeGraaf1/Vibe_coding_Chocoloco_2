@@ -27,12 +27,18 @@ html[data-theme="dark"] {
     --bg-color: #2B1810;
     --text-color: #E8D5C4;
     --text-secondary: #C4A080;
-    --border-color: #6B4423;
+    /* Improve contrast in dark mode: use a subtle light border and lighter primary colors */
+    --border-color: rgba(255, 255, 255, 0.06);
     --card-bg: #3C2415;
     --input-bg: #4A2F18;
     --nav-bg: #1A0F08;
     --shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
     --shadow-light: 0 2px 8px rgba(0, 0, 0, 0.3);
+    /* Lighter primary hues for readable headings and accents on dark backgrounds */
+    --primary-color: #FFF5ED;
+    --primary-dark: #FFE8D1;
+    --primary-light: #FFF8F0;
+    --accent-color: #E0B985;
 }
 
 * {
@@ -967,6 +973,28 @@ html[data-theme="dark"] .rewards-balance-card {
     background: var(--card-bg);
     border: 1px solid rgba(255,255,255,0.04);
     box-shadow: 0 10px 24px rgba(0,0,0,0.4);
+}
+
+/* Dark-mode: improve readability for dashboard hero */
+html[data-theme="dark"] .dashboard-hero {
+    /* darker, desaturated brown gradient to give strong contrast with light text */
+    background: linear-gradient(135deg, rgba(54,30,18,0.95) 0%, rgba(36,20,12,0.95) 100%);
+    color: var(--text-color);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+}
+
+html[data-theme="dark"] .dashboard-hero::before,
+html[data-theme="dark"] .dashboard-hero::after {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+html[data-theme="dark"] .dashboard-hero h1 {
+    color: var(--primary-color);
+}
+
+html[data-theme="dark"] .dashboard-hero p {
+    color: var(--text-color);
+    opacity: 0.95;
 }
 .rewards-grid {
     display: grid;
@@ -1955,6 +1983,57 @@ html[data-theme="dark"] .shop-cart-panel {
     box-shadow: 0 8px 30px rgba(107,68,35,0.08);
 }
 .form-textarea::placeholder { color: rgba(60,36,21,0.4); }
+
+/* Dark-mode overrides for store locator page — do NOT change light mode */
+html[data-theme="dark"] .store-locator-hero {
+    background: linear-gradient(135deg, rgba(54,30,18,0.95) 0%, rgba(28,14,9,0.95) 100%);
+    color: var(--text-color);
+    border-radius: 1rem;
+    padding: 2.2rem;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+}
+html[data-theme="dark"] .store-locator-hero h1 {
+    color: var(--primary-color);
+    margin: 0 0 0.4rem 0;
+}
+html[data-theme="dark"] .store-locator-hero p,
+html[data-theme="dark"] .store-locator-hero .hero-badge {
+    color: var(--text-secondary);
+}
+html[data-theme="dark"] .store-list-container h2 {
+    color: var(--primary-color);
+    font-weight: 800;
+    font-size: 1.25rem;
+    margin: 0 0 0.75rem 0;
+    text-shadow: 0 2px 0 rgba(0,0,0,0.55);
+}
+html[data-theme="dark"] .store-item {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    border-radius: 0.6rem;
+    padding: 0.85rem;
+    margin-bottom: 0.7rem;
+    box-shadow: var(--shadow-light);
+}
+html[data-theme="dark"] .store-item .store-item-name {
+    color: var(--primary-color);
+    font-weight: 800;
+}
+html[data-theme="dark"] .store-item .store-item-address,
+html[data-theme="dark"] .store-item .store-item-city,
+html[data-theme="dark"] .store-item .store-item-hours,
+html[data-theme="dark"] .store-item .store-item-contact a {
+    color: var(--text-secondary);
+}
+
+/* Ensure map container contrasts with page background in dark mode */
+html[data-theme="dark"] #store-map {
+    background: #1b0f0a;
+    border: 1px solid var(--border-color);
+    border-radius: 0.6rem;
+    min-height: 280px;
+}
 
 /* Editor toolbar */
 .editor-toolbar {
@@ -3809,6 +3888,25 @@ html[data-font-size="xlarge"] h1 {
     line-height: 1.2;
 }
 
+/* Additional dark-mode readability overrides */
+
+html[data-theme="dark"] .nav-notification-item-state.is-unread {
+    /* slightly brighter label color on dark backgrounds */
+    color: #FFD580;
+}
+
+html[data-theme="dark"] .shop-card-rating {
+    /* use the accent green for better contrast */
+    color: var(--accent-green);
+}
+
+html[data-theme="dark"] .reward-card p,
+html[data-theme="dark"] .nav-card p,
+html[data-theme="dark"] .shop-card-description,
+html[data-theme="dark"] .shop-card-category {
+    color: var(--text-secondary);
+}
+
 /* High contrast mode */
 html[data-contrast="high"] {
     --bg-color: #000000;
@@ -3868,6 +3966,112 @@ html[data-focus-mode="true"] .video-widget::before,
 html[data-focus-mode="true"] .news-widget::before {
     animation: none !important;
 }
+
+/* Broad dark-mode fixes for elements that use explicit white/light backgrounds */
+html[data-theme="dark"] .reply-card,
+html[data-theme="dark"] .topic-card,
+html[data-theme="dark"] .topic-card .post-card,
+html[data-theme="dark"] .community-wrap .reply-card,
+html[data-theme="dark"] .community-wrap .post-card,
+html[data-theme="dark"] .contributor-card,
+html[data-theme="dark"] .avatar-shell,
+html[data-theme="dark"] .avatar-shell.small,
+html[data-theme="dark"] .avatar-shell.large,
+html[data-theme="dark"] .avatar-badge,
+html[data-theme="dark"] .community-wrap .card,
+html[data-theme="dark"] .topic-card,
+html[data-theme="dark"] .topic-card .topic-excerpt,
+html[data-theme="dark"] .post-card,
+html[data-theme="dark"] .topic-card,
+html[data-theme="dark"] .topic-card .topic-title {
+    background: var(--card-bg) !important;
+    border-color: var(--border-color) !important;
+    box-shadow: var(--shadow-light) !important;
+    color: var(--text-color) !important;
+}
+
+html[data-theme="dark"] .form-textarea {
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), var(--input-bg));
+    border-color: rgba(255,255,255,0.04);
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.4);
+}
+
+html[data-theme="dark"] .toolbar-btn,
+html[data-theme="dark"] .hero-panel-item,
+html[data-theme="dark"] .shop-highlight,
+html[data-theme="dark"] .shop-hero-panel,
+html[data-theme="dark"] .hero-panel-item strong {
+    background: rgba(255,255,255,0.03);
+    border-color: rgba(255,255,255,0.04);
+    color: var(--text-color);
+}
+
+/* Replace bright white badges/avatars with subdued dark-mode variants */
+html[data-theme="dark"] .avatar,
+html[data-theme="dark"] .reward-icon,
+html[data-theme="dark"] .reward-card,
+html[data-theme="dark"] .reward-card .reward-icon {
+    background: linear-gradient(135deg, rgba(212,165,116,0.06), rgba(107,68,35,0.03));
+    color: var(--primary-color);
+}
+
+/* Make inputs and small white panels readable */
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] .card,
+html[data-theme="dark"] .nav-card,
+html[data-theme="dark"] .stat-card,
+html[data-theme="dark"] .shop-card {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+    color: var(--text-color);
+}
+
+/* Subtle highlight adjustments used across many components */
+html[data-theme="dark"] .quick-stat,
+html[data-theme="dark"] .nav-card:hover,
+html[data-theme="dark"] .stat-card:hover {
+    box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+}
+
+/* Template-specific dark-mode fixes (chocobot, livechat, discover, etc.) */
+html[data-theme="dark"] .chocobot-hero,
+html[data-theme="dark"] .livechat-hero {
+    background: linear-gradient(135deg, rgba(54,30,18,0.95) 0%, rgba(36,20,12,0.95) 100%);
+    color: var(--text-color);
+    box-shadow: 0 18px 40px rgba(0,0,0,0.6);
+}
+
+html[data-theme="dark"] .chocobot-card,
+html[data-theme="dark"] .chocobot-chat,
+html[data-theme="dark"] .livechat-card,
+html[data-theme="dark"] .livechat-thread {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: var(--shadow-light) !important;
+    color: var(--text-color);
+}
+
+/* Ensure 'Winkels' nav-card title is clearly readable in dark mode */
+html[data-theme="dark"] .nav-card[data-card-id="store_locator"] h3 {
+    color: var(--primary-color) !important;
+    text-shadow: 0 1px 0 rgba(0,0,0,0.6);
+}
+
+html[data-theme="dark"] .agent-bubble {
+    background: rgba(255,255,255,0.03) !important;
+    color: var(--text-color) !important;
+    border-color: rgba(255,255,255,0.04) !important;
+}
+
+html[data-theme="dark"] .livechat-empty,
+html[data-theme="dark"] .chocobot-empty,
+html[data-theme="dark"] .empty-state {
+    background: rgba(212,165,116,0.06);
+    color: var(--text-secondary);
+}
+
 
 html[data-focus-mode="true"] .nav-notification-panel,
 html[data-focus-mode="true"] .nav-card::hover::before {

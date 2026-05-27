@@ -29,6 +29,15 @@
             <h2>{{ _('Toegankelijkheid') }}</h2>
 
             <div class="setting-item">
+                <label>{{ _('Thema') }}</label>
+                <div class="theme-controls">
+                    <button type="button" class="theme-option-btn {% if current_user.theme == 'light' %}active{% endif %}" onclick="changeTheme('light')">🌞 {{ _('Light') }}</button>
+                    <button type="button" class="theme-option-btn {% if current_user.theme == 'dark' %}active{% endif %}" onclick="changeTheme('dark')">🌙 {{ _('Dark') }}</button>
+                </div>
+                <p class="setting-description">{{ _('Je thema-instelling wordt hier beheerd.') }}</p>
+            </div>
+
+            <div class="setting-item">
                 <label for="screen-reader-toggle">
                     <input type="checkbox" id="screen-reader-toggle" class="checkbox-toggle" role="switch" aria-checked="false">
                     {{ _('Schermlezer inschakelen') }}
@@ -235,6 +244,34 @@
         outline: none;
         border-color: var(--primary-color);
         box-shadow: 0 0 0 3px rgba(107, 68, 35, 0.1);
+    }
+
+    .theme-controls {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .theme-option-btn {
+        padding: 0.75rem 1rem;
+        border-radius: 0.6rem;
+        border: 2px solid var(--border-color);
+        background: var(--input-bg);
+        color: var(--text-color);
+        cursor: pointer;
+        font-weight: 700;
+        transition: all 0.2s ease;
+    }
+
+    .theme-option-btn:hover {
+        border-color: var(--primary-color);
+        transform: translateY(-1px);
+    }
+
+    .theme-option-btn.active {
+        background: var(--primary-color);
+        color: var(--card-bg);
+        border-color: var(--primary-color);
     }
 
     .back-container {

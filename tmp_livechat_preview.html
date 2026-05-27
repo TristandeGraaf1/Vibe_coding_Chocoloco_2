@@ -1,0 +1,45 @@
+<!doctype html>
+<html data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Livechat Dark Preview</title>
+  <link rel="stylesheet" href="app/static/style.css">
+  <style>body{padding:2rem}.container{max-width:980px;margin:0 auto}</style>
+</head>
+<body>
+  <div class="container livechat-page">
+    <div class="livechat-hero">
+      <div>
+        <p class="livechat-hero-eyebrow">Klantenservice</p>
+        <h1>Live chat (preview)</h1>
+        <p>Stel je vragen rechtstreeks aan een medewerker.</p>
+      </div>
+    </div>
+
+    <div class="livechat-card">
+      <p class="livechat-note">Je berichten worden doorgestuurd naar onze medewerkers.</p>
+      <div class="livechat-thread" id="livechatThread">
+        <div class="livechat-row agent-row">
+          <div class="livechat-avatar agent-avatar">M</div>
+          <div class="livechat-bubble agent-bubble">
+            <div class="livechat-meta">Medewerker</div>
+            <div class="livechat-text">Hoi! Hoe kan ik helpen?</div>
+          </div>
+        </div>
+        <div class="livechat-row user-row">
+          <div class="livechat-avatar user-avatar">J</div>
+          <div class="livechat-bubble user-bubble">
+            <div class="livechat-meta">Jij</div>
+            <div class="livechat-text">Wanneer is mijn bestelling klaar?</div>
+          </div>
+        </div>
+      </div>
+      <div class="livechat-composer">
+        <input id="livechatInput" type="text" placeholder="Typ je bericht..." />
+        <button class="btn livechat-send">Verstuur</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

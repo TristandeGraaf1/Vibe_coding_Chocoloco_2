@@ -103,9 +103,6 @@
                     </div>
                 </div>
                 <a href="{{ url_for('main.settings') }}" class="nav-link settings-btn" title="Instellingen">⚙️</a>
-                <button class="theme-toggle" onclick="toggleTheme()">
-                    <span id="theme-icon">🌙</span>
-                </button>
                 <a href="{{ url_for('auth.logout') }}" class="nav-link">Uitloggen</a>
             </div>
         </div>
@@ -153,24 +150,7 @@
             });
         }
 
-        function toggleTheme() {
-            const html = document.documentElement;
-            const currentTheme = html.getAttribute('data-theme');
-            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-
-            html.setAttribute('data-theme', newTheme);
-            document.getElementById('theme-icon').textContent = newTheme === 'dark' ? '☀️' : '🌙';
-
-            fetch('{{ url_for("main.set_theme", theme="") }}' + newTheme, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'}
-            });
-        }
-
         document.addEventListener('DOMContentLoaded', function() {
-            const theme = document.documentElement.getAttribute('data-theme');
-            document.getElementById('theme-icon').textContent = theme === 'dark' ? '☀️' : '🌙';
-
             const notificationToggle = document.getElementById('nav-notification-toggle');
             const notificationPanel = document.getElementById('nav-notification-panel');
 

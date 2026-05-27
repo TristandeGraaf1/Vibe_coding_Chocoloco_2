@@ -1,0 +1,50 @@
+<!doctype html>
+<html data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Store Locator Dark Preview</title>
+  <link rel="stylesheet" href="app/static/style.css">
+  <style>body{padding:2rem;font-family:Arial,Helvetica,sans-serif}.store-locator-container{max-width:1000px;margin:0 auto}</style>
+</head>
+<body>
+  <div class="store-locator-container">
+    <div class="store-locator-header store-locator-hero">
+      <div class="hero-text">
+        <h1>🏪 Winkelzoeker</h1>
+        <p>Vind de dichtstbijzijnde Chocoloco winkel</p>
+        <div class="hero-badge">Ontvang gratis proefjes in geselecteerde winkels</div>
+      </div>
+    </div>
+
+    <div class="store-locator-content" style="display:flex;gap:1rem;margin-top:1.25rem;">
+      <div id="store-map" class="store-locator-map" style="flex:1;min-height:300px;border-radius:0.6rem;"></div>
+      <div class="store-list-container" style="width:360px;">
+        <h2>Alle Winkels</h2>
+        <div id="store-list" class="store-list">
+          <div class="store-item">
+            <div class="store-item-header">
+              <div class="store-item-name">Chocoloco Centrum</div>
+              <span class="store-distance">0.9 km</span>
+            </div>
+            <div class="store-item-address">Voorbeeldstraat 5</div>
+            <div class="store-item-city">Amsterdam</div>
+            <div class="store-item-hours">🕒 09:00 - 18:00</div>
+            <div class="store-item-contact"><a class="store-item-email" href="#">📧 winkel@chocoloco.example</a> <a class="store-item-directions" href="#">🗺️ Route</a></div>
+          </div>
+          <div class="store-item">
+            <div class="store-item-header">
+              <div class="store-item-name">Chocoloco Zuid</div>
+              <span class="store-distance">3.2 km</span>
+            </div>
+            <div class="store-item-address">Zuidlaan 12</div>
+            <div class="store-item-city">Rotterdam</div>
+            <div class="store-item-hours">🕒 10:00 - 19:00</div>
+            <div class="store-item-contact"><a class="store-item-email" href="#">📧 zuid@chocoloco.example</a> <a class="store-item-directions" href="#">🗺️ Route</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

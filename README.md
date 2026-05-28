@@ -34,3 +34,6 @@ python scripts\test_odoo_connection.py
 
 Veelvoorkomende fout: `can't open file ... app.py` betekent dat je per ongeluk `python app.py` gebruikt — gebruik `python run.py`.
 
+## Render deployment
+Bij deploy op Render gebruikt de app een aparte Postgres-database uit `render.yaml`. Daardoor blijven accounts en andere opgeslagen gegevens bestaan na een restart of redeploy.
+
